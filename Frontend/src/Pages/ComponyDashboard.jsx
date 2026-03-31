@@ -1,8 +1,7 @@
-import React, { useState } from "react";
+import React from "react";
 import { useAppContext } from "../context/AppProvider";
 
 const CompanyDashboard = () => {
-  const [selectedTab, setSelectedTab] = useState("overview");
   const { navigate } = useAppContext();
 
   const stats = [
@@ -218,7 +217,7 @@ const CompanyDashboard = () => {
           {stats.map((stat) => (
             <div
               key={stat.id}
-              className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-xl hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"   
+              className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-xl hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
             >
               <div className="p-5">
                 <div className="flex items-center">
@@ -331,7 +330,7 @@ const CompanyDashboard = () => {
               </h3>
             </div>
             <div className="p-6">
-              <div className="grid grid-cols-5 gap-2">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
                 {pipelineStages.map((stage, index) => (
                   <div key={index} className="text-center">
                     <div
@@ -345,7 +344,7 @@ const CompanyDashboard = () => {
               </div>
               <div className="mt-6">
                 <button
-                  onClick={()=>navigate("/hiring-pipeline")}
+                  onClick={() => navigate("/hiring-pipeline")}
                   className="w-full flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:scale-105"
                 >
                   Manage Pipeline

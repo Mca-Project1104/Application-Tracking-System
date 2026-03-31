@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import api from "../api/axios"; // Using your centralized API instance
 
 const ResumeAnalyzer = () => {
   const [isDragging, setIsDragging] = useState(false);
@@ -6,6 +7,11 @@ const ResumeAnalyzer = () => {
   const [jobDescription, setJobDescription] = useState("");
   const [matchScore, setMatchScore] = useState(0);
   const [analysisComplete, setAnalysisComplete] = useState(false);
+  const [file, setFile] = useState(null);
+  const [resumeText, setResumeText] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [analysisData, setAnalysisData] = useState(null);
+  const [error, setError] = useState("");
 
   const handleDragOver = (e) => {
     e.preventDefault();
@@ -17,24 +23,101 @@ const ResumeAnalyzer = () => {
     setIsDragging(false);
   };
 
-  const handleDrop = (e) => {
+  const handleDrop = async (e) => {
     e.preventDefault();
     setIsDragging(false);
+
+    const droppedFile = e.dataTransfer.files[0];
+    if (!droppedFile) return;
+
+    // Validate file type
+    const validTypes = [
+      "application/pdf",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ];
+    if (
+      !validTypes.includes(droppedFile.type) &&
+      !droppedFile.name.endsWith(".docx")
+    ) {
+      setError("Please upload a PDF or DOCX file");
+      return;
+    }
+
+    setFile(droppedFile);
     setResumeUploaded(true);
-    // In a real app, you would handle the file upload here
+    setError("");
+
+    // We'll parse the file when analyzing, not on upload
+    // This is more efficient as we don't need the text until analysis
   };
 
-  const handleFileChange = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      setResumeUploaded(true);
-      // In a real app, you would handle the file upload here
+  const handleFileChange = async (e) => {
+    const selectedFile = e.target.files[0];
+    if (!selectedFile) return;
+
+    // Validate file type
+    const validTypes = [
+      "application/pdf",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ];
+    if (
+      !validTypes.includes(selectedFile.type) &&
+      !selectedFile.name.endsWith(".docx")
+    ) {
+      setError("Please upload a PDF or DOCX file");
+      return;
+    }
+
+    setFile(selectedFile);
+    setResumeUploaded(true);
+    setError("");
+  };
+
+  const analyzeResume = async () => {
+    if (!file) {
+      setError("Please upload a resume first");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError("");
+
+      const formData = new FormData();
+      formData.append("resume", file);
+      formData.append("jobDescription", jobDescription);
+
+      // Using your centralized API instance
+      const res = await api.post("/api/resume/analyze", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      console.log();
+
+      // Update state with analysis results
+      setMatchScore(res.data.data.atsScore || 0);
+      setAnalysisData(res.data);
+      setAnalysisComplete(true);
+      setResumeText(res.data.data.resumeText || "");
+    } catch (err) {
+      console.error(err);
+      console.log(err.message ?? "error response not found");
+      setError(
+        err.response?.data?.error || "Analysis failed. Please try again.",
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
-  const analyzeResume = () => {
-    // Simulate analysis
-    setMatchScore(75);
-    setAnalysisComplete(true);
+  const resetUpload = () => {
+    setResumeUploaded(false);
+    setFile(null);
+    setAnalysisComplete(false);
+    setAnalysisData(null);
+    setMatchScore(0);
+    setError("");
   };
 
   return (
@@ -45,6 +128,29 @@ const ResumeAnalyzer = () => {
           Upload your resume and get instant feedback
         </p>
       </div>
+
+      {error && (
+        <div className="bg-red-50 border-l-4 border-red-400 p-4">
+          <div className="flex">
+            <div className="shrink-0">
+              <svg
+                className="h-5 w-5 text-red-400"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white shadow rounded-lg p-6">
@@ -119,7 +225,7 @@ const ResumeAnalyzer = () => {
                       Resume uploaded successfully
                     </h3>
                     <div className="mt-2 text-sm text-blue-700">
-                      <p>John_Doe_Resume.pdf</p>
+                      <p>{file?.name}</p>
                     </div>
                   </div>
                 </div>
@@ -127,7 +233,7 @@ const ResumeAnalyzer = () => {
               <button
                 type="button"
                 className="mt-4 w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                onClick={() => setResumeUploaded(false)}
+                onClick={resetUpload}
               >
                 Upload Different Resume
               </button>
@@ -153,17 +259,17 @@ const ResumeAnalyzer = () => {
           <div className="mt-4">
             <button
               type="button"
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
               onClick={analyzeResume}
-              disabled={!resumeUploaded}
+              disabled={!resumeUploaded || loading}
             >
-              Analyze Resume
+              {loading ? "Processing..." : "Analyze Resume"}
             </button>
           </div>
         </div>
       </div>
 
-      {analysisComplete && (
+      {analysisComplete && analysisData && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
             <div className="bg-white shadow rounded-lg p-6">
@@ -179,18 +285,20 @@ const ResumeAnalyzer = () => {
                   <div className="mt-2 grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
                       <p className="text-sm font-medium text-gray-500">Name</p>
-                      <p className="mt-1 text-sm text-gray-900">John Doe</p>
+                      <p className="mt-1 text-sm text-gray-900">
+                        {analysisData.candidate?.name || "Not found"}
+                      </p>
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-500">Email</p>
                       <p className="mt-1 text-sm text-gray-900">
-                        john.doe@example.com
+                        {analysisData.candidate?.email || "Not found"}
                       </p>
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-500">Phone</p>
                       <p className="mt-1 text-sm text-gray-900">
-                        (555) 123-4567
+                        {analysisData.candidate?.phone || "Not found"}
                       </p>
                     </div>
                     <div>
@@ -198,7 +306,7 @@ const ResumeAnalyzer = () => {
                         Location
                       </p>
                       <p className="mt-1 text-sm text-gray-900">
-                        San Francisco, CA
+                        {analysisData.candidate?.location || "Not found"}
                       </p>
                     </div>
                   </div>
@@ -209,30 +317,18 @@ const ResumeAnalyzer = () => {
                     Skills
                   </h3>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      React
-                    </span>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      JavaScript
-                    </span>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      TypeScript
-                    </span>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      HTML
-                    </span>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      CSS
-                    </span>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      Node.js
-                    </span>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      Git
-                    </span>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      REST API
-                    </span>
+                    {analysisData.candidate?.skills?.length > 0 ? (
+                      analysisData.candidate.skills.map((skill, index) => (
+                        <span
+                          key={index}
+                          className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                        >
+                          {skill}
+                        </span>
+                      ))
+                    ) : (
+                      <p className="text-sm text-gray-500">No skills found</p>
+                    )}
                   </div>
                 </div>
 
@@ -241,52 +337,31 @@ const ResumeAnalyzer = () => {
                     Experience
                   </h3>
                   <div className="mt-2 space-y-4">
-                    <div className="border-l-4 border-blue-500 pl-4">
-                      <div className="flex justify-between">
-                        <h4 className="text-sm font-medium text-gray-900">
-                          Senior Frontend Developer
-                        </h4>
-                        <span className="text-sm text-gray-500">
-                          2020 - Present
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-600">
-                        Tech Innovations Inc.
+                    {analysisData.candidate?.experience?.length > 0 ? (
+                      analysisData.candidate.experience.map((exp, index) => (
+                        <div
+                          key={index}
+                          className="border-l-4 border-blue-500 pl-4"
+                        >
+                          <div className="flex justify-between">
+                            <h4 className="text-sm font-medium text-gray-900">
+                              {exp.title}
+                            </h4>
+                            <span className="text-sm text-gray-500">
+                              {exp.startDate} - {exp.endDate || "Present"}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-600">{exp.company}</p>
+                          <p className="mt-1 text-sm text-gray-500">
+                            {exp.description}
+                          </p>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-gray-500">
+                        No experience found
                       </p>
-                      <p className="mt-1 text-sm text-gray-500">
-                        Led the development of the company's flagship product
-                        using React and TypeScript.
-                      </p>
-                    </div>
-                    <div className="border-l-4 border-blue-500 pl-4">
-                      <div className="flex justify-between">
-                        <h4 className="text-sm font-medium text-gray-900">
-                          Frontend Developer
-                        </h4>
-                        <span className="text-sm text-gray-500">
-                          2018 - 2020
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-600">WebSolutions</p>
-                      <p className="mt-1 text-sm text-gray-500">
-                        Developed responsive web applications using modern
-                        JavaScript frameworks.
-                      </p>
-                    </div>
-                    <div className="border-l-4 border-blue-500 pl-4">
-                      <div className="flex justify-between">
-                        <h4 className="text-sm font-medium text-gray-900">
-                          Junior Developer
-                        </h4>
-                        <span className="text-sm text-gray-500">
-                          2016 - 2018
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-600">StartUpXYZ</p>
-                      <p className="mt-1 text-sm text-gray-500">
-                        Assisted in the development of various client projects.
-                      </p>
-                    </div>
+                    )}
                   </div>
                 </div>
 
@@ -295,19 +370,30 @@ const ResumeAnalyzer = () => {
                     Education
                   </h3>
                   <div className="mt-2 space-y-4">
-                    <div className="border-l-4 border-blue-500 pl-4">
-                      <div className="flex justify-between">
-                        <h4 className="text-sm font-medium text-gray-900">
-                          Bachelor of Science in Computer Science
-                        </h4>
-                        <span className="text-sm text-gray-500">
-                          2012 - 2016
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-600">
-                        University of California, Berkeley
+                    {analysisData.candidate?.education?.length > 0 ? (
+                      analysisData.candidate.education.map((edu, index) => (
+                        <div
+                          key={index}
+                          className="border-l-4 border-blue-500 pl-4"
+                        >
+                          <div className="flex justify-between">
+                            <h4 className="text-sm font-medium text-gray-900">
+                              {edu.degree}
+                            </h4>
+                            <span className="text-sm text-gray-500">
+                              {edu.startDate} - {edu.endDate || "Present"}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-600">
+                            {edu.institution}
+                          </p>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-gray-500">
+                        No education found
                       </p>
-                    </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -361,86 +447,50 @@ const ResumeAnalyzer = () => {
                 Resume Feedback
               </h2>
               <div className="space-y-3">
-                <div className="flex items-start">
-                  <svg
-                    className="h-5 w-5 text-green-500 mt-0.5"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  <p className="ml-2 text-sm text-gray-700">
-                    Strong technical skills section
+                {analysisData.suggestions?.length > 0 ? (
+                  analysisData.suggestions.map((suggestion, index) => (
+                    <div key={index} className="flex items-start">
+                      <svg
+                        className={`h-5 w-5 mt-0.5 ${
+                          suggestion.type === "positive"
+                            ? "text-green-500"
+                            : suggestion.type === "warning"
+                              ? "text-yellow-500"
+                              : "text-red-500"
+                        }`}
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        {suggestion.type === "positive" ? (
+                          <path
+                            fillRule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                            clipRule="evenodd"
+                          />
+                        ) : suggestion.type === "warning" ? (
+                          <path
+                            fillRule="evenodd"
+                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                            clipRule="evenodd"
+                          />
+                        ) : (
+                          <path
+                            fillRule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                            clipRule="evenodd"
+                          />
+                        )}
+                      </svg>
+                      <p className="ml-2 text-sm text-gray-700">
+                        {suggestion.text}
+                      </p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-500">
+                    No suggestions available
                   </p>
-                </div>
-                <div className="flex items-start">
-                  <svg
-                    className="h-5 w-5 text-green-500 mt-0.5"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  <p className="ml-2 text-sm text-gray-700">
-                    Clear work experience timeline
-                  </p>
-                </div>
-                <div className="flex items-start">
-                  <svg
-                    className="h-5 w-5 text-yellow-500 mt-0.5"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  <p className="ml-2 text-sm text-gray-700">
-                    Add more quantifiable achievements
-                  </p>
-                </div>
-                <div className="flex items-start">
-                  <svg
-                    className="h-5 w-5 text-yellow-500 mt-0.5"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  <p className="ml-2 text-sm text-gray-700">
-                    Consider adding a summary section
-                  </p>
-                </div>
-                <div className="flex items-start">
-                  <svg
-                    className="h-5 w-5 text-red-500 mt-0.5"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  <p className="ml-2 text-sm text-gray-700">
-                    Missing key skills from job description
-                  </p>
-                </div>
+                )}
               </div>
             </div>
 
@@ -449,30 +499,24 @@ const ResumeAnalyzer = () => {
                 Keywords Found
               </h2>
               <div className="flex flex-wrap gap-2">
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                  React
-                </span>
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                  JavaScript
-                </span>
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                  Frontend
-                </span>
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                  Developer
-                </span>
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                  Team
-                </span>
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                  TypeScript
-                </span>
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                  GraphQL
-                </span>
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                  AWS
-                </span>
+                {analysisData.keywords?.length > 0 ? (
+                  analysisData.keywords.map((keyword, index) => (
+                    <span
+                      key={index}
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        keyword.found
+                          ? "bg-green-100 text-green-800"
+                          : keyword.partial
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {keyword.text}
+                    </span>
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-500">No keywords analyzed</p>
+                )}
               </div>
               <div className="mt-4 text-xs text-gray-500">
                 <p>Green: Found in resume</p>

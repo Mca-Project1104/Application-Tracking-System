@@ -1,11 +1,16 @@
 import React from "react";
+import { useAppContext } from "../context/AppProvider";
 
 const CandidateDashboard = () => {
+  // const {  } = useAppContext();
+
+  const user = JSON.parse(localStorage.getItem("user"));
+
   return (
-    <div className="space-y-6 dark:bg-black">
+    <div className="space-y-6 select-none h-auto w-auto dark:bg-black">
       <div className="bg-white mt-12 shadow rounded-lg p-6">
-        <h1 className="text-2xl font-bold text-gray-900">
-          Welcome back, John!
+        <h1 className="text-2xl capitalize font-bold text-gray-900">
+          Welcome back, {user.name}!
         </h1>
         <p className="mt-1 text-gray-600">
           Here's an overview of your job search activity
@@ -228,15 +233,15 @@ const CandidateDashboard = () => {
               <div className="flex items-center">
                 <div className="shrink-0">
                   <div className="h-12 w-12 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">
-                    JD
+                    {user.name.charAt(0).toUpperCase()}
                   </div>
                 </div>
                 <div className="ml-4">
                   <h4 className="text-lg font-medium text-gray-900">
-                    John Doe
+                    {user.name}
                   </h4>
                   <p className="text-sm text-gray-500">
-                    Senior Frontend Developer
+                    Senior Frontend Developer {/* Chages this */}
                   </p>
                 </div>
               </div>

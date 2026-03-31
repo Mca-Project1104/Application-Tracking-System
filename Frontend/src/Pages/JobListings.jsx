@@ -165,7 +165,7 @@ const JobListings = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-      <div className="px-4 sm:px-6 lg:px-1 py-8">
+      <div className=" sm:px-6 lg:px-1 py-8">
         {/* Header */}
         <div className="bg-white mt-4 dark:bg-gray-800 shadow-sm rounded-xl p-6 mb-6 transition-all duration-200 hover:shadow-md">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">

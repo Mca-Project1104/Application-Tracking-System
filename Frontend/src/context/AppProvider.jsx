@@ -1,4 +1,4 @@
-import React, { createContext, useContext } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 // Create context
@@ -6,11 +6,19 @@ export const AppContext = createContext();
 
 // Provider Component
 export const AppProvider = ({ children }) => {
-  const name = "hello world";
+  const [user, setUser] = useState();
+  const token = localStorage.getItem("token");
+
+  useEffect(() => {
+    if (token) {
+      const user = JSON.parse(localStorage.getItem("user"));
+      setUser(user);
+    }
+  }, [token]);
 
   const navigate = useNavigate();
 
-  const value = { name, navigate };
+  const value = { navigate, user };
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };
 

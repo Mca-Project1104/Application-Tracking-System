@@ -113,14 +113,6 @@ const ChatSystem = () => {
   const messagesEndRef = useRef(null);
   const [showConversationList, setShowConversationList] = useState(true);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
   const handleSendMessage = (e) => {
     e.preventDefault();
     if (message.trim()) {
@@ -142,7 +134,11 @@ const ChatSystem = () => {
       setConversations(
         conversations.map((conv) =>
           conv.id === selectedConversation.id
-            ? { ...conv, lastMessage: message, time: "Just now" }
+            ? {
+                ...conv,
+                lastMessage: message,
+                time: new Date.toLocaleTimeString(),
+              }
             : conv,
         ),
       );
@@ -163,21 +159,26 @@ const ChatSystem = () => {
     }
   };
 
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
   const handleBackToList = () => {
     setShowConversationList(true);
   };
 
   return (
-    <div className="bg-white dark:bg-gray-900 mt-16 shadow-lg rounded-lg overflow-hidden h-[calc(100vh-4rem)]">
+    <div className="bg-white  w-auto dark:bg-gray-900 mt-10  shadow-lg rounded-lg overflow-hidden h-[calc(100vh-4rem)]">
       <div className="flex h-full">
         {/* Conversations List - Hidden on mobile when chat is open */}
         <div
           className={`${showConversationList ? "flex" : "hidden"} md:flex flex-col w-full md:w-80 border-r border-gray-200 dark:border-gray-700`}
         >
           <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="text-lg font-medium text-gray-900 dark:text-white">
-              Messages
-            </h2>
             <div className="mt-2 relative">
               <input
                 type="text"

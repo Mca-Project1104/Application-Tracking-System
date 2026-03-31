@@ -233,9 +233,9 @@ function App() {
                 </h3>
                 <div className="space-y-6">
                   {recruiterFlow.data.map((item, index) => (
-                    <div className="flex items-start text-left">
+                    <div key={index} className="flex items-start text-left">
                       <div
-                        key={index}
+                        
                         className="bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 w-10 h-10 rounded-full flex items-center justify-center shrink-0 font-bold mr-4"
                       >
                         {item.step}

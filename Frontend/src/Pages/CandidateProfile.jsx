@@ -1,111 +1,274 @@
-import React, { useState } from "react";
-import { useParams } from "react-router-dom";
-import { useAppContext } from "../context/AppProvider";
+import React, { useState, useEffect, useRef } from "react";
+import PropTypes from "prop-types";
+import api from "../api/axios";
 
-const CandidateProfile = () => {
-  const { id } = useParams();
+const CandidateProfile = ({ id, user }) => {
+  const [candidate, setCandidate] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("resume");
+  const [isEditingImage, setIsEditingImage] = useState(false);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const fileInputRef = useRef(null);
 
-  const { navigate } = useAppContext();
-
-  // In a real app, you would fetch the candidate data based on the ID
-  const candidate = {
-    id: id,
-    name: "Jay Bhoi",
-    position: "Senior Frontend Developer",
-    email: "jaydoe@example.com",
-    phone: "(555) 123-4567",
-    location: "-",
+  const dummyCandidate = {
+    _id: "1",
+    name: "John Doe",
+    position: "Frontend Developer",
+    email: "john.doe@example.com",
+    phone: "+91 9876543210",
+    location: "Ahmedabad, India",
     linkedin: "linkedin.com/in/johndoe",
     github: "github.com/johndoe",
-    portfolio: "-",
+    portfolio: "johndoe.dev",
     summary:
-      "Experienced frontend developer with 5+ years of experience building responsive web applications. Proficient in React, JavaScript, and modern CSS frameworks.",
+      "Passionate frontend developer with 3+ years of experience building responsive web applications using React and modern JavaScript.",
+
+    status: "shortlisted",
+    appliedDate: "2024-06-15",
+    score: 85,
+
+    profile_image: "",
+
     skills: [
-      { name: "React", level: "Expert" },
-      { name: "JavaScript", level: "Expert" },
-      { name: "TypeScript", level: "Advanced" },
+      { name: "React", level: "Advanced" },
+      { name: "JavaScript", level: "Advanced" },
       { name: "HTML/CSS", level: "Expert" },
       { name: "Node.js", level: "Intermediate" },
-      { name: "Git", level: "Advanced" },
-      { name: "REST API", level: "Advanced" },
-      { name: "GraphQL", level: "Intermediate" },
+      { name: "Tailwind CSS", level: "Advanced" },
     ],
+
     experience: [
       {
-        title: "Senior Frontend Developer",
-        company: "Tech Innovations Inc.",
-        location: "San Francisco, CA",
-        startDate: "2020-01",
+        title: "Frontend Developer",
+        company: "Tech Solutions Pvt Ltd",
+        location: "Ahmedabad",
+        startDate: "2022-01-01",
         endDate: "Present",
         description:
-          "Led the development of the company's flagship product using React and TypeScript. Mentored junior developers and implemented best practices for code quality and performance.",
-      },
-      {
-        title: "Frontend Developer",
-        company: "WebSolutions",
-        location: "New York, NY",
-        startDate: "2018-06",
-        endDate: "2019-12",
-        description:
-          "Developed responsive web applications using modern JavaScript frameworks. Collaborated with UX designers to implement pixel-perfect designs.",
+          "Developed and maintained responsive web applications using React, improving performance by 30%.",
       },
       {
         title: "Junior Developer",
-        company: "StartUpXYZ",
-        location: "Boston, MA",
-        startDate: "2016-07",
-        endDate: "2018-05",
+        company: "WebSoft",
+        location: "Surat",
+        startDate: "2020-06-01",
+        endDate: "2021-12-31",
         description:
-          "Assisted in the development of various client projects. Gained experience in full-stack development and agile methodologies.",
+          "Worked on UI components and fixed bugs, contributing to improved user experience.",
       },
     ],
+
     education: [
       {
-        degree: "Bachelor of Science in Computer Science",
-        school: "University of California, Berkeley",
-        location: "Berkeley, CA",
-        startDate: "2012-09",
-        endDate: "2016-05",
-        description:
-          "Graduated with honors. Relevant coursework: Data Structures, Algorithms, Web Development, Database Systems.",
+        degree: "B.Tech in Computer Engineering",
+        school: "Gujarat Technological University",
+        location: "Gujarat",
+        startDate: "2016-06-01",
+        endDate: "2020-05-30",
+        description: "Graduated with First Class Distinction.",
       },
     ],
-    certifications: [
-      {
-        name: "AWS Certified Developer",
-        issuer: "Amazon Web Services",
-        date: "2022-03",
-        credentialId: "AWS-DEV-123456",
-      },
-      {
-        name: "React Developer Certification",
-        issuer: "Meta",
-        date: "2021-08",
-        credentialId: "REACT-789012",
-      },
-    ],
+
     projects: [
       {
-        name: "E-commerce Platform",
+        name: "Job Portal App",
+        link: "https://github.com/johndoe/job-portal",
         description:
-          "Built a full-stack e-commerce platform with React, Node.js, and MongoDB. Implemented features like user authentication, payment processing, and inventory management.",
-        technologies: ["React", "Node.js", "MongoDB", "Stripe API"],
-        link: "https://github.com/johndoe/ecommerce-platform",
+          "A full-stack job portal application with authentication, resume upload, and admin dashboard.",
+        technologies: ["React", "Node.js", "MongoDB", "Tailwind"],
       },
       {
-        name: "Task Management App",
+        name: "E-commerce Website",
+        link: "https://johndoe.dev/ecommerce",
         description:
-          "Developed a task management application with drag-and-drop functionality, real-time updates, and team collaboration features.",
-        technologies: ["React", "Firebase", "Material-UI"],
-        link: "https://github.com/johndoe/task-manager",
+          "Built a fully responsive e-commerce UI with cart and payment integration.",
+        technologies: ["React", "Redux", "Stripe"],
       },
     ],
-    score: 85,
-    status: "interview",
-    appliedDate: "2023-06-10",
-    avatar: "https://picsum.photos/seed/user1/200/200.jpg",
+
+    certifications: [
+      {
+        name: "React Developer Certification",
+        issuer: "Coursera",
+        date: "2023-08-10",
+        credentialId: "ABC123XYZ",
+      },
+      {
+        name: "JavaScript Advanced",
+        issuer: "Udemy",
+        date: "2022-05-15",
+        credentialId: "JS456DEF",
+      },
+    ],
   };
+
+  // useEffect(() => {
+  //   const fetchCandidateData = async () => {
+  //     try {
+  //       setLoading(true);
+  //       const response = await api.get(
+  //         `/api/candidates/69cabaf38843e69f4f5c7f8`,
+  //       );
+  //       setCandidate(response.data);
+  //     } catch (err) {
+  //       console.error("Error fetching candidate data:", err);
+  //       setError("Failed to load candidate data. Please try again later.");
+  //       setCandidate(dummyCandidate); // Use dummy data on error
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+
+  //   fetchCandidateData();
+  // }, []);
+
+  useEffect(() => {
+    setCandidate(dummyCandidate);
+  }, []);
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    const validTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+    if (!validTypes.includes(file.type)) {
+      alert("Please select a valid image file (JPG, PNG, GIF, or WebP)");
+      return;
+    }
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      alert("File size must be less than 5MB");
+      return;
+    }
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSaveImage = async () => {
+    if (!imagePreview) {
+      alert("Please select an image first");
+      return;
+    }
+
+    const formData = new FormData();
+    const file = fileInputRef.current?.files[0];
+    if (file) {
+      formData.append("profile_image", file);
+      formData.append("status", candidate.status);
+    }
+
+    try {
+      setIsUploading(true);
+      setUploadProgress(0);
+
+      const response = await api.put(
+        `/api/candidates/69cabaf38843e69f4f5c7f82`,
+        formData,
+        {
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round(
+              (progressEvent.loaded * 100) / progressEvent.total,
+            );
+            setUploadProgress(percentCompleted);
+          },
+        },
+      );
+
+      setCandidate(response.data);
+      closeImageModal();
+      console.log("Save successful:", response.data);
+    } catch (error) {
+      console.error("Error saving image:", error);
+      alert("Save failed. Please try again.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleRemoveImage = async () => {
+    try {
+      const formData = new FormData();
+      formData.append("profile_image", "");
+      formData.append("status", candidate.status);
+
+      const response = await api.put(
+        `/api/candidates/69ca5fa075a8be6077528f6f`,
+        formData,
+      );
+      setCandidate(response.data);
+      closeImageModal();
+    } catch (error) {
+      console.error("Error removing image:", error);
+      alert("Failed to remove image. Please try again.");
+    }
+  };
+
+  const closeImageModal = () => {
+    setIsEditingImage(false);
+    setImagePreview(null);
+    setUploadProgress(0);
+    setIsUploading(false);
+    // Reset file input properly
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+      // Force input to reset
+      const input = fileInputRef.current;
+      const newInput = document.createElement("input");
+      newInput.type = "file";
+      newInput.accept = "image/*";
+      newInput.className = input.className;
+      newInput.style.display = "none";
+      input.parentNode.replaceChild(newInput, input);
+      fileInputRef.current = newInput;
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 max-w-md">
+          <h3 className="text-red-800 dark:text-red-200 font-medium mb-2">
+            Error Loading Profile
+          </h3>
+          <p className="text-red-600 dark:text-red-300 text-sm">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!candidate) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <p className="text-gray-500 dark:text-gray-400">
+          No candidate data found
+        </p>
+      </div>
+    );
+  }
 
   const getLevelColor = (level) => {
     switch (level) {
@@ -152,17 +315,64 @@ const CandidateProfile = () => {
   };
 
   return (
-    <div className="space-y-6 mt-15 min-h-screen px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-900">
+    <div className="space-y-2 mt-15 min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
           <div className="flex items-center">
-            <img
-              className="h-20 w-20 rounded-full"
-              src={candidate.avatar}
-              alt={candidate.name}
-            />
+            {/* Profile Image Section */}
+            <div className="relative group">
+              <div className="relative z-0">
+                {candidate.profile_image || imagePreview ? (
+                  <img
+                    className="h-20 w-20 rounded-full object-cover"
+                    src={
+                      imagePreview ||
+                      `http://localhost:8000/${candidate.profile_image}`
+                    }
+                    alt={candidate.name}
+                  />
+                ) : (
+                  <div className="h-20 w-20 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
+                    <svg
+                      className="h-10 w-10 text-gray-400 dark:text-gray-500"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                  </div>
+                )}
+
+                {/* Edit Image Button */}
+                <button
+                  onClick={() => setIsEditingImage(true)}
+                  className="absolute inset-0 h-20 w-20 rounded-full bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                >
+                  <svg
+                    className="h-8 w-8 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
             <div className="ml-6">
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              <h1 className="text-2xl capitalize font-bold text-gray-900 dark:text-white">
                 {candidate.name}
               </h1>
               <p className="text-lg text-gray-600 dark:text-gray-300">
@@ -170,10 +380,12 @@ const CandidateProfile = () => {
               </p>
               <div className="mt-2 flex flex-wrap items-center gap-2 sm:gap-4">
                 <span
-                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(candidate.status)}`}
+                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
+                    candidate.status,
+                  )}`}
                 >
-                  {candidate.status.charAt(0).toUpperCase() +
-                    candidate.status.slice(1)}
+                  {candidate?.status?.charAt(0).toUpperCase() +
+                    candidate?.status?.slice(1)}
                 </span>
                 <span className="text-sm text-gray-500 dark:text-gray-400">
                   Applied on {formatDate(candidate.appliedDate)}
@@ -183,7 +395,9 @@ const CandidateProfile = () => {
                     Score:
                   </span>
                   <span
-                    className={`text-lg font-bold ${getScoreColor(candidate.score)}`}
+                    className={`text-lg font-bold ${getScoreColor(
+                      candidate.score,
+                    )}`}
                   >
                     {candidate.score}/100
                   </span>
@@ -246,6 +460,121 @@ const CandidateProfile = () => {
           </div>
         </div>
       </div>
+
+      {/* Image Edit Modal */}
+      {isEditingImage && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+              Edit Profile Picture
+            </h3>
+
+            {/* Image Preview */}
+            <div className="flex justify-center mb-4">
+              <div className="relative">
+                {imagePreview || candidate.profile_image ? (
+                  <img
+                    className="h-32 w-32 rounded-full object-cover"
+                    src={`http://localhost:8000/${candidate.profile_image}`}
+                    alt="Profile preview"
+                  />
+                ) : (
+                  <div className="h-32 w-32 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
+                    <svg
+                      className="h-16 w-16 text-gray-400 dark:text-gray-500"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Upload Progress */}
+            {isUploading && (
+              <div className="mb-4">
+                <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-1">
+                  <span>Uploading...</span>
+                  <span>{uploadProgress}%</span>
+                </div>
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                  <div
+                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${uploadProgress}%` }}
+                  ></div>
+                </div>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex flex-col gap-3">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="hidden"
+              />
+
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+                className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <svg
+                  className="mr-2 -ml-1 h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                  />
+                </svg>
+                {isUploading ? "Uploading..." : "Select New Image"}
+              </button>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={handleSaveImage}
+                  disabled={!imagePreview || isUploading}
+                  className="flex-1 inline-flex justify-center items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Save
+                </button>
+
+                <button
+                  onClick={handleRemoveImage}
+                  disabled={isUploading}
+                  className="flex-1 inline-flex justify-center items-center px-4 py-2 border border-red-300 dark:border-red-600 shadow-sm text-sm font-medium rounded-md text-red-700 dark:text-red-300 bg-white dark:bg-gray-700 hover:bg-red-50 dark:hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Remove
+                </button>
+
+                <button
+                  onClick={closeImageModal}
+                  disabled={isUploading}
+                  className="flex-1 inline-flex justify-center items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+
+            {/* File Requirements */}
+            <div className="mt-4 text-xs text-gray-500 dark:text-gray-400">
+              <p>• Accepted formats: JPG, PNG, GIF, WebP</p>
+              <p>• Maximum file size: 5MB</p>
+              <p>• Recommended dimensions: 200x200px</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg">
         <div className="border-b border-gray-200 dark:border-gray-700">
@@ -379,7 +708,9 @@ const CandidateProfile = () => {
                       {skill.name}
                     </span>
                     <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getLevelColor(skill.level)}`}
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getLevelColor(
+                        skill.level,
+                      )}`}
                     >
                       {skill.level}
                     </span>
@@ -525,6 +856,14 @@ const CandidateProfile = () => {
       </div>
     </div>
   );
+};
+
+CandidateProfile.propTypes = {
+  id: PropTypes.string.isRequired,
+  user: PropTypes.shape({
+    name: PropTypes.string.isRequired,
+    email: PropTypes.string.isRequired,
+  }).isRequired,
 };
 
 export default CandidateProfile;

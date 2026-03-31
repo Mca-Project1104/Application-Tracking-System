@@ -8,10 +8,23 @@ const Navbar = ({
   titleName,
   showSidebar,
   setIsAuthenticated,
+  setUserRole,
 }) => {
-  const { name, navigate } = useAppContext();
+  const { navigate } = useAppContext();
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const notification = [1];
+
+  const user = JSON.parse(localStorage.getItem("user")) || { name: "User" };
+
+  const Logout = () => {
+    if (window.confirm("Are you sure you want to logout?")) {
+      localStorage.clear();
+      setIsAuthenticated(false);
+      setUserRole(null);
+      navigate("/login");
+    }
+  };
 
   return (
     <nav className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700 px-2 sm:px-4 py-3 fixed top-0 left-0 right-0 z-10">
@@ -90,37 +103,35 @@ const Navbar = ({
                 d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
               ></path>
             </svg>
-            <span className="absolute top-0 right-0 h-4 w-4 bg-red-500 rounded-full flex items-center justify-center text-xs text-white">
-              1
-            </span>
+            {notification > 0 && (
+              <span className="absolute animate-pulse top-0 right-0 h-4 w-4 bg-red-500 rounded-full flex items-center justify-center text-xs text-white">
+                {notification.length}
+              </span>
+            )}
           </button>
 
-          <div className="flex items-center">
+          <div className="flex  items-center">
             <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold">
               <button
                 className="cursor-pointer "
                 onClick={() => navigate("/candidate-profile/2")}
               >
-                {userRole === "candidate"
-                  ? "C"
-                  : `${userRole === "admin" ? "A" : "R"}`}
+                {user.name.charAt(0).toUpperCase()}
               </button>
             </div>
             <div className="ml-2 hidden sm:block">
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                {userRole === "candidate"
-                  ? "John Doe"
-                  : `${userRole === "admin" ? "Anuj Dalvadi" : "Acme Corp"}`}
+              <p className="capitalize text-sm font-medium text-gray-700 dark:text-gray-200">
+                {user.name}
               </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">
+              {/* <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">
                 {userRole}
-              </p>
+              </p> */}
             </div>
           </div>
 
           <button
-            onClick={() => setIsAuthenticated(false)}
-            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 dark:hover:bg-gray-800 hover:bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+            onClick={Logout}
+            className="px-4 py-2 text-sm font-medium bg-gray-100 text-gray-700 dark:text-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 hover:bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
           >
             Logout
           </button>
@@ -179,22 +190,18 @@ const Navbar = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold">
-                  {userRole === "candidate"
-                    ? "C"
-                    : `${userRole === "admin" ? "A" : "R"}`}
+                  {user.name.charAt(0).toUpperCase()}
                 </div>
                 <div className="ml-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                    {userRole === "candidate"
-                      ? "John Doe"
-                      : `${userRole === "admin" ? "Anuj Dalvadi" : "Acme Corp"}`}
+                  <p className="capitalize text-sm font-medium text-gray-700 dark:text-gray-200">
+                    {user.name}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">
                     {userRole}
                   </p>
                 </div>
               </div>
-              <button className="p-2 rounded-full text-gray-600 dark:text-gray-300 dark:hover:bg-gray-800 hover:bg-gray-100 relative">
+              <button className="p-2  rounded-full text-gray-600 dark:text-gray-300 dark:hover:bg-gray-800 hover:bg-gray-100 relative">
                 <svg
                   className="w-6 h-6"
                   fill="none"
@@ -209,13 +216,13 @@ const Navbar = ({
                     d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
                   ></path>
                 </svg>
-                <span className="absolute top-0 right-0 h-4 w-4 bg-red-500 rounded-full flex items-center justify-center text-xs text-white">
+                <span className="absolute  top-0 right-0 h-4 w-4 bg-red-500 rounded-full flex items-center justify-center text-xs text-white">
                   1
                 </span>
               </button>
             </div>
             <button
-              onClick={() => setIsAuthenticated(false)}
+              onClick={Logout}
               className="w-full px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 dark:hover:bg-gray-800 hover:bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 text-left"
             >
               Logout
