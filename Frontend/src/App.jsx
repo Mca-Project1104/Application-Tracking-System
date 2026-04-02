@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Navbar from "./Components/Navbar.jsx";
 import Sidebar from "./Components/Sidebar.jsx";
 import Login from "./Pages/Login.jsx";
 import Register from "./Pages/Register.jsx";
-import RoleSelection from "./Pages/RoleSelection.jsx";
 import CandidateDashboard from "./Pages/CandidateDashboard.jsx";
 import CompanyDashboard from "./Pages/ComponyDashboard.jsx";
 import JobListings from "./Pages/JobListings.jsx";
@@ -15,50 +14,62 @@ import ChatSystem from "./Pages/ChatSystem.jsx";
 import AdminPanel from "./Pages/AdminPanel.jsx";
 import LandinPage from "./Components/LandinPage.jsx";
 import JobPostingForm from "./Components/JobPostingForm.jsx";
+import VerifyEmail from "./Components/VerifyEmail.jsx";
+import NotFound from "./Components/NotFound.jsx";
 import socket from "./services/socket.js";
+import AOS from "aos";
+import "aos/dist/aos.css";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(
     () => !!localStorage.getItem("token"),
   );
+
   const [userRole, setUserRole] = useState(() => {
     const user = JSON.parse(localStorage.getItem("user"));
     return user?.accountType || null;
   });
+
   const [showSidebar, setShowSidebar] = useState(false);
-  const titleName = "ATS TRACKING";
+  // const titleName = "ATS TRACKING";
   const [theme, setTheme] = useState(
-    () => localStorage.getItem("theme") || "dark",
+    () => localStorage.getItem("theme") || "true",
   );
-  // const { user } = useAppContext();
 
-  useEffect(() => {
-    // ✅ connect socket once
-    if (!socket.connected) {
-      socket.connect();
-    }
+  const location = useLocation();
+  const titleName = "HireFlow"; //paased statically used dynamically change admin
 
-    // ✅ listen events
-    socket.on("newCandidate", (data) => {
-      console.log("newCandidate event:", data);
-    });
+  AOS.init({
+    delay: 0,
+    duration: 1500,
+    once: true,
+    anchorPlacement: "top-bottom",
+  });
 
-    socket.on("disconnect", (reason) => {
-      console.log("❌ Disconnected:", reason);
-    });
+  // useEffect(() => {
+  //   if (!socket.connected) {
+  //     socket.connect();
+  //   }
 
-    // ✅ cleanup listeners (VERY IMPORTANT)
-    return () => {
-      socket.off("newCandidate");
-      socket.off("connect");
-      socket.off("disconnect");
-    };
-  }, []);
+  //   socket.on("newCandidate", (data) => {
+  //     console.log("newCandidate event:", data);
+  //   });
+
+  //   socket.on("disconnect", (reason) => {
+  //     console.log(" Disconnected:", reason);
+  //   });
+
+  //   return () => {
+  //     socket.off("newCandidate");
+  //     socket.off("connect");
+  //     socket.off("disconnect");
+  //   };
+  // }, []);
 
   useEffect(() => {
     const root = document.documentElement;
 
-    if (theme === "dark") {
+    if (theme === "true") {
       root.classList.add("dark");
     } else {
       root.classList.remove("dark");
@@ -72,43 +83,44 @@ function App() {
       style={{ fontFamily: "Arimo, sans-serif" }}
       className="min-h-screen  bg-gray-50 dark:bg-black dark:text-white"
     >
-      <button
-        onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-        className="fixed bottom-4 right-4 p-3 z-999 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 shadow-lg hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-      >
-        {theme === "light" ? (
-          <svg
-            className="w-6 h-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
-            ></path>
-          </svg>
-        ) : (
-          <svg
-            className="w-6 h-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M20.354 15.354A9 9 0 118.646 3.646 9.003 9.003 0 0020.354 15.354z"
-            ></path>
-          </svg>
-        )}
-      </button>
-
+      {location.pathname !== "/" && (
+        <button
+          onClick={() => setTheme(theme === "false" ? "true" : "false")}
+          className="fixed bottom-4 right-4 p-3 z-999 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 shadow-lg hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+        >
+          {theme === "false" ? (
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+              ></path>
+            </svg>
+          ) : (
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M20.354 15.354A9 9 0 118.646 3.646 9.003 9.003 0 0020.354 15.354z"
+              ></path>
+            </svg>
+          )}
+        </button>
+      )}
       <Routes>
         {!isAuthenticated ? (
           <>
@@ -124,85 +136,119 @@ function App() {
               }
             />
             <Route path="/register" element={<Register />} />
-            <Route
-              path="/role-selection"
-              element={<RoleSelection setUserRole={setUserRole} />}
-            />
-
-            {/* Redirect unknown routes */}
-            <Route path="*" element={<Navigate to="/" />} />
+            <Route path="*" element={<NotFound />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
           </>
         ) : (
-          <>
-            {/* Protected Layout */}
-            <Route
-              path="*"
-              element={
-                <>
-                  <Navbar
-                    userRole={userRole}
-                    setShowSidebar={setShowSidebar}
-                    showSidebar={showSidebar}
-                    titleName={titleName}
-                    setIsAuthenticated={setIsAuthenticated}
-                    setUserRole={setUserRole}
-                  />
-                  <div className="flex">
-                    {userRole !== "admin" && (
-                      <Sidebar
-                        userRole={userRole}
-                        setShowSidebar={setShowSidebar}
-                        showSidebar={showSidebar}
-                      />
-                    )}
+          isAuthenticated && (
+            <>
+              {/* Protected Layout */}
+              <Route
+                path="*"
+                element={
+                  <>
+                    <Navbar
+                      userRole={userRole}
+                      setShowSidebar={setShowSidebar}
+                      showSidebar={showSidebar}
+                      titleName={titleName}
+                      setIsAuthenticated={setIsAuthenticated}
+                      setUserRole={setUserRole}
+                    />
+                    <div className="flex">
+                      {userRole !== "admin" && (
+                        <Sidebar
+                          userRole={userRole}
+                          setShowSidebar={setShowSidebar}
+                          showSidebar={showSidebar}
+                        />
+                      )}
 
-                    <div
-                      className={`flex-1 w-full p-6  pb-0 pt-8 transition-all duration-300 ease-in-out ${
-                        showSidebar ? "lg:ml-64" : "lg:ml-0"
-                      } dark:bg-black min-h-screen`}
-                    >
-                      <Routes>
-                        <Route
-                          path="/"
-                          element={
-                            userRole === "candidate" ? (
-                              <Navigate to="/candidate-dashboard" />
-                            ) : (
-                              <Navigate to="/company-dashboard" />
-                            )
-                          }
-                        />
-                        <Route
-                          path="/candidate-dashboard"
-                          element={<CandidateDashboard />}
-                        />
-                        <Route
-                          path="/company-dashboard"
-                          element={<CompanyDashboard />}
-                        />
-                        <Route path="/jobs" element={<JobListings />} />
-                        <Route
-                          path="/resume-analyzer"
-                          element={<ResumeAnalyzer />}
-                        />
-                        <Route
-                          path="/hiring-pipeline"
-                          element={<HiringPipeline />}
-                        />
-                        <Route
-                          path="/candidate-profile/:id"
-                          element={<CandidateProfile />}
-                        />
-                        <Route path="/post-job" element={<JobPostingForm />} />
-                        <Route path="/chat" element={<ChatSystem />} />
-                        <Route path="/admin" element={<AdminPanel />} />
-                      </Routes>
+                      <div
+                        className={`flex-1 w-full p-2  pb-0 pt-8 transition-all duration-300 ease-in-out ${
+                          showSidebar ? "lg:ml-64" : "lg:ml-0 m-0"
+                        } dark:bg-gray-900 min-h-screen`}
+                      >
+                        <Routes>
+                          <Route
+                            path="/"
+                            element={
+                              userRole === "candidate" ? (
+                                <Navigate to="/candidate" />
+                              ) : userRole === "admin" ? (
+                                <Navigate to="/admin" />
+                              ) : (
+                                <Navigate to="/company" />
+                              )
+                            }
+                          />
+                          <Route
+                            path="/candidate"
+                            element={
+                              userRole === "candidate" ? (
+                                <CandidateDashboard />
+                              ) : (
+                                <Navigate to={"/"} />
+                              )
+                            }
+                          />
+                          <Route
+                            path="/company"
+                            element={
+                              userRole === "company" ? (
+                                <CompanyDashboard />
+                              ) : (
+                                <Navigate to={"/"} />
+                              )
+                            }
+                          />
+                          <Route
+                            path={`/${userRole}/jobs`} //work in process
+                            element={<JobListings />}
+                          />
+                          <Route
+                            path="/candidate/resume_analyzer"
+                            element={<ResumeAnalyzer />}
+                          />
+                          <Route
+                            path="/company/hiring-pipeline"
+                            element={<HiringPipeline />}
+                          />
+                          <Route
+                            path="/candidate/profile/:id"
+                            element={<CandidateProfile />}
+                          />
+                          <Route
+                            path="/company/post_job"
+                            element={<JobPostingForm />}
+                          />
+                          <Route
+                            path={`/${userRole}/chat`}
+                            element={<ChatSystem />}
+                          />
+
+                          <Route path="*" element={<NotFound />} />
+
+                          {userRole === "admin" && (
+                            <Route
+                              path="/admin"
+                              element={
+                                userRole === "admin" ? (
+                                  <AdminPanel />
+                                ) : (
+                                  <Navigate to="/" />
+                                )
+                              }
+                            />
+                          )}
+                        </Routes>
+                      </div>
                     </div>
-                  </div>
-                </>
-              }
-            />
-          </>
+                  </>
+                }
+              />
+            </>
+          )
         )}
       </Routes>
     </div>

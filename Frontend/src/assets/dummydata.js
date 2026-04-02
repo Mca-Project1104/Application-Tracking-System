@@ -116,7 +116,7 @@ export const users = [
   },
 ];
 
-export const jobs = [
+export const jobsData = [
   {
     id: 1,
     title: "Senior Frontend Developer",
@@ -265,56 +265,55 @@ export const jobs = [
 export const candidateLinks = [
   {
     name: "Dashboard",
-    path: "/candidate-dashboard",
+    path: "/candidate",
     icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6",
   },
   {
     name: "Job Listings",
-    path: "/jobs",
+    path: "/candidate/jobs",
     icon: "M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z",
   },
   {
     name: "Resume Analyzer",
-    path: "/resume-analyzer",
+    path: "/candidate/resume_analyzer",
     icon: "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z",
   },
   {
     name: "Messages",
-    path: "/chat",
+    path: "/candidate/chat",
     icon: "M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z",
   },
   {
     name: "Profile",
-    path: "/candidate-profile/1",
+    path: "/candidate/profile/1",
     icon: "M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z",
   },
-  
 ];
 
 export const companyLinks = [
   {
     name: "Dashboard",
-    path: "/company-dashboard",
+    path: "/company",
     icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6",
   },
   {
     name: "Job Postings",
-    path: "/jobs",
+    path: "/company/jobs",
     icon: "M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z",
   },
   {
     name: "Hiring Pipeline",
-    path: "/hiring-pipeline",
+    path: "/company/hiring-pipeline",
     icon: "M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10",
   },
   {
     name: "Messages",
-    path: "/chat",
+    path: "/company/chat",
     icon: "M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z",
   },
   {
     name: "Post a Job",
-    path: "/post-job",
+    path: "/company/post-job",
     icon: "M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z",
   },
 ];
@@ -369,6 +368,207 @@ export const recruiterFlow = {
       heading: "Collaborate & Hire",
       description:
         "Manage interviews, gather feedback, and send offers—all in one platform.",
+    },
+  ],
+};
+
+export const jobs = [
+  {
+    id: 1,
+    title: "Senior React Developer",
+    company: "TechCorp",
+    location: "San Francisco, CA",
+    type: "Full-time",
+    experience: "5+ years",
+    salary: "₹120k - ₹150k",
+    description:
+      "We are looking for an experienced React Developer to join our growing team. You will be responsible for building and maintaining web applications using React, TypeScript, and modern web technologies.",
+    skills: ["React", "TypeScript", "Node.js", "GraphQL"],
+    posted: "2 days ago",
+    logo: "https://picsum.photos/seed/company1/40/40.jpg",
+    featured: true,
+  },
+  {
+    id: 2,
+    title: "UX Designer",
+    company: "DesignHub",
+    location: "New York, NY",
+    type: "Full-time",
+    experience: "3-5 years",
+    salary: "₹100k - ₹130k",
+    description:
+      "Join our creative team as a UX Designer. You'll work on various projects, creating user-centered designs and conducting user research to improve our products.",
+    skills: ["Figma", "User Research", "Prototyping", "Design Systems"],
+    posted: "5 days ago",
+    logo: "https://picsum.photos/seed/company2/40/40.jpg",
+    featured: false,
+  },
+  {
+    id: 3,
+    title: "Frontend Engineer",
+    company: "WebSolutions",
+    location: "Remote",
+    type: "Contract",
+    experience: "2-4 years",
+    salary: "₹80k - ₹100k",
+    description:
+      "We are seeking a talented Frontend Engineer to work on our client projects and deliver exceptional user experiences.",
+    skills: ["Vue.js", "JavaScript", "CSS", "Sass"],
+    posted: "1 week ago",
+    logo: "https://picsum.photos/seed/company3/40/40.jpg",
+    featured: false,
+  },
+  {
+    id: 4,
+    title: "UI/UX Designer",
+    company: "Creative Agency",
+    location: "Los Angeles, CA",
+    type: "Full-time",
+    experience: "3+ years",
+    salary: "₹90k - ₹120k",
+    description:
+      "Looking for a creative UI/UX Designer to join our design team and create beautiful, intuitive interfaces.",
+    skills: ["Figma", "Adobe XD", "Sketch", "Prototyping"],
+    posted: "3 days ago",
+    logo: "https://picsum.photos/seed/company4/40/40.jpg",
+    featured: true,
+  },
+  {
+    id: 5,
+    title: "Full Stack Developer",
+    company: "TechCorp",
+    location: "Seattle, WA",
+    type: "Full-time",
+    experience: "4+ years",
+    salary: "₹110k - ₹140k",
+    description:
+      "We are looking for a Full Stack Developer to help build our next-generation platform using modern tech stack.",
+    skills: ["React", "Node.js", "MongoDB", "Express"],
+    posted: "1 day ago",
+    logo: "https://picsum.photos/seed/company5/40/40.jpg",
+    featured: false,
+  },
+  {
+    id: 6,
+    title: "Full Stack",
+    company: "Facebook",
+    location: "Anand",
+    type: "Full-time",
+    experience: "Entry-level",
+    salary: "₹12k - ₹18k",
+    description: "qwdas",
+    skills: ["qwf", "qw", "qwqw"],
+    posted: "Just now",
+    logo: "https://cdn-icons-png.flaticon.com/512/5968/5968764.png",
+    featured: true,
+  },
+  // Add more jobs for pagination demo
+  ...Array.from({ length: 20 }, (_, i) => ({
+    id: 7 + i,
+    title: `Software Engineer ${i + 1}`,
+    company: `Company ${i + 6}`,
+    location: ["Remote", "San Francisco, CA", "New York, NY", "Seattle, WA"][
+      i % 4
+    ],
+    type: ["Full-time", "Part-time", "Contract", "Internship"][i % 4],
+    experience: ["Entry-level", "2-4 years", "3-5 years", "5+ years"][i % 4],
+    salary: `₹${60 + i * 10}k - ₹${80 + i * 10}k`,
+    description: `Job description for position ${i + 1}. We are looking for talented individuals to join our team.`,
+    skills: ["React", "Node.js", "Python", "AWS"].slice(0, (i % 3) + 2),
+    posted: `${i + 1} days ago`,
+    logo: `https://picsum.photos/seed/company${7 + i}/40/40.jpg`,
+    featured: i % 3 === 0,
+  })),
+];
+
+export const dummyCandidate = {
+  _id: "69cbff64216e377c6661ef99",
+  name: "John Doe",
+  position: "Frontend Developer",
+  email: "john.doe@example.com",
+  phone: "+91 9876543210",
+  location: "Ahmedabad, India",
+  linkedin: "linkedin.com/in/johndoe",
+  github: "github.com/johndoe",
+  portfolio: "johndoe.dev",
+  summary:
+    "Passionate frontend developer with 3+ years of experience building responsive web applications using React and modern JavaScript.",
+
+  status: "shortlisted",
+  appliedDate: "2024-06-15",
+  score: 85,
+
+  profile_image: "",
+
+  skills: [
+    { name: "React", level: "Advanced" },
+    { name: "JavaScript", level: "Advanced" },
+    { name: "HTML/CSS", level: "Expert" },
+    { name: "Node.js", level: "Intermediate" },
+    { name: "Tailwind CSS", level: "Advanced" },
+  ],
+
+  experience: [
+    {
+      title: "Frontend Developer",
+      company: "Tech Solutions Pvt Ltd",
+      location: "Ahmedabad",
+      startDate: "2022-01-01",
+      endDate: "Present",
+      description:
+        "Developed and maintained responsive web applications using React, improving performance by 30%.",
+    },
+    {
+      title: "Junior Developer",
+      company: "WebSoft",
+      location: "Surat",
+      startDate: "2020-06-01",
+      endDate: "2021-12-31",
+      description:
+        "Worked on UI components and fixed bugs, contributing to improved user experience.",
+    },
+  ],
+
+  education: [
+    {
+      degree: "B.Tech in Computer Engineering",
+      school: "Gujarat Technological University",
+      location: "Gujarat",
+      startDate: "2016-06-01",
+      endDate: "2020-05-30",
+      description: "Graduated with First Class Distinction.",
+    },
+  ],
+
+  projects: [
+    {
+      name: "Job Portal App",
+      link: "https://github.com/johndoe/job-portal",
+      description:
+        "A full-stack job portal application with authentication, resume upload, and admin dashboard.",
+      technologies: ["React", "Node.js", "MongoDB", "Tailwind"],
+    },
+    {
+      name: "E-commerce Website",
+      link: "https://johndoe.dev/ecommerce",
+      description:
+        "Built a fully responsive e-commerce UI with cart and payment integration.",
+      technologies: ["React", "Redux", "Stripe"],
+    },
+  ],
+
+  certifications: [
+    {
+      name: "React Developer Certification",
+      issuer: "Coursera",
+      date: "2023-08-10",
+      credentialId: "ABC123XYZ",
+    },
+    {
+      name: "JavaScript Advanced",
+      issuer: "Udemy",
+      date: "2022-05-15",
+      credentialId: "JS456DEF",
     },
   ],
 };

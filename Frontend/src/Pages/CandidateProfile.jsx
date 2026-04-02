@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
-import PropTypes from "prop-types";
+import { dummyCandidate } from "../assets/dummydata";
 import api from "../api/axios";
 
-const CandidateProfile = ({ id, user }) => {
-  const [candidate, setCandidate] = useState(null);
+const CandidateProfile = () => {
+  const [candidate, setCandidate] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("resume");
@@ -13,117 +13,26 @@ const CandidateProfile = ({ id, user }) => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef(null);
 
-  const dummyCandidate = {
-    _id: "1",
-    name: "John Doe",
-    position: "Frontend Developer",
-    email: "john.doe@example.com",
-    phone: "+91 9876543210",
-    location: "Ahmedabad, India",
-    linkedin: "linkedin.com/in/johndoe",
-    github: "github.com/johndoe",
-    portfolio: "johndoe.dev",
-    summary:
-      "Passionate frontend developer with 3+ years of experience building responsive web applications using React and modern JavaScript.",
+  console.log(dummyCandidate._id);
 
-    status: "shortlisted",
-    appliedDate: "2024-06-15",
-    score: 85,
+  useEffect(() => {
+    const fetchCandidateData = async () => {
+      try {
+        setLoading(true);
+        const response = await api.get(`/api/candidates/${dummyCandidate._id}`);
+        console.log(response);
+        setCandidate(response.data.data);
+      } catch (err) {
+        console.error("Error fetching candidate data:", err);
+        setError("Failed to load candidate data. Please try again later.");
+        setCandidate(dummyCandidate); // Use dummy data on error
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    profile_image: "",
-
-    skills: [
-      { name: "React", level: "Advanced" },
-      { name: "JavaScript", level: "Advanced" },
-      { name: "HTML/CSS", level: "Expert" },
-      { name: "Node.js", level: "Intermediate" },
-      { name: "Tailwind CSS", level: "Advanced" },
-    ],
-
-    experience: [
-      {
-        title: "Frontend Developer",
-        company: "Tech Solutions Pvt Ltd",
-        location: "Ahmedabad",
-        startDate: "2022-01-01",
-        endDate: "Present",
-        description:
-          "Developed and maintained responsive web applications using React, improving performance by 30%.",
-      },
-      {
-        title: "Junior Developer",
-        company: "WebSoft",
-        location: "Surat",
-        startDate: "2020-06-01",
-        endDate: "2021-12-31",
-        description:
-          "Worked on UI components and fixed bugs, contributing to improved user experience.",
-      },
-    ],
-
-    education: [
-      {
-        degree: "B.Tech in Computer Engineering",
-        school: "Gujarat Technological University",
-        location: "Gujarat",
-        startDate: "2016-06-01",
-        endDate: "2020-05-30",
-        description: "Graduated with First Class Distinction.",
-      },
-    ],
-
-    projects: [
-      {
-        name: "Job Portal App",
-        link: "https://github.com/johndoe/job-portal",
-        description:
-          "A full-stack job portal application with authentication, resume upload, and admin dashboard.",
-        technologies: ["React", "Node.js", "MongoDB", "Tailwind"],
-      },
-      {
-        name: "E-commerce Website",
-        link: "https://johndoe.dev/ecommerce",
-        description:
-          "Built a fully responsive e-commerce UI with cart and payment integration.",
-        technologies: ["React", "Redux", "Stripe"],
-      },
-    ],
-
-    certifications: [
-      {
-        name: "React Developer Certification",
-        issuer: "Coursera",
-        date: "2023-08-10",
-        credentialId: "ABC123XYZ",
-      },
-      {
-        name: "JavaScript Advanced",
-        issuer: "Udemy",
-        date: "2022-05-15",
-        credentialId: "JS456DEF",
-      },
-    ],
-  };
-
-  // useEffect(() => {
-  //   const fetchCandidateData = async () => {
-  //     try {
-  //       setLoading(true);
-  //       const response = await api.get(
-  //         `/api/candidates/69cabaf38843e69f4f5c7f8`,
-  //       );
-  //       setCandidate(response.data);
-  //     } catch (err) {
-  //       console.error("Error fetching candidate data:", err);
-  //       setError("Failed to load candidate data. Please try again later.");
-  //       setCandidate(dummyCandidate); // Use dummy data on error
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-
-  //   fetchCandidateData();
-  // }, []);
+    fetchCandidateData();
+  }, []);
 
   useEffect(() => {
     setCandidate(dummyCandidate);
@@ -141,8 +50,8 @@ const CandidateProfile = ({ id, user }) => {
     }
 
     // Validate file size (5MB max)
-    if (file.size > 5 * 1024 * 1024) {
-      alert("File size must be less than 5MB");
+    if (file.size > 10 * 1024 * 1024) {
+      alert("File size must be less than 10MB");
       return;
     }
 
@@ -152,7 +61,10 @@ const CandidateProfile = ({ id, user }) => {
       setImagePreview(reader.result);
     };
     reader.readAsDataURL(file);
+    console.log(file);
   };
+
+  // CandidateProfile.jsx
 
   const handleSaveImage = async () => {
     if (!imagePreview) {
@@ -164,15 +76,15 @@ const CandidateProfile = ({ id, user }) => {
     const file = fileInputRef.current?.files[0];
     if (file) {
       formData.append("profile_image", file);
-      formData.append("status", candidate.status);
     }
+    formData.append("status", candidate.status);
 
     try {
       setIsUploading(true);
       setUploadProgress(0);
 
       const response = await api.put(
-        `/api/candidates/69cabaf38843e69f4f5c7f82`,
+        `/api/candidates/update/${candidate._id}`, // Use dynamic ID
         formData,
         {
           onUploadProgress: (progressEvent) => {
@@ -184,9 +96,11 @@ const CandidateProfile = ({ id, user }) => {
         },
       );
 
-      setCandidate(response.data);
+      console.log(response.data.candidate);
+
+      // Update candidate state with response data
+      setCandidate(response.data.candidate);
       closeImageModal();
-      console.log("Save successful:", response.data);
     } catch (error) {
       console.error("Error saving image:", error);
       alert("Save failed. Please try again.");
@@ -198,14 +112,17 @@ const CandidateProfile = ({ id, user }) => {
   const handleRemoveImage = async () => {
     try {
       const formData = new FormData();
-      formData.append("profile_image", "");
+      formData.append("profile_image", ""); // Empty string to remove
       formData.append("status", candidate.status);
 
       const response = await api.put(
-        `/api/candidates/69ca5fa075a8be6077528f6f`,
+        `/api/candidates/update/${candidate._id}`, // Use same endpoint
         formData,
       );
-      setCandidate(response.data);
+
+      console.log(response);
+
+      setCandidate(response.data.candidate);
       closeImageModal();
     } catch (error) {
       console.error("Error removing image:", error);
@@ -213,11 +130,20 @@ const CandidateProfile = ({ id, user }) => {
     }
   };
 
+  const handleDownload=async()=>{
+    try {
+      const response =await api.get
+    } catch (error) {
+      console.log(error.response.data.data);
+    }
+  }
+
   const closeImageModal = () => {
     setIsEditingImage(false);
     setImagePreview(null);
     setUploadProgress(0);
     setIsUploading(false);
+
     // Reset file input properly
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -322,13 +248,10 @@ const CandidateProfile = ({ id, user }) => {
             {/* Profile Image Section */}
             <div className="relative group">
               <div className="relative z-0">
-                {candidate.profile_image || imagePreview ? (
+                {candidate.profile_image ? (
                   <img
                     className="h-20 w-20 rounded-full object-cover"
-                    src={
-                      imagePreview ||
-                      `http://localhost:8000/${candidate.profile_image}`
-                    }
+                    src={`http://localhost:5173/${candidate.profile_image}`}
                     alt={candidate.name}
                   />
                 ) : (
@@ -388,7 +311,7 @@ const CandidateProfile = ({ id, user }) => {
                     candidate?.status?.slice(1)}
                 </span>
                 <span className="text-sm text-gray-500 dark:text-gray-400">
-                  Applied on {formatDate(candidate.appliedDate)}
+                  Applied on {formatDate(candidate.createdAt)}
                 </span>
                 <div className="flex items-center">
                   <span className="text-sm font-medium text-gray-500 dark:text-gray-400 mr-1">
@@ -399,7 +322,7 @@ const CandidateProfile = ({ id, user }) => {
                       candidate.score,
                     )}`}
                   >
-                    {candidate.score}/100
+                    {candidate.atsScore}/100
                   </span>
                 </div>
               </div>
@@ -440,7 +363,9 @@ const CandidateProfile = ({ id, user }) => {
               </svg>
               Schedule Interview
             </button>
-            <button className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            <button 
+            onClick={handleDownload}
+            className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
               <svg
                 className="mr-2 -ml-1 h-5 w-5 text-gray-500 dark:text-gray-400"
                 fill="none"
@@ -472,10 +397,15 @@ const CandidateProfile = ({ id, user }) => {
             {/* Image Preview */}
             <div className="flex justify-center mb-4">
               <div className="relative">
-                {imagePreview || candidate.profile_image ? (
+                {candidate.profile_image || imagePreview ? (
                   <img
                     className="h-32 w-32 rounded-full object-cover"
-                    src={`http://localhost:8000/${candidate.profile_image}`}
+                    src={
+                      imagePreview
+                        ? imagePreview
+                        : `http://localhost:5173/${candidate.profile_image}` ||
+                          imagePreview
+                    }
                     alt="Profile preview"
                   />
                 ) : (
@@ -686,8 +616,8 @@ const CandidateProfile = ({ id, user }) => {
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white">
                   Professional Summary
                 </h3>
-                <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
-                  {candidate.summary}
+                <p className="mt-2 text-sm text-wrap text-gray-600 dark:text-gray-300">
+                  {candidate.resumeText}
                 </p>
               </div>
             </div>
@@ -705,14 +635,15 @@ const CandidateProfile = ({ id, user }) => {
                     className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-600 rounded-lg"
                   >
                     <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                      {skill.name}
+                      {skill}
                     </span>
                     <span
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getLevelColor(
-                        skill.level,
+                        "Advanced",
                       )}`}
                     >
-                      {skill.level}
+                      Advanced
+                      {/* {skill.level} */}
                     </span>
                   </div>
                 ))}
@@ -856,14 +787,6 @@ const CandidateProfile = ({ id, user }) => {
       </div>
     </div>
   );
-};
-
-CandidateProfile.propTypes = {
-  id: PropTypes.string.isRequired,
-  user: PropTypes.shape({
-    name: PropTypes.string.isRequired,
-    email: PropTypes.string.isRequired,
-  }).isRequired,
 };
 
 export default CandidateProfile;

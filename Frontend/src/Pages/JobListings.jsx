@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { jobs } from "../assets/dummydata";
 
 const JobListings = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -7,104 +8,14 @@ const JobListings = () => {
   const [skillFilter, setSkillFilter] = useState("");
   const [jobTypeFilter, setJobTypeFilter] = useState("");
   const [savedJobs, setSavedJobs] = useState(new Set());
-
-  const jobs = [
-    {
-      id: 1,
-      title: "Senior Frontend Developer",
-      company: "Tech Innovations Inc.",
-      location: "San Francisco, CA",
-      type: "Full-time",
-      experience: "5+ years",
-      salary: "₹120k - ₹150k",
-      description:
-        "We are looking for an experienced Frontend Developer to join our team and help build cutting-edge web applications using modern technologies.",
-      skills: ["React", "TypeScript", "Node.js", "CSS"],
-      posted: "2 days ago",
-      logo: "https://picsum.photos/seed/company1/40/40.jpg",
-      featured: true,
-    },
-    {
-      id: 2,
-      title: "React Developer",
-      company: "StartupXYZ",
-      location: "New York, NY",
-      type: "Full-time",
-      experience: "3-5 years",
-      salary: "₹100k - ₹130k",
-      description:
-        "Join our fast-growing startup as a React Developer and work on innovative products that will shape the future.",
-      skills: ["React", "JavaScript", "HTML", "CSS"],
-      posted: "5 days ago",
-      logo: "https://picsum.photos/seed/company2/40/40.jpg",
-      featured: false,
-    },
-    {
-      id: 3,
-      title: "Frontend Engineer",
-      company: "WebSolutions",
-      location: "Remote",
-      type: "Contract",
-      experience: "2-4 years",
-      salary: "₹80k - ₹100k",
-      description:
-        "We are seeking a talented Frontend Engineer to work on our client projects and deliver exceptional user experiences.",
-      skills: ["Vue.js", "JavaScript", "CSS", "Sass"],
-      posted: "1 week ago",
-      logo: "https://picsum.photos/seed/company3/40/40.jpg",
-      featured: false,
-    },
-    {
-      id: 4,
-      title: "UI/UX Designer",
-      company: "Creative Agency",
-      location: "Los Angeles, CA",
-      type: "Full-time",
-      experience: "3+ years",
-      salary: "₹90k - ₹120k",
-      description:
-        "Looking for a creative UI/UX Designer to join our design team and create beautiful, intuitive interfaces.",
-      skills: ["Figma", "Adobe XD", "Sketch", "Prototyping"],
-      posted: "3 days ago",
-      logo: "https://picsum.photos/seed/company4/40/40.jpg",
-      featured: true,
-    },
-    {
-      id: 5,
-      title: "Full Stack Developer",
-      company: "TechCorp",
-      location: "Seattle, WA",
-      type: "Full-time",
-      experience: "4+ years",
-      salary: "₹110k - ₹140k",
-      description:
-        "We are looking for a Full Stack Developer to help build our next-generation platform using modern tech stack.",
-      skills: ["React", "Node.js", "MongoDB", "Express"],
-      posted: "1 day ago",
-      logo: "https://picsum.photos/seed/company5/40/40.jpg",
-      featured: false,
-    },
-    {
-      id: 6,
-      title: "Full Stak",
-      company: "Facebook",
-      location: "Anand",
-      type: "Full-time",
-      experience: "Entry-level",
-      salary: "₹12k - ₹18k",
-      description: "qwdas",
-      skills: ["qwf", "qw", "qwqw"],
-      posted: "Just now",
-      logo: "https://cdn-icons-png.flaticon.com/512/5968/5968764.png",
-      featured: true,
-    },
-  ];
+  const [currentPage, setCurrentPage] = useState(1);
+  const [jobsPerPage] = useState(8); // Show 8 jobs per page
 
   const filteredJobs = useMemo(() => {
     return jobs.filter((job) => {
       const matchesSearch =
-        job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        job.company.toLowerCase().includes(searchTerm.toLowerCase());
+        job.title.toLowerCase().includes(searchTerm.toLowerCase()) || //match job title
+        job.company.toLowerCase().includes(searchTerm.toLowerCase()); // match comoany name
       const matchesLocation =
         !locationFilter || job.location.includes(locationFilter);
       const matchesExperience =
@@ -124,6 +35,24 @@ const JobListings = () => {
         matchesJobType
       );
     });
+  }, [
+    searchTerm,
+    locationFilter,
+    experienceFilter,
+    skillFilter,
+    jobTypeFilter,
+  ]);
+
+  // Pagination calculations
+  const totalJobs = filteredJobs.length;
+  const totalPages = Math.ceil(totalJobs / jobsPerPage);
+  const indexOfLastJob = currentPage * jobsPerPage;
+  const indexOfFirstJob = indexOfLastJob - jobsPerPage;
+  const currentJobs = filteredJobs.slice(indexOfFirstJob, indexOfLastJob);
+
+  // Reset to page 1 when filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
   }, [
     searchTerm,
     locationFilter,
@@ -152,6 +81,23 @@ const JobListings = () => {
     setJobTypeFilter("");
   };
 
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      handlePageChange(currentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      handlePageChange(currentPage + 1);
+    }
+  };
+
   const jobTypeColors = {
     "Full-time":
       "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
@@ -163,9 +109,41 @@ const JobListings = () => {
       "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
   };
 
+  // Generate page numbers for pagination
+  const getPageNumbers = () => {
+    const delta = 2; // Number of pages to show before and after current page
+    const range = [];
+    const rangeWithDots = [];
+    let l;
+
+    for (let i = 1; i <= totalPages; i++) {
+      if (
+        i === 1 ||
+        i === totalPages ||
+        (i >= currentPage - delta && i <= currentPage + delta)
+      ) {
+        range.push(i);
+      }
+    }
+
+    range.forEach((i) => {
+      if (l) {
+        if (i - l === 2) {
+          rangeWithDots.push(l + 1);
+        } else if (i - l !== 1) {
+          rangeWithDots.push("...");
+        }
+      }
+      rangeWithDots.push(i);
+      l = i;
+    });
+
+    return rangeWithDots;
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-      <div className=" sm:px-6 lg:px-1 py-8">
+    <div className="min-h-screen p-0 bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+      <div className="py-8">
         {/* Header */}
         <div className="bg-white mt-4 dark:bg-gray-800 shadow-sm rounded-xl p-6 mb-6 transition-all duration-200 hover:shadow-md">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
@@ -180,7 +158,7 @@ const JobListings = () => {
             </div>
             <div className="mt-4 sm:mt-0 flex items-center space-x-2">
               <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
-                {filteredJobs.length} Results
+                {totalJobs} Results
               </span>
             </div>
           </div>
@@ -324,7 +302,7 @@ const JobListings = () => {
 
         {/* Job Listings */}
         <div className="space-y-4">
-          {filteredJobs.length === 0 ? (
+          {currentJobs.length === 0 ? (
             <div className="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-12 text-center transition-all duration-200">
               <svg
                 className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500"
@@ -347,7 +325,7 @@ const JobListings = () => {
               </p>
             </div>
           ) : (
-            filteredJobs.map((job) => (
+            currentJobs.map((job) => (
               <div
                 key={job.id}
                 className="bg-white dark:bg-gray-800 shadow-sm rounded-xl overflow-hidden hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1"
@@ -515,20 +493,34 @@ const JobListings = () => {
         </div>
 
         {/* Pagination */}
-        {filteredJobs.length > 0 && (
+        {totalPages > 1 && (
           <div className="bg-white dark:bg-gray-800 shadow-sm rounded-xl px-6 py-4 mt-6 transition-all duration-200 hover:shadow-md">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
               <div className="mb-4 sm:mb-0">
                 <p className="text-sm text-gray-700 dark:text-gray-300">
-                  Showing <span className="font-medium">1</span> to{" "}
-                  <span className="font-medium">{filteredJobs.length}</span> of{" "}
-                  <span className="font-medium">{jobs.length}</span> results
+                  Showing{" "}
+                  <span className="font-medium">
+                    {totalJobs === 0 ? 0 : indexOfFirstJob + 1}
+                  </span>{" "}
+                  to{" "}
+                  <span className="font-medium">
+                    {Math.min(indexOfLastJob, totalJobs)}
+                  </span>{" "}
+                  of <span className="font-medium">{totalJobs}</span> results
                 </p>
               </div>
-              <div className="flex space-x-2">
-                <button className="relative inline-flex items-center px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600 transition-all duration-200">
+              <div className="flex items-center space-x-1">
+                <button
+                  onClick={handlePrevPage}
+                  disabled={currentPage === 1}
+                  className={`relative inline-flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    currentPage === 1
+                      ? "text-gray-300 dark:text-gray-600 cursor-not-allowed"
+                      : "text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600"
+                  }`}
+                >
                   <svg
-                    className="h-4 w-4 mr-1"
+                    className="h-4 w-4"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -542,16 +534,37 @@ const JobListings = () => {
                   </svg>
                   Previous
                 </button>
-                <button className="relative inline-flex items-center px-4 py-2 rounded-lg border border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-sm font-medium text-blue-600 dark:text-blue-400 transition-all duration-200">
-                  1
-                </button>
-                <button className="relative inline-flex items-center px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition-all duration-200">
-                  2
-                </button>
-                <button className="relative inline-flex items-center px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition-all duration-200">
-                  3
-                </button>
-                <button className="relative inline-flex items-center px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600 transition-all duration-200">
+
+                {getPageNumbers().map((page, index) => (
+                  <div key={index}>
+                    {page === "..." ? (
+                      <span className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                        ...
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => handlePageChange(page)}
+                        className={`relative inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                          currentPage === page
+                            ? "z-10 bg-blue-50 dark:bg-blue-900/30 border-blue-500 text-blue-600 dark:text-blue-400 border"
+                            : "bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600"
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    )}
+                  </div>
+                ))}
+
+                <button
+                  onClick={handleNextPage}
+                  disabled={currentPage === totalPages}
+                  className={`relative inline-flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    currentPage === totalPages
+                      ? "text-gray-300 dark:text-gray-600 cursor-not-allowed"
+                      : "text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600"
+                  }`}
+                >
                   Next
                   <svg
                     className="h-4 w-4 ml-1"

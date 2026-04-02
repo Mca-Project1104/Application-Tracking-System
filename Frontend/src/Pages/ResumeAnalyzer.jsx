@@ -121,20 +121,22 @@ const ResumeAnalyzer = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="bg-white shadow mt-15 rounded-lg p-6">
-        <h1 className="text-2xl font-bold text-gray-900">Resume Analyzer</h1>
-        <p className="mt-1 text-gray-600">
+    <div className="space-y-6 dark:bg-gray-900 min-h-screen transition-colors duration-200">
+      <div className="bg-white dark:bg-gray-800 shadow mt-15 rounded-lg p-6 hover:shadow-lg transition-all duration-200">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          Resume Analyzer
+        </h1>
+        <p className="mt-1 text-gray-600 dark:text-gray-400">
           Upload your resume and get instant feedback
         </p>
       </div>
 
       {error && (
-        <div className="bg-red-50 border-l-4 border-red-400 p-4">
+        <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-400 dark:border-red-600 p-4 transition-colors duration-200">
           <div className="flex">
             <div className="shrink-0">
               <svg
-                className="h-5 w-5 text-red-400"
+                className="h-5 w-5 text-red-400 dark:text-red-500"
                 viewBox="0 0 20 20"
                 fill="currentColor"
               >
@@ -146,28 +148,32 @@ const ResumeAnalyzer = () => {
               </svg>
             </div>
             <div className="ml-3">
-              <p className="text-sm text-red-700">{error}</p>
+              <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
             </div>
           </div>
         </div>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white shadow rounded-lg p-6">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">
+        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 hover:shadow-lg transition-all duration-200">
+          <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
             Upload Resume
           </h2>
 
           {!resumeUploaded ? (
             <div
-              className={`mt-2 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md ${isDragging ? "border-blue-400 bg-blue-50" : "border-gray-300"}`}
+              className={`mt-2 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md transition-all duration-200 ${
+                isDragging
+                  ? "border-blue-400 bg-blue-50 dark:bg-blue-900/20"
+                  : "border-gray-300 dark:border-gray-600"
+              }`}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
             >
               <div className="space-y-1 text-center">
                 <svg
-                  className="mx-auto h-12 w-12 text-gray-400"
+                  className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500"
                   stroke="currentColor"
                   fill="none"
                   viewBox="0 0 48 48"
@@ -180,10 +186,10 @@ const ResumeAnalyzer = () => {
                     strokeLinejoin="round"
                   />
                 </svg>
-                <div className="flex text-sm text-gray-600">
+                <div className="flex text-sm text-gray-600 dark:text-gray-400">
                   <label
                     htmlFor="file-upload"
-                    className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500"
+                    className="relative cursor-pointer bg-white dark:bg-gray-800 rounded-md font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500 transition-colors duration-200"
                   >
                     <span>Upload a file</span>
                     <input
@@ -197,18 +203,18 @@ const ResumeAnalyzer = () => {
                   </label>
                   <p className="pl-1">or drag and drop</p>
                 </div>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   PDF, DOC, DOCX up to 10MB
                 </p>
               </div>
             </div>
           ) : (
             <div className="mt-2">
-              <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-4 transition-colors duration-200">
                 <div className="flex">
                   <div className="shrink-0">
                     <svg
-                      className="h-5 w-5 text-blue-400"
+                      className="h-5 w-5 text-blue-400 dark:text-blue-500"
                       fill="currentColor"
                       viewBox="0 0 20 20"
                       aria-hidden="true"
@@ -221,10 +227,10 @@ const ResumeAnalyzer = () => {
                     </svg>
                   </div>
                   <div className="ml-3">
-                    <h3 className="text-sm font-medium text-blue-800">
+                    <h3 className="text-sm font-medium text-blue-800 dark:text-blue-300">
                       Resume uploaded successfully
                     </h3>
-                    <div className="mt-2 text-sm text-blue-700">
+                    <div className="mt-2 text-sm text-blue-700 dark:text-blue-400">
                       <p>{file?.name}</p>
                     </div>
                   </div>
@@ -232,7 +238,7 @@ const ResumeAnalyzer = () => {
               </div>
               <button
                 type="button"
-                className="mt-4 w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="mt-4 w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200 transform hover:scale-105"
                 onClick={resetUpload}
               >
                 Upload Different Resume
@@ -241,8 +247,8 @@ const ResumeAnalyzer = () => {
           )}
         </div>
 
-        <div className="bg-white shadow rounded-lg p-6">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">
+        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 hover:shadow-lg transition-all duration-200">
+          <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
             Job Description (Optional)
           </h2>
           <div className="mt-2">
@@ -250,7 +256,7 @@ const ResumeAnalyzer = () => {
               id="job-description"
               name="job-description"
               rows={8}
-              className="shadow-sm focus:ring-blue-500 focus:border-blue-500 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
+              className="shadow-sm focus:ring-blue-500 focus:border-blue-500 mt-1 block w-full sm:text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-colors duration-200"
               placeholder="Paste the job description here to get a match score..."
               value={jobDescription}
               onChange={(e) => setJobDescription(e.target.value)}
@@ -259,7 +265,7 @@ const ResumeAnalyzer = () => {
           <div className="mt-4">
             <button
               type="button"
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200 transform hover:scale-105 disabled:transform-none"
               onClick={analyzeResume}
               disabled={!resumeUploaded || loading}
             >
@@ -272,40 +278,46 @@ const ResumeAnalyzer = () => {
       {analysisComplete && analysisData && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white shadow rounded-lg p-6">
-              <h2 className="text-lg font-medium text-gray-900 mb-4">
+            <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 hover:shadow-lg transition-all duration-200">
+              <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
                 Extracted Information
               </h2>
 
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-base font-medium text-gray-900">
+                  <h3 className="text-base font-medium text-gray-900 dark:text-white">
                     Contact Information
                   </h3>
                   <div className="mt-2 grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
-                      <p className="text-sm font-medium text-gray-500">Name</p>
-                      <p className="mt-1 text-sm text-gray-900">
+                      <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        Name
+                      </p>
+                      <p className="mt-1 text-sm text-gray-900 dark:text-gray-300">
                         {analysisData.candidate?.name || "Not found"}
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-500">Email</p>
-                      <p className="mt-1 text-sm text-gray-900">
+                      <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        Email
+                      </p>
+                      <p className="mt-1 text-sm text-gray-900 dark:text-gray-300">
                         {analysisData.candidate?.email || "Not found"}
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-500">Phone</p>
-                      <p className="mt-1 text-sm text-gray-900">
+                      <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        Phone
+                      </p>
+                      <p className="mt-1 text-sm text-gray-900 dark:text-gray-300">
                         {analysisData.candidate?.phone || "Not found"}
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-500">
+                      <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
                         Location
                       </p>
-                      <p className="mt-1 text-sm text-gray-900">
+                      <p className="mt-1 text-sm text-gray-900 dark:text-gray-300">
                         {analysisData.candidate?.location || "Not found"}
                       </p>
                     </div>
@@ -313,7 +325,7 @@ const ResumeAnalyzer = () => {
                 </div>
 
                 <div>
-                  <h3 className="text-base font-medium text-gray-900">
+                  <h3 className="text-base font-medium text-gray-900 dark:text-white">
                     Skills
                   </h3>
                   <div className="mt-2 flex flex-wrap gap-2">
@@ -321,19 +333,21 @@ const ResumeAnalyzer = () => {
                       analysisData.candidate.skills.map((skill, index) => (
                         <span
                           key={index}
-                          className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                          className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 transition-colors duration-200"
                         >
                           {skill}
                         </span>
                       ))
                     ) : (
-                      <p className="text-sm text-gray-500">No skills found</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        No skills found
+                      </p>
                     )}
                   </div>
                 </div>
 
                 <div>
-                  <h3 className="text-base font-medium text-gray-900">
+                  <h3 className="text-base font-medium text-gray-900 dark:text-white">
                     Experience
                   </h3>
                   <div className="mt-2 space-y-4">
@@ -341,24 +355,26 @@ const ResumeAnalyzer = () => {
                       analysisData.candidate.experience.map((exp, index) => (
                         <div
                           key={index}
-                          className="border-l-4 border-blue-500 pl-4"
+                          className="border-l-4 border-blue-500 dark:border-blue-400 pl-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 -mx-4 px-4 py-2 rounded-r transition-colors duration-200"
                         >
                           <div className="flex justify-between">
-                            <h4 className="text-sm font-medium text-gray-900">
+                            <h4 className="text-sm font-medium text-gray-900 dark:text-white">
                               {exp.title}
                             </h4>
-                            <span className="text-sm text-gray-500">
+                            <span className="text-sm text-gray-500 dark:text-gray-400">
                               {exp.startDate} - {exp.endDate || "Present"}
                             </span>
                           </div>
-                          <p className="text-sm text-gray-600">{exp.company}</p>
-                          <p className="mt-1 text-sm text-gray-500">
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            {exp.company}
+                          </p>
+                          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                             {exp.description}
                           </p>
                         </div>
                       ))
                     ) : (
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
                         No experience found
                       </p>
                     )}
@@ -366,7 +382,7 @@ const ResumeAnalyzer = () => {
                 </div>
 
                 <div>
-                  <h3 className="text-base font-medium text-gray-900">
+                  <h3 className="text-base font-medium text-gray-900 dark:text-white">
                     Education
                   </h3>
                   <div className="mt-2 space-y-4">
@@ -374,23 +390,23 @@ const ResumeAnalyzer = () => {
                       analysisData.candidate.education.map((edu, index) => (
                         <div
                           key={index}
-                          className="border-l-4 border-blue-500 pl-4"
+                          className="border-l-4 border-blue-500 dark:border-blue-400 pl-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 -mx-4 px-4 py-2 rounded-r transition-colors duration-200"
                         >
                           <div className="flex justify-between">
-                            <h4 className="text-sm font-medium text-gray-900">
+                            <h4 className="text-sm font-medium text-gray-900 dark:text-white">
                               {edu.degree}
                             </h4>
-                            <span className="text-sm text-gray-500">
+                            <span className="text-sm text-gray-500 dark:text-gray-400">
                               {edu.startDate} - {edu.endDate || "Present"}
                             </span>
                           </div>
-                          <p className="text-sm text-gray-600">
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
                             {edu.institution}
                           </p>
                         </div>
                       ))
                     ) : (
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
                         No education found
                       </p>
                     )}
@@ -401,15 +417,15 @@ const ResumeAnalyzer = () => {
           </div>
 
           <div className="space-y-6">
-            <div className="bg-white shadow rounded-lg p-6">
-              <h2 className="text-lg font-medium text-gray-900 mb-4">
+            <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 hover:shadow-lg transition-all duration-200">
+              <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
                 Match Score
               </h2>
               <div className="flex flex-col items-center">
                 <div className="relative">
                   <svg className="w-32 h-32">
                     <circle
-                      className="text-gray-200"
+                      className="text-gray-200 dark:text-gray-700"
                       strokeWidth="10"
                       stroke="currentColor"
                       fill="transparent"
@@ -418,7 +434,7 @@ const ResumeAnalyzer = () => {
                       cy="64"
                     />
                     <circle
-                      className="text-blue-600"
+                      className="text-blue-600 dark:text-blue-500"
                       strokeWidth="10"
                       strokeDasharray={`${matchScore * 3.52} 352`}
                       strokeLinecap="round"
@@ -431,32 +447,35 @@ const ResumeAnalyzer = () => {
                     />
                   </svg>
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-3xl font-bold text-gray-900">
+                    <span className="text-3xl font-bold text-gray-900 dark:text-white">
                       {matchScore}%
                     </span>
                   </div>
                 </div>
-                <p className="mt-4 text-sm text-gray-600 text-center">
+                <p className="mt-4 text-sm text-gray-600 dark:text-gray-400 text-center">
                   Your resume matches {matchScore}% with the job description
                 </p>
               </div>
             </div>
 
-            <div className="bg-white shadow rounded-lg p-6">
-              <h2 className="text-lg font-medium text-gray-900 mb-4">
+            <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 hover:shadow-lg transition-all duration-200">
+              <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
                 Resume Feedback
               </h2>
               <div className="space-y-3">
                 {analysisData.suggestions?.length > 0 ? (
                   analysisData.suggestions.map((suggestion, index) => (
-                    <div key={index} className="flex items-start">
+                    <div
+                      key={index}
+                      className="flex items-start hover:bg-gray-50 dark:hover:bg-gray-700/50 p-2 rounded transition-colors duration-200"
+                    >
                       <svg
                         className={`h-5 w-5 mt-0.5 ${
                           suggestion.type === "positive"
-                            ? "text-green-500"
+                            ? "text-green-500 dark:text-green-400"
                             : suggestion.type === "warning"
-                              ? "text-yellow-500"
-                              : "text-red-500"
+                              ? "text-yellow-500 dark:text-yellow-400"
+                              : "text-red-500 dark:text-red-400"
                         }`}
                         fill="currentColor"
                         viewBox="0 0 20 20"
@@ -481,21 +500,21 @@ const ResumeAnalyzer = () => {
                           />
                         )}
                       </svg>
-                      <p className="ml-2 text-sm text-gray-700">
+                      <p className="ml-2 text-sm text-gray-700 dark:text-gray-300">
                         {suggestion.text}
                       </p>
                     </div>
                   ))
                 ) : (
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
                     No suggestions available
                   </p>
                 )}
               </div>
             </div>
 
-            <div className="bg-white shadow rounded-lg p-6">
-              <h2 className="text-lg font-medium text-gray-900 mb-4">
+            <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 hover:shadow-lg transition-all duration-200">
+              <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
                 Keywords Found
               </h2>
               <div className="flex flex-wrap gap-2">
@@ -503,22 +522,24 @@ const ResumeAnalyzer = () => {
                   analysisData.keywords.map((keyword, index) => (
                     <span
                       key={index}
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors duration-200 ${
                         keyword.found
-                          ? "bg-green-100 text-green-800"
+                          ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
                           : keyword.partial
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-red-100 text-red-800"
+                            ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
+                            : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
                       }`}
                     >
                       {keyword.text}
                     </span>
                   ))
                 ) : (
-                  <p className="text-sm text-gray-500">No keywords analyzed</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    No keywords analyzed
+                  </p>
                 )}
               </div>
-              <div className="mt-4 text-xs text-gray-500">
+              <div className="mt-4 text-xs text-gray-500 dark:text-gray-400">
                 <p>Green: Found in resume</p>
                 <p>Yellow: Partial match</p>
                 <p>Red: Not found</p>

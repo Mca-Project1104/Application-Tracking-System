@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAppContext } from "../context/AppProvider";
+import Button from "../Components/Style/Button";
 
 const Navbar = ({
   userRole,
@@ -22,7 +23,7 @@ const Navbar = ({
       localStorage.clear();
       setIsAuthenticated(false);
       setUserRole(null);
-      navigate("/login");
+      navigate("/");
     }
   };
 
@@ -55,7 +56,7 @@ const Navbar = ({
             to="/"
             className="ml-2 sm:ml-4 text-lg sm:text-xl font-bold text-blue-600 dark:text-blue-400"
           >
-            {titleName}
+            <Button name={titleName} />
           </Link>
         </div>
 
@@ -88,7 +89,10 @@ const Navbar = ({
 
         {/* Desktop Navigation Items */}
         <div className="hidden lg:flex items-center space-x-4">
-          <button className="p-2 rounded-full text-gray-600 dark:text-gray-300 dark:hover:bg-gray-800 hover:bg-gray-100 relative focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400">
+          <button
+            onClick={() => navigate(`${userRole}/chat`)}
+            className="p-2 rounded-full text-gray-600 dark:text-gray-300 dark:hover:bg-gray-800 hover:bg-gray-100 relative focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+          >
             <svg
               className="w-6 h-6"
               fill="none"
@@ -112,12 +116,13 @@ const Navbar = ({
 
           <div className="flex  items-center">
             <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold">
-              <button
-                className="cursor-pointer "
-                onClick={() => navigate("/candidate-profile/2")}
-              >
-                {user.name.charAt(0).toUpperCase()}
-              </button>
+              {userRole === "candidate" && (
+                <button
+                  className="cursor-pointer "
+                  onClick={() => navigate("/candidate-profile/1")} //passed a login user-id
+                ></button>
+              )}
+              {user.name.charAt(0).toUpperCase()}
             </div>
             <div className="ml-2 hidden sm:block">
               <p className="capitalize text-sm font-medium text-gray-700 dark:text-gray-200">

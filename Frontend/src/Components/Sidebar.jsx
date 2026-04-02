@@ -17,7 +17,7 @@ const Sidebar = ({ userRole, setShowSidebar, showSidebar }) => {
 
   return (
     <div
-      className={`bg-white dark:bg-white/6 h-screen shadow-md fixed left-0 top-17 z-50 w-64 border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-300 ease-in-out ${
+      className={`bg-white dark:bg-black h-screen shadow-md fixed left-0 top-20 z-50 w-64 border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-300 ease-in-out ${
         showSidebar ? "translate-x-0" : "-translate-x-full"
       }`}
     >
