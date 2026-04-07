@@ -7,15 +7,17 @@ const Login = ({ setIsAuthenticated, setUserRole }) => {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
+    newpassword: "",
   });
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isActive, setIsActive] = useState(false);
+  const [isActive, setIsActive] = useState("login");
+
   const navigate = useNavigate();
 
-  const { email, password } = formData;
+  const { email, password, newpassword } = formData;
 
   const onChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -35,51 +37,84 @@ const Login = ({ setIsAuthenticated, setUserRole }) => {
     e.preventDefault();
     setError("");
 
+    const token = localStorage.getItem("token");
+
     if (loading) return;
 
     setLoading(true);
+    console.log(isActive);
 
-    try {
-      const response = await api.post("/api/user/login", {
-        email,
-        password,
-      });
+    switch (isActive) {
+      case "forgot_password":
+        try {
+          const response = await api.post(
+            "/api/user/forgetpass",
+            { password, newpassword },
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            },
+          );
 
-      if (response.status === 200) {
-        const { token, user } = response.data;
-        localStorage.setItem("token", token);
-        localStorage.setItem("userRole", user.accountType);
-        localStorage.setItem("user", JSON.stringify(user));
-        setIsAuthenticated(true);
-        setUserRole(user.accountType);
+          console.log(response);
 
-        const role = user.accountType;
-        navigate(
-          role === "company"
-            ? "/company"
-            : role === "admin"
-              ? "/admin"
-              : "/candidate",
-        );
-      }
-    } catch (err) {
-      if (err.response) {
-        const { data } = err.response;
-        setError(data.message || "Login failed");
-      } else if (err.request) {
-        setError("No response from server. Please check your connection.");
-      } else {
-        setError("An error occurred. Please try again.");
-      }
-    } finally {
-      setLoading(false);
+          if (response.status === 200) {
+            console.log(response);
+            setIsActive("login");
+          }
+        } catch (error) {
+          console.log(error);
+        } finally {
+          setLoading(false);
+        }
+        break;
+      case "login":
+        try {
+          const response = await api.post("/api/user/login", {
+            email,
+            password,
+          });
+
+          if (response.status === 200) {
+            const { accessToken, user } = response.data;
+            localStorage.setItem("token", accessToken);
+            localStorage.setItem("userRole", user.accountType);
+            localStorage.setItem("user", JSON.stringify(user));
+            setIsAuthenticated(true);
+            setUserRole(user.accountType);
+
+            const role = user.accountType;
+            navigate(
+              role === "company"
+                ? "/company"
+                : role === "admin"
+                  ? "/admin"
+                  : "/candidate",
+            );
+          }
+        } catch (err) {
+          if (err.response) {
+            const { data } = err.response;
+            setError(data.message || "Login failed");
+          } else if (err.request) {
+            setError("No response from server. Please check your connection.");
+          } else {
+            setError("An error occurred. Please try again.");
+          }
+        } finally {
+          setLoading(false);
+        }
+        break;
+
+      default:
+        console.log("not found");
+        setLoading(false);
     }
   };
 
   return (
     <div className="min-h-screen p-3 flex bg-white dark:bg-black relative">
-      {/* Close Button - Top Right Corner */}
-
       {/* aos animation */}
       <div
         data-aos="slide-left"
@@ -339,7 +374,7 @@ const Login = ({ setIsAuthenticated, setUserRole }) => {
                   onChange={onChange}
                 />
 
-                {isActive && (
+                {isActive === "forgot_password" && (
                   <>
                     <label
                       htmlFor="password"
@@ -350,13 +385,13 @@ const Login = ({ setIsAuthenticated, setUserRole }) => {
                     <div className="mt-1 relative">
                       <input
                         id="password"
-                        name="password"
+                        name="newpassword"
                         type={showPassword ? "text" : "password"}
                         autoComplete="current-password"
                         required
                         className="appearance-none block w-full px-3 py-2  border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-800 dark:text-white"
                         placeholder="Enter new password"
-                        value={password}
+                        value={newpassword}
                         onChange={onChange}
                       />
                     </div>
@@ -375,6 +410,7 @@ const Login = ({ setIsAuthenticated, setUserRole }) => {
                 <input
                   id="remember-me"
                   name="remember-me"
+                  required
                   type="checkbox"
                   className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                 />
@@ -389,7 +425,13 @@ const Login = ({ setIsAuthenticated, setUserRole }) => {
               <div className="text-sm">
                 <Link
                   // to="/forgot-password"
-                  onClick={() => setIsActive(!isActive)}
+                  onClick={() =>
+                    setIsActive(
+                      isActive === "forgot_password"
+                        ? "login"
+                        : "forgot_password",
+                    )
+                  }
                   className="font-medium text-indigo-600 hover:text-indigo-500"
                 >
                   Forgot your password?

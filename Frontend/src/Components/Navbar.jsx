@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAppContext } from "../context/AppProvider";
-import Button from "../Components/Style/Button";
 
 const Navbar = ({
   userRole,
@@ -11,16 +10,17 @@ const Navbar = ({
   setIsAuthenticated,
   setUserRole,
 }) => {
-  const { navigate } = useAppContext();
+  const { navigate, companydata } = useAppContext();
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const notification = [1];
 
-  const user = JSON.parse(localStorage.getItem("user")) || { name: "User" };
+  const user = JSON.parse(localStorage.getItem("user"));
 
   const Logout = () => {
     if (window.confirm("Are you sure you want to logout?")) {
       localStorage.clear();
+
       setIsAuthenticated(false);
       setUserRole(null);
       navigate("/");
@@ -28,7 +28,7 @@ const Navbar = ({
   };
 
   return (
-    <nav className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700 px-2 sm:px-4 py-3 fixed top-0 left-0 right-0 z-10">
+    <nav className="bg-white dark:bg-gray-900  shadow-sm border-b border-gray-200 dark:border-gray-700 px-2 sm:px-4 py-3 fixed top-0 left-0 right-0 z-10">
       <div className="flex items-center justify-between max-w-full">
         <div className="flex items-center">
           {userRole !== "admin" && (
@@ -56,7 +56,7 @@ const Navbar = ({
             to="/"
             className="ml-2 sm:ml-4 text-lg sm:text-xl font-bold text-blue-600 dark:text-blue-400"
           >
-            <Button name={titleName} />
+            {titleName}
           </Link>
         </div>
 
@@ -115,14 +115,21 @@ const Navbar = ({
           </button>
 
           <div className="flex  items-center">
-            <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold">
-              {userRole === "candidate" && (
-                <button
-                  className="cursor-pointer "
-                  onClick={() => navigate("/candidate-profile/1")} //passed a login user-id
-                ></button>
+            <div
+              onClick={() => navigate(`/${userRole}/profile`)}
+              className="w-9 h-9 rounded-full bg-blue-500 flex items-center justify-center text-white "
+            >
+              {userRole !== "company" ? (
+                <button className="cursor-pointer">
+                  {user.name.charAt(0).toUpperCase()}
+                </button>
+              ) : (
+                <img
+                  src={`http://localhost:8000/uploads/${companydata?.company?.logo}`}
+                  className="w-full object-cover h-full rounded-full cursor-pointer"
+                  alt=""
+                />
               )}
-              {user.name.charAt(0).toUpperCase()}
             </div>
             <div className="ml-2 hidden sm:block">
               <p className="capitalize text-sm font-medium text-gray-700 dark:text-gray-200">
@@ -194,8 +201,21 @@ const Navbar = ({
           <div className="flex flex-col space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
-                <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold">
-                  {user.name.charAt(0).toUpperCase()}
+                <div
+                  onClick={() => navigate(`/${userRole}/profile`)}
+                  className="w-9 h-9 rounded-full bg-blue-500 flex items-center justify-center text-white "
+                >
+                  {userRole !== "company" ? (
+                    <button className="cursor-pointer">
+                      {user.name.charAt(0).toUpperCase()}
+                    </button>
+                  ) : (
+                    <img
+                      src={`http://localhost:8000/uploads/${companydata?.company?.logo}`}
+                      className="w-full object-cover h-full rounded-full cursor-pointer"
+                      alt=""
+                    />
+                  )}
                 </div>
                 <div className="ml-2">
                   <p className="capitalize text-sm font-medium text-gray-700 dark:text-gray-200">
@@ -222,7 +242,7 @@ const Navbar = ({
                   ></path>
                 </svg>
                 <span className="absolute  top-0 right-0 h-4 w-4 bg-red-500 rounded-full flex items-center justify-center text-xs text-white">
-                  1
+                  0
                 </span>
               </button>
             </div>

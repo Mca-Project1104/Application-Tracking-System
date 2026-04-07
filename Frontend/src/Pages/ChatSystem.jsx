@@ -172,7 +172,7 @@ const ChatSystem = () => {
   };
 
   return (
-    <div className="bg-white  w-auto dark:bg-gray-900 mt-10  shadow-lg rounded-lg overflow-hidden h-[calc(100vh-4rem)]">
+    <div className="bg-white  w-auto dark:bg-gray-900 mt-4 p-4  shadow-lg rounded-lg overflow-hidden h-[calc(100vh-3rem)]">
       <div className="flex h-full">
         {/* Conversations List - Hidden on mobile when chat is open */}
         <div
@@ -360,7 +360,7 @@ const ChatSystem = () => {
               return (
                 <div key={msg.id}>
                   {showDate && (
-                    <div className="flex justify-center mb-4">
+                    <div className="flex justify-center ">
                       <span className="px-3 py-1 text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-full">
                         {msg.date}
                       </span>

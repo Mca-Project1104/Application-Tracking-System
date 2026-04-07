@@ -1,29 +1,20 @@
 import React, { useEffect, useState } from "react";
-import { useAppContext } from "../context/AppProvider";
-import api from "../api/axios";
+import { useAppContext } from "../../context/AppProvider";
+import api from "../../api/axios";
+import { Link, Navigate } from "react-router-dom";
 
 const CandidateDashboard = () => {
-  const [candidate, setCandidateS] = useState();
+  // const [candidate, setCandidateS] = useState();
 
-  const { candidatee, loading, error, user } = useAppContext();
+  const { candidate, loading, error, user, currency, token, navigate, jobs } =
+    useAppContext();
+  const userData = JSON.parse(localStorage.getItem("user"));
 
-  useEffect(() => {
-    const getCandidate = async () => {
-      const res = await api.get(`/api/candidates/69cbff64216e377c6661ef99`);
-
-      if (res.status === 200) {
-        setCandidateS(res.data.data);
-        console.log(res);
-      }
-    };
-    getCandidate();
-  }, []);
-
-  // console.log(candidate);
+  console.log(jobs);
 
   return (
-    <div className="min-h-screen  bg-gray-50 mt-5 dark:bg-gray-900 transition-colors duration-200">
-      <div className="  py-8">
+    <div className="min-h-screen p-4   bg-gray-50 mt-5 dark:bg-gray-900 transition-colors duration-200">
+      <div className="">
         {/* Header */}
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-6 transition-all duration-200">
           <h1 className="text-2xl capitalize font-bold text-gray-900 dark:text-white">
@@ -43,10 +34,10 @@ const CandidateDashboard = () => {
               </h3>
               <div className="mt-5">
                 <div className="flex items-center">
-                  <span className="text-4xl font-bold text-blue-600 dark:text-blue-400">
-                    {candidate?.atsScore ?? 0}
+                  <span className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                    {candidate?.ats_score ?? 0}
                   </span>
-                  <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">
+                  <span className="ml-2 text-lg text-gray-500 dark:text-gray-400">
                     / 100
                   </span>
                 </div>
@@ -54,7 +45,7 @@ const CandidateDashboard = () => {
                   <div className="bg-gray-200  dark:bg-gray-700 rounded-full h-2">
                     <div
                       className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${candidate?.atsScore ?? 0}%` }}
+                      style={{ width: `${candidate?.ats_score ?? 0}%` }}
                     ></div>
                   </div>
                 </div>
@@ -110,7 +101,10 @@ const CandidateDashboard = () => {
                 </div>
               </div>
               <div className="mt-5">
-                <button className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:scale-105">
+                <button
+                  onClick={() => navigate("/candidate/resume_analyzer")}
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:scale-105"
+                >
                   Improve Resume
                 </button>
               </div>
@@ -127,7 +121,7 @@ const CandidateDashboard = () => {
                 <div className="flex items-center">
                   <div className="shrink-0">
                     <div className="h-12 w-12 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">
-                      {user.name ? user.name.charAt(0) : ""}
+                      {user.name ? user.name.charAt(0) : "U"}
                     </div>
                   </div>
                   <div className="ml-4">
@@ -151,25 +145,18 @@ const CandidateDashboard = () => {
                     Top Skills
                   </h5>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
-                      React
-                    </span>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
-                      JavaScript
-                    </span>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
-                      CSS
-                    </span>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
-                      HTML
-                    </span>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
-                      TypeScript
-                    </span>
+                    {candidate?.skills?.slice(0, 5).map((skil) => (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                        {skil}
+                      </span>
+                    ))}
                   </div>
                 </div>
                 <div className="mt-5">
-                  <button className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200">
+                  <button
+                    onClick={() => navigate("/candidate/profile")}
+                    className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+                  >
                     Edit Profile
                   </button>
                 </div>
@@ -218,6 +205,7 @@ const CandidateDashboard = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                  {}
                   <tr className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
                       Senior Frontend Developer
@@ -294,12 +282,12 @@ const CandidateDashboard = () => {
               </table>
             </div>
             <div className="mt-4">
-              <a
-                href="#"
+              <Link
+                to={"#"}
                 className="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200"
               >
                 View all applications →
-              </a>
+              </Link>
             </div>
           </div>
         </div>
@@ -311,83 +299,56 @@ const CandidateDashboard = () => {
               Recommended Jobs
             </h3>
             <div className="mt-5 space-y-4">
-              <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow duration-200 hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                <div className="flex justify-between">
-                  <div>
-                    <h4 className="text-lg font-medium text-gray-900 dark:text-white">
-                      Senior React Developer
-                    </h4>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Tech Innovations Inc.
-                    </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                      San Francisco, CA • Full-time
-                    </p>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
-                        React
-                      </span>
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
-                        TypeScript
-                      </span>
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
-                        Node.js
-                      </span>
+              {jobs.slice(0, 2).map(
+                (
+                  job,
+                  index, //only 2 record recommended latest
+                ) => (
+                  <div
+                    key={index}
+                    className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow duration-200 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                  >
+                    <div className="flex justify-between">
+                      <div>
+                        <h4 className="text-lg font-medium text-gray-900 dark:text-white">
+                          {job.title}
+                        </h4>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          {job.company.name}
+                        </p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                          {job.location}
+                        </p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {job.skillsRequired.map((skill) => (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+                              {skill}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">
+                          {currency}
+                          {job.salaryMin}k - {currency}
+                          {job.salaryMax}k
+                        </span>
+                        <button className="mt-2 inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:scale-105">
+                          Apply Now
+                        </button>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex flex-col items-end">
-                    <span className="text-sm font-medium text-gray-900 dark:text-white">
-                      $120k - $150k
-                    </span>
-                    <button className="mt-2 inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:scale-105">
-                      Apply Now
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow duration-200 hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                <div className="flex justify-between">
-                  <div>
-                    <h4 className="text-lg font-medium text-gray-900 dark:text-white">
-                      Frontend Engineer
-                    </h4>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Digital Agency Co.
-                    </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                      Remote • Full-time
-                    </p>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
-                        Vue.js
-                      </span>
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
-                        JavaScript
-                      </span>
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
-                        CSS
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-end">
-                    <span className="text-sm font-medium text-gray-900 dark:text-white">
-                      $100k - $130k
-                    </span>
-                    <button className="mt-2 inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:scale-105">
-                      Apply Now
-                    </button>
-                  </div>
-                </div>
-              </div>
+                ),
+              )}
             </div>
             <div className="mt-4">
-              <a
-                href="#"
+              <Link
+                to={"/candidate/jobs"}
                 className="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200"
               >
                 View all recommendations →
-              </a>
+              </Link>
             </div>
           </div>
         </div>

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { candidate } from "../assets/dummydata.js";
+import { candidate } from "../../assets/dummydata.js";
 
 const HiringPipeline = () => {
   const [candidates, setCandidates] = useState(candidate);
@@ -115,23 +115,23 @@ const HiringPipeline = () => {
   }, [candidates]);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-      <div className="px-4 sm:px-6 lg:px-8 py-8">
+    <div className="w-full bg-gray-50 dark:bg-gray-900 transition-colors mt-2 duration-200">
+      <div className="px-2 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8 max-w-full overflow-x-hidden">
         {/* Header */}
-        <div className="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6 mb-6 transition-all duration-200 hover:shadow-md">
+        <div className="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-4 sm:p-6 mb-4 sm:mb-6 transition-all duration-200 hover:shadow-md">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            <div className="mb-4 sm:mb-0">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
                 Hiring Pipeline
               </h1>
-              <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+              <p className="mt-1 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                 Track and manage candidates through the hiring process
               </p>
             </div>
-            <div className="mt-4 sm:mt-0 flex space-x-3">
-              <button className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+              <button className="inline-flex items-center justify-center px-3 sm:px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200">
                 <svg
-                  className="mr-2 -ml-1 h-5 w-5"
+                  className="mr-1 sm:mr-2 -ml-1 h-4 w-4 sm:h-5 sm:w-5"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -143,11 +143,12 @@ const HiringPipeline = () => {
                     d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
                   />
                 </svg>
-                Filter
+                <span className="hidden sm:inline">Filter</span>
+                <span className="sm:hidden">F</span>
               </button>
-              <button className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:scale-105">
+              <button className="inline-flex items-center justify-center px-3 sm:px-4 py-2 border border-transparent rounded-lg shadow-sm text-xs sm:text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:scale-105">
                 <svg
-                  className="mr-2 -ml-1 h-5 w-5"
+                  className="mr-1 sm:mr-2 -ml-1 h-4 w-4 sm:h-5 sm:w-5"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -159,14 +160,15 @@ const HiringPipeline = () => {
                     d="M12 6v6m0 0v6m0-6h6m-6 0H6"
                   />
                 </svg>
-                Add Candidate
+                <span className="hidden sm:inline">Add Candidate</span>
+                <span className="sm:hidden">+</span>
               </button>
             </div>
           </div>
         </div>
 
         {/* Pipeline Columns */}
-        <div className="flex space-x-4 overflow-x-auto pb-6">
+        <div className="flex gap-2 sm:gap-4 overflow-x-auto pb-6">
           {columns.map((column) => {
             const config = getStatusConfig(column.id);
             const columnCandidates = candidates.filter(
@@ -177,7 +179,7 @@ const HiringPipeline = () => {
             return (
               <div
                 key={column.id}
-                className="shrink-0 w-80"
+                className="shrink-0 w-64 sm:w-72 md:w-80"
                 onDragOver={(e) => handleDragOver(e, column.id)}
                 onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, column.id)}
@@ -190,25 +192,27 @@ const HiringPipeline = () => {
                   }`}
                 >
                   {/* Column Header */}
-                  <div className={`${config.headerBg} px-4 py-3`}>
+                  <div
+                    className={`${config.headerBg} px-3 sm:px-4 py-2 sm:py-3`}
+                  >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
-                        <h3 className="font-semibold text-white">
+                        <h3 className="font-semibold text-white text-sm sm:text-base">
                           {column.title}
                         </h3>
                       </div>
-                      <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white/20 text-white text-sm font-medium">
+                      <span className="inline-flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-white/20 text-white text-xs sm:text-sm font-medium">
                         {columnCandidates.length}
                       </span>
                     </div>
                   </div>
 
                   {/* Candidates List */}
-                  <div className="p-4 space-y-3 min-h-100 bg-gray-50 dark:bg-gray-900/50">
+                  <div className="p-2 sm:p-4 space-y-2 sm:space-y-3 min-h-100 bg-gray-50 dark:bg-gray-900/50">
                     {columnCandidates.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center h-32 text-gray-400 dark:text-gray-500">
+                      <div className="flex flex-col items-center justify-center h-24 sm:h-32 text-gray-400 dark:text-gray-500">
                         <svg
-                          className="w-12 h-12 mb-2"
+                          className="w-8 h-8 sm:w-12 sm:h-12 mb-2"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -220,7 +224,7 @@ const HiringPipeline = () => {
                             d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
                           />
                         </svg>
-                        <p className="text-sm">No candidates yet</p>
+                        <p className="text-xs sm:text-sm">No candidates yet</p>
                       </div>
                     ) : (
                       columnCandidates.map((candidate) => (
@@ -229,26 +233,26 @@ const HiringPipeline = () => {
                           draggable
                           onDragStart={() => handleDragStart(candidate)}
                           onDragEnd={handleDragEnd}
-                          className={`bg-white dark:bg-gray-800 border ${config.border} rounded-lg p-4 cursor-move hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1 ${
+                          className={`bg-white dark:bg-gray-800 border ${config.border} rounded-lg p-3 sm:p-4 cursor-move hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1 ${
                             draggedCandidate?.id === candidate.id
                               ? "opacity-50"
                               : ""
                           }`}
                         >
-                          <div className="flex items-start justify-between mb-3">
-                            <div className="flex items-center space-x-3">
+                          <div className="flex items-start justify-between mb-2 sm:mb-3">
+                            <div className="flex items-center space-x-2 sm:space-x-3">
                               <div className="relative">
                                 <img
-                                  className="h-12 w-12 rounded-full object-cover ring-2 ring-gray-200 dark:ring-gray-700"
+                                  className="h-10 w-10 sm:h-12 sm:w-12 rounded-full object-cover ring-2 ring-gray-200 dark:ring-gray-700"
                                   src={candidate.avatar}
                                   alt={candidate.name}
                                 />
                                 <div
-                                  className={`absolute -bottom-1 -right-1 w-4 h-4 ${config.bg} rounded-full border-2 border-white dark:border-gray-800}`}
+                                  className={`absolute -bottom-1 -right-1 w-3 h-3 sm:w-4 sm:h-4 ${config.bg} rounded-full border-2 border-white dark:border-gray-800}`}
                                 ></div>
                               </div>
                               <div>
-                                <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+                                <h4 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">
                                   {candidate.name}
                                 </h4>
                                 <p className="text-xs text-gray-600 dark:text-gray-400">
@@ -257,39 +261,39 @@ const HiringPipeline = () => {
                               </div>
                             </div>
                             <span
-                              className={`inline-flex items-center justify-center w-10 h-10 rounded-full text-sm font-bold ${getScoreBadgeColor(candidate.score)}`}
+                              className={`inline-flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full text-xs sm:text-sm font-bold ${getScoreBadgeColor(candidate.score)}`}
                             >
                               {candidate.score}
                             </span>
                           </div>
 
-                          <div className="mb-3">
+                          <div className="mb-2 sm:mb-3">
                             <div className="flex flex-wrap gap-1">
                               {candidate.skills
                                 .slice(0, 3)
                                 .map((skill, index) => (
                                   <span
                                     key={index}
-                                    className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${config.lightBg} ${config.text}`}
+                                    className={`inline-flex items-center px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md text-xs font-medium ${config.lightBg} ${config.text}`}
                                   >
                                     {skill}
                                   </span>
                                 ))}
                               {candidate.skills.length > 3 && (
-                                <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
+                                <span className="inline-flex items-center px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
                                   +{candidate.skills.length - 3}
                                 </span>
                               )}
                             </div>
                           </div>
 
-                          <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-700">
+                          <div className="flex items-center justify-between pt-2 sm:pt-3 border-t border-gray-100 dark:border-gray-700">
                             <button
-                              className={`text-sm font-medium ${config.text} hover:underline transition-colors duration-200`}
+                              className={`text-xs sm:text-sm font-medium ${config.text} hover:underline transition-colors duration-200`}
                             >
                               View Profile
                             </button>
-                            <button className="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200">
+                            <button className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200">
                               Schedule
                             </button>
                           </div>
@@ -304,28 +308,28 @@ const HiringPipeline = () => {
         </div>
 
         {/* Statistics */}
-        <div className="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6 mt-6 transition-all duration-200 hover:shadow-md">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
+        <div className="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-4 sm:p-6 mt-4 sm:mt-6 transition-all duration-200 hover:shadow-md">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4 sm:mb-6">
             Pipeline Overview
           </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
             {statistics.map((stat) => {
               const config = getStatusConfig(stat.id);
               return (
                 <div key={stat.id} className="text-center">
                   <div
-                    className={`relative inline-flex items-center justify-center w-16 h-16 rounded-full ${config.bg} mb-3 transition-transform duration-200 hover:scale-98`}
+                    className={`relative inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-full ${config.bg} mb-2 sm:mb-3 transition-transform duration-200 hover:scale-98`}
                   >
-                    <span className="text-2xl font-bold text-white">
+                    <span className="text-lg sm:text-2xl font-bold text-white">
                       {stat.count}
                     </span>
-                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center">
+                    <div className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center">
                       <span className="text-xs font-bold text-gray-600 dark:text-gray-400">
                         {stat.percentage}%
                       </span>
                     </div>
                   </div>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                  <p className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white">
                     {stat.title}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -337,17 +341,17 @@ const HiringPipeline = () => {
           </div>
 
           {/* Progress Bar */}
-          <div className="mt-8">
+          <div className="mt-6 sm:mt-8">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              <span className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">
                 Total Progress
               </span>
-              <span className="text-sm text-gray-500 dark:text-gray-400">
+              <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                 {candidates.filter((c) => c.status === "selected").length} /{" "}
                 {candidates.length} hired
               </span>
             </div>
-            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
+            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 sm:h-3 overflow-hidden">
               <div
                 className="h-full bg-linear-to-r from-blue-500 to-green-500 rounded-full transition-all duration-500 ease-out"
                 style={{

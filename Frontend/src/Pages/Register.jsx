@@ -410,7 +410,7 @@ const Register = ({ setIsAuthenticated, setUserRole }) => {
 
             <div
               data-aos="fade-up"
-              data-aos-delay="600"
+              data-aos-delay="800"
               data-aos-duration="400"
               className="flex items-start"
             >

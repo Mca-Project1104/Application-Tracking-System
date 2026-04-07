@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-import { dummyCandidate } from "../assets/dummydata";
-import api from "../api/axios";
+import { dummyCandidate } from "../../assets/dummydata";
+import api from "../../api/axios";
 
 const CandidateProfile = () => {
   const [candidate, setCandidate] = useState({});
@@ -12,16 +12,20 @@ const CandidateProfile = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef(null);
-
-  console.log(dummyCandidate._id);
+  const token = localStorage.getItem("token");
 
   useEffect(() => {
     const fetchCandidateData = async () => {
       try {
         setLoading(true);
-        const response = await api.get(`/api/candidates/${dummyCandidate._id}`);
-        console.log(response);
-        setCandidate(response.data.data);
+        const response = await api.get(`/api/candidates`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (response.status === 200) {
+          setCandidate(response.data.data);
+        }
       } catch (err) {
         console.error("Error fetching candidate data:", err);
         setError("Failed to load candidate data. Please try again later.");
@@ -30,9 +34,17 @@ const CandidateProfile = () => {
         setLoading(false);
       }
     };
-
-    fetchCandidateData();
+    if (token) fetchCandidateData();
   }, []);
+
+  const handleDownload = () => {
+    if (confirm("Download Resume.")) {
+      window.open(
+        `http://localhost:8000/api/candidates/resume/${candidate._id}`,
+        "_blank",
+      );
+    }
+  };
 
   useEffect(() => {
     setCandidate(dummyCandidate);
@@ -130,13 +142,13 @@ const CandidateProfile = () => {
     }
   };
 
-  const handleDownload=async()=>{
-    try {
-      const response =await api.get
-    } catch (error) {
-      console.log(error.response.data.data);
-    }
-  }
+  // const handleDownload=async()=>{
+  //   try {
+  //     const response =await api.get
+  //   } catch (error) {
+  //     console.log(error.response.data.data);
+  //   }
+  // }
 
   const closeImageModal = () => {
     setIsEditingImage(false);
@@ -204,7 +216,7 @@ const CandidateProfile = () => {
         return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
       case "Intermediate":
         return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
-      case "Beginner":
+      case "Beginne r":
         return "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200";
       default:
         return "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200";
@@ -233,6 +245,7 @@ const CandidateProfile = () => {
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
+  //resme scoring depend on socre
   const getScoreColor = (score) => {
     if (score >= 90) return "text-green-600 dark:text-green-400";
     if (score >= 80) return "text-blue-600 dark:text-blue-400";
@@ -241,8 +254,10 @@ const CandidateProfile = () => {
   };
 
   return (
-    <div className="space-y-2 mt-15 min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6">
+    <div className="space-y-2 p-4  min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div
+        className={`bg-white mt-15 ${isEditingImage ? "opacity-10" : ""}  dark:bg-gray-800 shadow-lg rounded-lg p-6`}
+      >
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
           <div className="flex items-center">
             {/* Profile Image Section */}
@@ -252,7 +267,7 @@ const CandidateProfile = () => {
                   <img
                     className="h-20 w-20 rounded-full object-cover"
                     src={`http://localhost:5173/${candidate.profile_image}`}
-                    alt={candidate.name}
+                    alt={candidate?.user_id?.firstName}
                   />
                 ) : (
                   <div className="h-20 w-20 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
@@ -296,20 +311,21 @@ const CandidateProfile = () => {
 
             <div className="ml-6">
               <h1 className="text-2xl capitalize font-bold text-gray-900 dark:text-white">
-                {candidate.name}
+                {candidate?.user_id?.firstName}&nbsp;
+                {candidate?.user_id?.lastName}
               </h1>
               <p className="text-lg text-gray-600 dark:text-gray-300">
                 {candidate.position}
               </p>
               <div className="mt-2 flex flex-wrap items-center gap-2 sm:gap-4">
-                <span
+                {/* <span
                   className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
                     candidate.status,
                   )}`}
                 >
                   {candidate?.status?.charAt(0).toUpperCase() +
                     candidate?.status?.slice(1)}
-                </span>
+                </span> */}
                 <span className="text-sm text-gray-500 dark:text-gray-400">
                   Applied on {formatDate(candidate.createdAt)}
                 </span>
@@ -319,10 +335,10 @@ const CandidateProfile = () => {
                   </span>
                   <span
                     className={`text-lg font-bold ${getScoreColor(
-                      candidate.score,
+                      candidate.ats_score,
                     )}`}
                   >
-                    {candidate.atsScore}/100
+                    {candidate.ats_score}/100
                   </span>
                 </div>
               </div>
@@ -363,9 +379,10 @@ const CandidateProfile = () => {
               </svg>
               Schedule Interview
             </button>
-            <button 
-            onClick={handleDownload}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            <button
+              onClick={handleDownload}
+              className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
               <svg
                 className="mr-2 -ml-1 h-5 w-5 text-gray-500 dark:text-gray-400"
                 fill="none"
@@ -388,7 +405,7 @@ const CandidateProfile = () => {
 
       {/* Image Edit Modal */}
       {isEditingImage && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed  inset-0 flex items-center   justify-center z-20 p-10">
           <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6">
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
               Edit Profile Picture
@@ -506,7 +523,9 @@ const CandidateProfile = () => {
         </div>
       )}
 
-      <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg">
+      <div
+        className={`bg-white ${isEditingImage ? "opacity-10" : ""} dark:bg-gray-800 shadow-lg rounded-lg`}
+      >
         <div className="border-b border-gray-200 dark:border-gray-700">
           <nav
             className="-mb-px flex space-x-8 px-6 overflow-x-auto"
@@ -684,29 +703,17 @@ const CandidateProfile = () => {
           )}
 
           {activeTab === "education" && (
-            <div className="space-y-6">
+            <div className="">
               <h3 className="text-lg font-medium text-gray-900 dark:text-white">
                 Education
               </h3>
               {candidate.education.map((edu, index) => (
-                <div
-                  key={index}
-                  className="border-l-4 border-blue-500 dark:border-blue-400 pl-4"
-                >
-                  <div className="flex flex-col sm:flex-row sm:justify-between">
-                    <h4 className="text-base font-medium text-gray-900 dark:text-white">
-                      {edu.degree}
-                    </h4>
-                    <span className="text-sm text-gray-500 dark:text-gray-400 mt-1 sm:mt-0">
-                      {formatDate(edu.startDate)} - {formatDate(edu.endDate)}
-                    </span>
+                <div key={index} className="pl-4">
+                  <div
+                    className={`flex flex-col sm:flex-row ${(index >= 1) & index ? "mt-2" : ""} sm:justify-between`}
+                  >
+                    <p className="  text-gray-900 dark:text-white">{edu} </p>
                   </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
-                    {edu.school} • {edu.location}
-                  </p>
-                  <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                    {edu.description}
-                  </p>
                 </div>
               ))}
             </div>

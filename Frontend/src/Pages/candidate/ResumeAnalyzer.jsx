@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import api from "../api/axios"; // Using your centralized API instance
+import api from "../../api/axios"; // Using your centralized API instance
 
 const ResumeAnalyzer = () => {
   const [isDragging, setIsDragging] = useState(false);
@@ -10,8 +10,12 @@ const ResumeAnalyzer = () => {
   const [file, setFile] = useState(null);
   const [resumeText, setResumeText] = useState("");
   const [loading, setLoading] = useState(false);
-  const [analysisData, setAnalysisData] = useState(null);
+  const [analysisData, setAnalysisData] = useState([]);
   const [error, setError] = useState("");
+
+  const splitFilter = /[,;|]+/;
+
+  const token = localStorage.getItem("token");
 
   const handleDragOver = (e) => {
     e.preventDefault();
@@ -90,15 +94,16 @@ const ResumeAnalyzer = () => {
       // Using your centralized API instance
       const res = await api.post("/api/resume/analyze", formData, {
         headers: {
+          Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data",
         },
       });
-      console.log();
+      console.log(res);
 
       // Update state with analysis results
       setMatchScore(res.data.data.atsScore || 0);
-      setAnalysisData(res.data);
-      setAnalysisComplete(true);
+      setAnalysisData(res.data.data.candidate);
+      setAnalysisComplete(res.data.data.candidate);
       setResumeText(res.data.data.resumeText || "");
     } catch (err) {
       console.error(err);
@@ -111,6 +116,8 @@ const ResumeAnalyzer = () => {
     }
   };
 
+  console.log(analysisData);
+
   const resetUpload = () => {
     setResumeUploaded(false);
     setFile(null);
@@ -121,7 +128,7 @@ const ResumeAnalyzer = () => {
   };
 
   return (
-    <div className="space-y-6 dark:bg-gray-900 min-h-screen transition-colors duration-200">
+    <div className="space-y-6 p-4 dark:bg-gray-900 min-h-screen transition-colors duration-200">
       <div className="bg-white dark:bg-gray-800 shadow mt-15 rounded-lg p-6 hover:shadow-lg transition-all duration-200">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
           Resume Analyzer
@@ -294,7 +301,8 @@ const ResumeAnalyzer = () => {
                         Name
                       </p>
                       <p className="mt-1 text-sm text-gray-900 dark:text-gray-300">
-                        {analysisData.candidate?.name || "Not found"}
+                        {analysisData.user_id.firstName}{" "}
+                        {analysisData.user_id.lastName}
                       </p>
                     </div>
                     <div>
@@ -302,7 +310,7 @@ const ResumeAnalyzer = () => {
                         Email
                       </p>
                       <p className="mt-1 text-sm text-gray-900 dark:text-gray-300">
-                        {analysisData.candidate?.email || "Not found"}
+                        {analysisData.email || "Not found"}
                       </p>
                     </div>
                     <div>
@@ -310,7 +318,7 @@ const ResumeAnalyzer = () => {
                         Phone
                       </p>
                       <p className="mt-1 text-sm text-gray-900 dark:text-gray-300">
-                        {analysisData.candidate?.phone || "Not found"}
+                        {analysisData.phone || "Not found"}
                       </p>
                     </div>
                     <div>
@@ -318,7 +326,7 @@ const ResumeAnalyzer = () => {
                         Location
                       </p>
                       <p className="mt-1 text-sm text-gray-900 dark:text-gray-300">
-                        {analysisData.candidate?.location || "Not found"}
+                        {analysisData.location || "Not found"}
                       </p>
                     </div>
                   </div>
@@ -329,8 +337,8 @@ const ResumeAnalyzer = () => {
                     Skills
                   </h3>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {analysisData.candidate?.skills?.length > 0 ? (
-                      analysisData.candidate.skills.map((skill, index) => (
+                    {analysisData.skills?.length > 0 ? (
+                      analysisData.skills.map((skill, index) => (
                         <span
                           key={index}
                           className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 transition-colors duration-200"
@@ -385,23 +393,15 @@ const ResumeAnalyzer = () => {
                   <h3 className="text-base font-medium text-gray-900 dark:text-white">
                     Education
                   </h3>
-                  <div className="mt-2 space-y-4">
-                    {analysisData.candidate?.education?.length > 0 ? (
-                      analysisData.candidate.education.map((edu, index) => (
+                  <div className="mt-2  space-y-4">
+                    {Array.isArray(analysisData.education) ? (
+                      analysisData.education.map((edu, index) => (
                         <div
                           key={index}
-                          className="border-l-4 border-blue-500 dark:border-blue-400 pl-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 -mx-4 px-4 py-2 rounded-r transition-colors duration-200"
+                          className="pl-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 -mx-4 px-4 rounded-r transition-all duration-200"
                         >
-                          <div className="flex justify-between">
-                            <h4 className="text-sm font-medium text-gray-900 dark:text-white">
-                              {edu.degree}
-                            </h4>
-                            <span className="text-sm text-gray-500 dark:text-gray-400">
-                              {edu.startDate} - {edu.endDate || "Present"}
-                            </span>
-                          </div>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
-                            {edu.institution}
+                          <p className="text-sm text-gray-900 dark:text-gray-300">
+                            {edu}
                           </p>
                         </div>
                       ))
