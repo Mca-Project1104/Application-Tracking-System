@@ -23,7 +23,6 @@ import toast, { Toaster } from "react-hot-toast";
 
 import AOS from "aos";
 import "aos/dist/aos.css";
-import { useAppContext } from "./context/AppProvider.jsx";
 
 function App() {
   const location = useLocation();
@@ -36,8 +35,6 @@ function App() {
     const user = JSON.parse(localStorage.getItem("user"));
     return user?.accountType || null;
   });
-
-  const { navigate } = useAppContext();
 
   const [showSidebar, setShowSidebar] = useState(false);
 
@@ -104,6 +101,8 @@ function App() {
       </div>
     </>
   );
+
+  console.log(userRole);
 
   // // Handle theme toggle with preventDefault
   // const handleThemeToggle = () => {
@@ -176,7 +175,7 @@ function App() {
         {isAuthenticated && (
           <>
             <Route
-              path="/"
+              path="/*"
               element={
                 userRole === "candidate" ? (
                   <Navigate to="/candidate" />

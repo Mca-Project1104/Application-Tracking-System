@@ -233,9 +233,9 @@ function App() {
   ];
 
   return (
-    <div className="min-h-screen top-2 bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 transition-colors duration-300">
+    <div className="min-h-screen w-auto top-2 bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 transition-colors duration-300">
       {/* ===== NAVBAR ===== */}
-      <nav className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-b border-gray-200 dark:border-gray-800 transition-all duration-300">
+      <nav className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 justify-center-safe backdrop-blur-lg border-b border-gray-200 dark:border-gray-800 transition-all duration-300">
         <div className="container mx-auto px-6 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-linear-to-br dark:bg-gray-900 bg-white  rounded-lg flex items-center justify-center">
@@ -326,13 +326,13 @@ function App() {
         {/* ===== HERO SECTION ===== */}
         <section
           data-aos="fade-up"
-          className="relative mt-0 overflow-hidden bg-linear-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-950 dark:to-gray-900 py-5"
+          className="relative overflow-hidden bg-linear-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-950 dark:to-gray-900 py-12 sm:py-16 md:py-20 lg:py-24"
         >
-          <div className="absolute  auto  bg-grid-pattern opacity-5 dark:opacity-10"></div>
-          <div className="container px-6 relative">
+          <div className="absolute inset-0 bg-grid-pattern opacity-5 dark:opacity-10"></div>
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">
             <div className="text-center max-w-4xl mx-auto">
-              <div className="inline-flex items-center px-3  rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-sm font-medium mb-6">
-                <span className="w-2 h-2 bg-green-500 rounded-full  mr-2 animate-pulse"></span>
+              <div className="inline-flex items-center px-3 py-1 sm:px-4 sm:py-2 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs sm:text-sm font-medium mb-4 sm:mb-6">
+                <span className="w-2 h-2   bg-green-500 rounded-full mr-2 animate-pulse"></span>
                 Now hiring: 10,000+ opportunities
               </div>
 

@@ -33,7 +33,7 @@ const Company = () => {
         <div className="absolute left-0 top-0 h-full w-20 z-10 pointer-events-none " />
         <div
           className="marquee-inner h-auto flex will-change-transform w-full"
-          style={{ animationDuration: "15s" }}
+          style={{ animationDuration: "7s" }}
         >
           <div className="flex">
             {[...companyLogos, ...companyLogos].map((company, index) => (
