@@ -9,7 +9,7 @@ const Register = ({ setIsAuthenticated, setUserRole }) => {
     email: "",
     password: "",
     confirmPassword: "",
-    accountType: "candidate",
+    accountType: "",
   });
 
   const [loading, setLoading] = useState(false);
@@ -77,7 +77,7 @@ const Register = ({ setIsAuthenticated, setUserRole }) => {
         data-aos="slide-left"
         data-aos-duration="1000"
         data-aos-easing="ease-out-cubic"
-        className="w-full lg:w-1/2 flex items-center justify-center p-2 lg:p-8 rounded-2xl lg:rounded-r-2xl bg-gray-200 dark:bg-gray-900"
+        className="w-full lg:w-1/2 flex items-center justify-center p-2 lg:p-8  rounded-l-2xl rounded-r-0  bg-gray-200 dark:bg-gray-900"
       >
         <div className="w-full">
           <div
@@ -539,7 +539,7 @@ const Register = ({ setIsAuthenticated, setUserRole }) => {
           </div>
         </div>
       </div>
-      {/* Left Side - Image with Enhanced AOS */}
+      {/* Right Side - Image with Enhanced AOS */}
       <div
         data-aos="slide-right"
         data-aos-duration="1000"

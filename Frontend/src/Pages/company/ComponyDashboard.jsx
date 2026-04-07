@@ -35,7 +35,7 @@ const CompanyDashboard = () => {
     };
 
     if (token) getDetails();
-  }, [token]);
+  }, []);
 
   //function to return css matching status
   const getpipelineColor = (name) => {
