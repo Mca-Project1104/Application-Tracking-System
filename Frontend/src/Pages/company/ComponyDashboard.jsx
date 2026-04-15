@@ -3,6 +3,7 @@ import api from "../../api/axios";
 import { useAppContext } from "../../context/AppProvider";
 import { useEffect } from "react";
 import { useState } from "react";
+import Loading from "../../Components/Loading/Loading";
 
 const CompanyDashboard = () => {
   const { navigate } = useAppContext();
@@ -10,11 +11,14 @@ const CompanyDashboard = () => {
   const [recentapplications, setRecentApplications] = useState([]);
   const [pipelinestages, setPipelineStages] = useState([]);
   const [jobpostings, setJobPostings] = useState([]);
+  const [loading, setLoading] = useState(false);
   const token = localStorage.getItem("token");
   const arrstate = Object.entries(stats); //convert into array
+  const user = JSON.stringify(localStorage.getItem("user"));
 
   useEffect(() => {
     const getDetails = async () => {
+      setLoading(true);
       try {
         const response = await api.get("/api/applications", {
           headers: {
@@ -29,6 +33,7 @@ const CompanyDashboard = () => {
           setPipelineStages(response?.data?.pipeline);
           setJobPostings(response?.data?.jobs);
         }
+        setLoading(false);
       } catch (error) {
         console.log(error?.response?.data?.message);
       }
@@ -54,6 +59,10 @@ const CompanyDashboard = () => {
     else
       return "bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400 hover:border-2 border-red-400";
   };
+
+  if (loading) {
+    return <Loading detail={"Loading  data..."} />;
+  }
 
   return (
     <div className="min-h-screen mt-4 bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
@@ -130,20 +139,22 @@ const CompanyDashboard = () => {
                     <div className="flex items-center space-x-4">
                       <div className="shrink-0">
                         <div
-                          className={`h-12 w-12 rounded-full bg-blue-600 flex items-center  justify-center-safe text-white text-sm font-semibold`}
+                          className={`h-12 w-12 rounded-full  flex items-center  justify-center-safe text-white text-sm font-semibold`}
                         >
-                          <p className="text-4xl justify-items-center-safe">
-                            {app?.name.charAt(0)}
-                          </p>
-                          {/* <img src=""  alt="" className="w-full object-cover" /> */}
+                          <img
+                            src={`http://localhost:8000/${app.candidate.profile_image}`}
+                            alt="logo"
+                            className="w-full h-full rounded-full"
+                          />
                         </div>
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                          {app.name}
+                          {app.candidate.user_id.firstName}{" "}
+                          {app.candidate.user_id.lastName}
                         </p>
                         <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                          {app.position}
+                          {app.candidate.user_id.email}
                         </p>
                       </div>
                     </div>

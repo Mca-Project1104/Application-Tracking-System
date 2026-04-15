@@ -1,28 +1,34 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useAppContext } from "../../context/AppProvider";
 import api from "../../api/axios";
 import { Link, Navigate } from "react-router-dom";
+import Loading from "../../Components/Loading/Loading";
+import Header from "../../Components/Header";
 
 const CandidateDashboard = () => {
-  // const [candidate, setCandidateS] = useState();
+  const {
+    candidate,
+    user,
+    currency,
+    navigate,
+    jobs,
+    applications,
+    candidateLoading,
+  } = useAppContext();
 
-  const { candidate, loading, error, user, currency, token, navigate, jobs } =
-    useAppContext();
-  const userData = JSON.parse(localStorage.getItem("user"));
-
-  console.log(jobs);
+  if (candidateLoading || !user) {
+    return <Loading detail={"loading.."} />;
+  }
 
   return (
     <div className="min-h-screen p-4   bg-gray-50 mt-5 dark:bg-gray-900 transition-colors duration-200">
       <div className="">
         {/* Header */}
-        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-6 transition-all duration-200">
-          <h1 className="text-2xl capitalize font-bold text-gray-900 dark:text-white">
-            Welcome, {user.name} !
-          </h1>
-          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-            Here's what's happening with your job search today.
-          </p>
+        <div className="mb-6 mt-2">
+          <Header
+            title={`Welcome ${user.name} !`}
+            description={"Here's what's happening with your job search today."}
+          />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -120,24 +126,27 @@ const CandidateDashboard = () => {
               <div className="mt-5">
                 <div className="flex items-center">
                   <div className="shrink-0">
-                    <div className="h-12 w-12 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">
-                      {user.name ? user.name.charAt(0) : "U"}
+                    <div className="h-12 select-none w-12 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">
+                      <img
+                        src={`http://localhost:8000/${candidate?.profile_image}`}
+                        alt="logo"
+                        className="w-full rounded-full h-full"
+                      />
                     </div>
                   </div>
                   <div className="ml-4">
                     <h4 className="text-lg font-medium text-gray-900 dark:text-white">
-                      {user.name}
+                      {user?.name}
                     </h4>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Senior Frontend Developer
+                      Senior Frontend Developer{" "}
+                      {/* update statically show name */}
                     </p>
                   </div>
                 </div>
                 <div className="mt-4">
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Experienced frontend developer with 5+ years of experience
-                    building responsive web applications. Proficient in React,
-                    JavaScript, and modern CSS frameworks.
+                    {candidate?.personal}
                   </p>
                 </div>
                 <div className="mt-4">
@@ -145,8 +154,11 @@ const CandidateDashboard = () => {
                     Top Skills
                   </h5>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {candidate?.skills?.slice(0, 5).map((skil) => (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                    {candidate?.skills?.slice(0, 5).map((skil, i) => (
+                      <span
+                        key={i}
+                        className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
+                      >
                         {skil}
                       </span>
                     ))}
@@ -171,113 +183,58 @@ const CandidateDashboard = () => {
             <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">
               Recent Applications
             </h3>
+
             <div className="mt-5 overflow-hidden">
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead className="bg-gray-50 dark:bg-gray-700/50">
                   <tr>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
-                    >
-                      Position
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
-                    >
-                      Company
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
-                    >
-                      Date Applied
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
-                    >
-                      Status
-                    </th>
+                    {["Position", "Company", " Date Applied", " Status"].map(
+                      (item, i) => (
+                        <th
+                          scope="col"
+                          key={i}
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                        >
+                          {item}
+                        </th>
+                      ),
+                    )}
                     <th scope="col" className="relative px-6 py-3">
                       <span className="sr-only">View</span>
                     </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                  {}
-                  <tr className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                      Senior Frontend Developer
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      TechCorp
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      Jun 15, 2023
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
-                        Interview
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <a
-                        href="#"
-                        className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200"
+                  {applications?.length > 0 &&
+                    applications.map((item) => (
+                      <tr
+                        key={item._id}
+                        className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200"
                       >
-                        View
-                      </a>
-                    </td>
-                  </tr>
-                  <tr className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                      React Developer
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      StartupXYZ
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      Jun 12, 2023
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
-                        Applied
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <a
-                        href="#"
-                        className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200"
-                      >
-                        View
-                      </a>
-                    </td>
-                  </tr>
-                  <tr className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                      Frontend Engineer
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      WebSolutions
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      Jun 10, 2023
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
-                        Selected
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <a
-                        href="#"
-                        className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200"
-                      >
-                        View
-                      </a>
-                    </td>
-                  </tr>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                          {item?.jobId.title}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          {item?.jobId.companyName}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          {new Date(item.updatedAt).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
+                            {item?.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <Link
+                            to={"#"}
+                            className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200"
+                          >
+                            View
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
                 </tbody>
               </table>
             </div>
@@ -300,10 +257,8 @@ const CandidateDashboard = () => {
             </h3>
             <div className="mt-5 space-y-4">
               {jobs.slice(0, 2).map(
-                (
-                  job,
-                  index, //only 2 record recommended latest
-                ) => (
+                //only 2 record recommended latest
+                (job, index) => (
                   <div
                     key={index}
                     className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow duration-200 hover:bg-gray-50 dark:hover:bg-gray-700/50"
@@ -320,8 +275,11 @@ const CandidateDashboard = () => {
                           {job.location}
                         </p>
                         <div className="mt-2 flex flex-wrap gap-2">
-                          {job.skillsRequired.map((skill) => (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+                          {job?.skillsRequired?.map((skill, i) => (
+                            <span
+                              key={i}
+                              className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300"
+                            >
                               {skill}
                             </span>
                           ))}
@@ -333,7 +291,12 @@ const CandidateDashboard = () => {
                           {job.salaryMin}k - {currency}
                           {job.salaryMax}k
                         </span>
-                        <button className="mt-2 inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:scale-105">
+
+                        {/*Access a particular id wise match jobposting  */}
+                        <button
+                          onClick={() => navigate(`/candidate/jobs/${job._id}`)}
+                          className="mt-2 inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:scale-105"
+                        >
                           Apply Now
                         </button>
                       </div>
@@ -342,6 +305,7 @@ const CandidateDashboard = () => {
                 ),
               )}
             </div>
+
             <div className="mt-4">
               <Link
                 to={"/candidate/jobs"}

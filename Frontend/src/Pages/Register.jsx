@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../api/axios.jsx";
+import { useAppContext } from "../context/AppProvider.jsx";
 
-const Register = ({ setIsAuthenticated, setUserRole }) => {
+const Register = () => {
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -16,7 +17,8 @@ const Register = ({ setIsAuthenticated, setUserRole }) => {
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const navigate = useNavigate();
+
+  const { HIREFLOWLOGO, navigate } = useAppContext();
 
   const { firstName, lastName, email, password, confirmPassword, accountType } =
     formData;
@@ -71,7 +73,7 @@ const Register = ({ setIsAuthenticated, setUserRole }) => {
   };
 
   return (
-    <div className="min-h-screen flex p-3 bg-white dark:bg-black">
+    <div className="flex p-3 bg-white dark:bg-black">
       {/* Left Side - Register Form with Enhanced AOS */}
       <div
         data-aos="slide-left"
@@ -88,20 +90,8 @@ const Register = ({ setIsAuthenticated, setUserRole }) => {
           >
             <div className="flex justify-center items-center">
               <div className="shrink-0">
-                <div className="h-12 w-12 rounded-lg bg-indigo-600 flex items-center justify-center">
-                  <svg
-                    className="h-8 w-8 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-                    />
-                  </svg>
+                <div className="h-12 w-12 rounded-lg  flex items-center justify-center">
+                  <img src={HIREFLOWLOGO} alt="logo" className="rounded" />
                 </div>
               </div>
               <div className="ml-3 text-left">
@@ -346,7 +336,7 @@ const Register = ({ setIsAuthenticated, setUserRole }) => {
 
             <div
               data-aos="fade-up"
-              data-aos-delay="600"
+              data-aos-delay="400"
               data-aos-duration="400"
             >
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
@@ -402,7 +392,7 @@ const Register = ({ setIsAuthenticated, setUserRole }) => {
                         d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
                       />
                     </svg>
-                    Employer
+                    Recruiter
                   </span>
                 </label>
               </div>
@@ -410,8 +400,8 @@ const Register = ({ setIsAuthenticated, setUserRole }) => {
 
             <div
               data-aos="fade-up"
-              data-aos-delay="800"
-              data-aos-duration="400"
+              data-aos-delay="200"
+              data-aos-duration="200"
               className="flex items-start"
             >
               <input
@@ -444,7 +434,7 @@ const Register = ({ setIsAuthenticated, setUserRole }) => {
 
             <div
               data-aos="zoom-in"
-              data-aos-delay="1000"
+              data-aos-delay="600"
               data-aos-duration="600"
             >
               <button
@@ -485,7 +475,7 @@ const Register = ({ setIsAuthenticated, setUserRole }) => {
 
           <div
             data-aos="fade-up"
-            data-aos-delay="1100"
+            data-aos-delay="400"
             data-aos-duration="400"
             className="mt-6"
           >
@@ -576,30 +566,6 @@ const Register = ({ setIsAuthenticated, setUserRole }) => {
             </p>
 
             <div className="space-y-4">
-              <div
-                data-aos="slide-right"
-                data-aos-delay="400"
-                data-aos-duration="600"
-                className="flex items-center transform transition-transform hover:translate-x-2"
-              >
-                <div className="shrink-0 w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
-                  <svg
-                    className="h-6 w-6 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                </div>
-                <span className="ml-4 text-lg">AI-Powered Screening</span>
-              </div>
-
               <div
                 data-aos="slide-right"
                 data-aos-delay="500"
@@ -706,28 +672,6 @@ const Register = ({ setIsAuthenticated, setUserRole }) => {
           </div>
         </div>
       </div>
-
-      <style>{`
-        @keyframes shake {
-          0%,
-          100% {
-            transform: translateX(0);
-          }
-          10%,
-          30%,
-          50%,
-          70%,
-          90% {
-            transform: translateX(-5px);
-          }
-          20%,
-          40%,
-          60%,
-          80% {
-            transform: translateX(5px);
-          }
-        }
-      `}</style>
     </div>
   );
 };

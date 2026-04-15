@@ -29,7 +29,7 @@ const Company = () => {
                 }
             `}</style>
 
-      <div className="overflow-hidden   p-3 w-full  relative mx-2  select-none">
+      <div className="overflow-hidden p-3 w-full  relative mx-2  select-none">
         <div className="absolute left-0 top-0 h-full w-20 z-10 pointer-events-none " />
         <div
           className="marquee-inner h-auto flex will-change-transform w-full"

@@ -3,14 +3,13 @@ import React from "react";
 const NotFound = () => {
   return (
     <>
-      <div className="dark:bg-black bg-white text-black dark:text-white  rounded-2xl animate-pulse relative justify-items-center-safe">
-        <p className="dark:bg-black bg-white text-black dark:text-white text-4xl ">
+      <div className="relative top-50 text-center ">
+        <p className="text-5xl">🔍</p>
+        <p className=" animate-pulse  text-black dark:text-white text-4xl ">
           {" "}
-          Not Found !
+          Page Not Found!
         </p>
       </div>
-
-      <div></div>
     </>
   );
 };

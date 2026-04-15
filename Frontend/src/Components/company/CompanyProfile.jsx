@@ -125,7 +125,7 @@ const CompanyProfile = () => {
   }
 
   return (
-    <div className="select-none container mt-8">
+    <div className="select-none mt-8">
       {/* Alert/Message Box */}
       {message.text && (
         <div
@@ -140,7 +140,10 @@ const CompanyProfile = () => {
         </div>
       )}
 
-      <div className="bg-white lg:h-167.5 h-195    dark:bg-gray-800 p-4 shadow-md lg:p-6">
+      <div
+        className="bg-white lg:h-167.5 h-195
+          dark:bg-gray-800 p-4 shadow-md lg:p-6"
+      >
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
             Company Profile

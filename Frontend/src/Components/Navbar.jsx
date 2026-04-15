@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { useAppContext } from "../context/AppProvider";
 
 const Navbar = ({
@@ -10,20 +10,18 @@ const Navbar = ({
   setIsAuthenticated,
   setUserRole,
 }) => {
-  const { navigate, companydata } = useAppContext();
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const { navigate, companydata, candidate } = useAppContext();
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const notification = [1];
+  // const notification = [1]; //set app.jsx dynamically process
 
   const user = JSON.parse(localStorage.getItem("user"));
 
   const Logout = () => {
     if (window.confirm("Are you sure you want to logout?")) {
       localStorage.clear();
-
       setIsAuthenticated(false);
       setUserRole(null);
-      navigate("/");
+      navigate("/"); //landing page
     }
   };
 
@@ -33,6 +31,7 @@ const Navbar = ({
         <div className="flex items-center">
           {userRole !== "admin" && (
             <button
+              type="button"
               onClick={() => setShowSidebar(!showSidebar)}
               className="p-2 rounded-md text-gray-600 dark:text-gray-300 dark:hover:bg-gray-800 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
             >
@@ -53,43 +52,16 @@ const Navbar = ({
             </button>
           )}
           <Link
-            to="/"
+            to={`/${userRole}`}
             className="ml-2 sm:ml-4 text-lg sm:text-xl font-bold text-blue-600 dark:text-blue-400"
           >
             {titleName}
           </Link>
         </div>
 
-        {/* Desktop Search Bar */}
-        <div className="hidden md:flex items-center flex-1 max-w-md mx-4">
-          <div className="relative w-full">
-            <input
-              type="text"
-              placeholder="Search..."
-              onFocus={() => setIsSearchFocused(true)}
-              onBlur={() => setIsSearchFocused(false)}
-              className={`w-full px-4 py-2 border ${isSearchFocused ? "ring-2 ring-blue-500 dark:ring-blue-400" : ""} border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400`}
-            />
-            <svg
-              className="absolute right-3 top-2.5 w-5 h-5 text-gray-400 dark:text-gray-500"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              ></path>
-            </svg>
-          </div>
-        </div>
-
         {/* Desktop Navigation Items */}
         <div className="hidden lg:flex items-center space-x-4">
-          <button
+          {/* <button
             onClick={() => navigate(`${userRole}/chat`)}
             className="p-2 rounded-full text-gray-600 dark:text-gray-300 dark:hover:bg-gray-800 hover:bg-gray-100 relative focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
           >
@@ -112,22 +84,24 @@ const Navbar = ({
                 {notification.length}
               </span>
             )}
-          </button>
+          </button> */}
 
           <div className="flex  items-center">
             <div
               onClick={() => navigate(`/${userRole}/profile`)}
-              className="w-9 h-9 rounded-full bg-blue-500 flex items-center justify-center text-white "
+              className="w-9 h-9 rounded-full  flex items-center justify-center text-white "
             >
               {userRole !== "company" ? (
-                <button className="cursor-pointer">
-                  {user.name.charAt(0).toUpperCase()}
-                </button>
+                <img
+                  src={`http://localhost:8000/${candidate?.profile_image}`}
+                  className="w-full object-cover h-full rounded-full cursor-pointer"
+                  alt="logo"
+                />
               ) : (
                 <img
                   src={`http://localhost:8000/uploads/${companydata?.company?.logo}`}
                   className="w-full object-cover h-full rounded-full cursor-pointer"
-                  alt=""
+                  alt="logo"
                 />
               )}
             </div>
@@ -135,13 +109,14 @@ const Navbar = ({
               <p className="capitalize text-sm font-medium text-gray-700 dark:text-gray-200">
                 {user.name}
               </p>
-              {/* <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">
-                {userRole}
-              </p> */}
+              <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">
+                {/* {user} */}
+              </p>
             </div>
           </div>
 
           <button
+            type="button"
             onClick={Logout}
             className="px-4 py-2 text-sm font-medium bg-gray-100 text-gray-700 dark:text-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 hover:bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
           >
@@ -152,6 +127,7 @@ const Navbar = ({
         {/* Mobile Menu Button */}
 
         <button
+          type="button"
           onClick={() => setShowMobileMenu(!showMobileMenu)}
           className="lg:hidden p-2 rounded-md text-gray-600 dark:text-gray-300 dark:hover:bg-gray-800 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
         >
@@ -213,7 +189,7 @@ const Navbar = ({
                     <img
                       src={`http://localhost:8000/uploads/${companydata?.company?.logo}`}
                       className="w-full object-cover h-full rounded-full cursor-pointer"
-                      alt=""
+                      alt="logo"
                     />
                   )}
                 </div>

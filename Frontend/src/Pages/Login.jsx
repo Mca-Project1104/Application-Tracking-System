@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import api from "../api/axios.jsx";
-import { recruiterFlow } from "../assets/dummydata.js";
+import hireflow from "../assets/HIRE_FLOW.png";
+import { useAppContext } from "../context/AppProvider.jsx";
 
 const Login = ({ setIsAuthenticated, setUserRole }) => {
   const [formData, setFormData] = useState({
@@ -12,12 +13,10 @@ const Login = ({ setIsAuthenticated, setUserRole }) => {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [isActive, setIsActive] = useState("login");
-
-  const navigate = useNavigate();
-
+  const { navigate } = useAppContext();
   const { email, password, newpassword } = formData;
+  const token = localStorage.getItem("token");
 
   const onChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -36,8 +35,6 @@ const Login = ({ setIsAuthenticated, setUserRole }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-
-    const token = localStorage.getItem("token");
 
     if (loading) return;
 
@@ -78,11 +75,16 @@ const Login = ({ setIsAuthenticated, setUserRole }) => {
 
           if (response.status === 200) {
             const { accessToken, user } = response.data;
-            localStorage.setItem("token", accessToken);
+
+            if (user.accountType === "admin") {
+              localStorage.setItem("admin_token", accessToken);
+            } else {
+              localStorage.setItem("token", accessToken);
+              setIsAuthenticated(true);
+              setUserRole(user.accountType);
+            }
             localStorage.setItem("userRole", user.accountType);
             localStorage.setItem("user", JSON.stringify(user));
-            setIsAuthenticated(true);
-            setUserRole(user.accountType);
 
             const role = user.accountType;
             navigate(
@@ -235,7 +237,7 @@ const Login = ({ setIsAuthenticated, setUserRole }) => {
           aria-label="Close page"
         >
           <svg
-            className="h-6 w-6 text-gray-600 duration-500 hover:rotate-50 dark:text-gray-300  dark:group-hover:text-white transition-colors"
+            className="h-6 w-6 text-gray-600  hover:scale-95 duration-200 dark:text-gray-300  dark:group-hover:text-white transition-colors"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -258,20 +260,12 @@ const Login = ({ setIsAuthenticated, setUserRole }) => {
           >
             <div className="flex justify-center items-center">
               <div className="shrink-0">
-                <div className="h-12 w-12 rounded-lg bg-indigo-600 flex items-center justify-center">
-                  <svg
-                    className="h-8 w-8 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-                    />
-                  </svg>
+                <div className="h-12 w-12 rounded-lg  flex items-center justify-center">
+                  <img
+                    src={hireflow}
+                    alt="logo"
+                    className="rounded object-fill"
+                  />
                 </div>
               </div>
               <div className="ml-3 text-left">
@@ -365,7 +359,7 @@ const Login = ({ setIsAuthenticated, setUserRole }) => {
                 <input
                   id="password"
                   name="password"
-                  type={showPassword ? "text" : "password"}
+                  type="password"
                   autoComplete="current-password"
                   required
                   className="appearance-none block w-full px-3 py-2  border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-800 dark:text-white"
@@ -386,7 +380,7 @@ const Login = ({ setIsAuthenticated, setUserRole }) => {
                       <input
                         id="password"
                         name="newpassword"
-                        type={showPassword ? "text" : "password"}
+                        type="password"
                         autoComplete="current-password"
                         required
                         className="appearance-none block w-full px-3 py-2  border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-800 dark:text-white"
@@ -536,28 +530,6 @@ const Login = ({ setIsAuthenticated, setUserRole }) => {
           </div>
         </div>
       </div>
-
-      <style>{`
-        @keyframes shake {
-          0%,
-          100% {
-            transform: translateX(0);
-          }
-          10%,
-          30%,
-          50%,
-          70%,  
-          90% {
-            transform: translateX(-5px);
-          }
-          20%,
-          40%,
-          60%,
-          80% {
-            transform: translateX(5px);
-          }
-        }
-      `}</style>
     </div>
   );
 };
