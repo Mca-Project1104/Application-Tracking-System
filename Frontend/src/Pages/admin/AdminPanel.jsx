@@ -1,6 +1,6 @@
-import axios from "axios";
 import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { PLANS } from "../../assets/dummydata";
+import api from "../../api/axios";
 import {
   BarChart,
   Bar,
@@ -99,7 +99,7 @@ const AdminPanel = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [users, setUsers] = useState([]);
   const [company, setCompany] = useState([]);
-  const [usersdata, setUsersData] = useState({});
+  const [usersdata, setUsersData] = useState([]);
   const [totaljobs, setTotalJobs] = useState(null);
   const { HIREFLOWLOGO, currency, navigate } = useAppContext();
 
@@ -122,8 +122,9 @@ const AdminPanel = () => {
   useEffect(() => {
     const handlerUsers = async () => {
       try {
-        const res = await axios.get("/api/admin/allusers");
+        const res = await api.get("/api/admin/allusers");
         if (res.status === 200) {
+          console.log(res);
           setUsers(res.data.users);
           setUsersData(res.data);
         }
@@ -134,8 +135,9 @@ const AdminPanel = () => {
 
     const handlerCompany = async () => {
       try {
-        const response = await axios.get("/api/admin/allcompany");
+        const response = await api.get("/api/admin/allcompany");
         if (response.status === 200) {
+          console.log(response);
           setCompany(response.data.company);
           setTotalJobs(response.data.totalJobs);
         }
@@ -147,7 +149,7 @@ const AdminPanel = () => {
     const fetchSubscriptionData = async () => {
       // setSubsLoading(true);
       // try {
-      //   const response = await axios.get("/api/admin/subscriptions");
+      //   const response = await api.get("/api/admin/subscriptions");
       //   if (response.status === 200) {
       //     const enrichedCompanies = response.data.companies.map((comp) => ({
       //       ...comp,
@@ -219,12 +221,12 @@ const AdminPanel = () => {
         })),
       );
     }
-  }, [subsCompanies.length]);
+  }, [subsCompanies]);
 
   const handleUpgradePlan = useCallback(
     async (companyId, newPlan) => {
       try {
-        const response = await axios.post("/api/admin/subscription/change", {
+        const response = await api.post("/api/admin/subscription/change", {
           companyId,
           plan: newPlan,
         });
@@ -281,7 +283,7 @@ const AdminPanel = () => {
 
   const handleExtendSubscription = useCallback(async (companyId, days) => {
     // try {
-    //   const response = await axios.post("/api/admin/subscription/extend", {
+    //   const response = await api.post("/api/admin/subscription/extend", {
     //     companyId,
     //     days,
     //   });
@@ -311,7 +313,7 @@ const AdminPanel = () => {
 
   const handleResetJobs = useCallback(async (companyId) => {
     try {
-      const response = await axios.post("/api/admin/subscription/reset-jobs", {
+      const response = await api.post("/api/admin/subscription/reset-jobs", {
         companyId,
       });
 
@@ -367,7 +369,7 @@ const AdminPanel = () => {
       <div className="w-full">
         <div className="flex justify-between text-xs mb-1">
           <span className="text-gray-600 dark:text-gray-400">
-            {used} / {limit === -1 ? "∞" : limit} jobs
+            {user} / {limit === -1 ? "∞" : limit} jobs
           </span>
           <span
             className={`font-medium ${isOverLimit ? "text-red-600 dark:text-red-400" : "text-gray-600 dark:text-gray-400"}`}

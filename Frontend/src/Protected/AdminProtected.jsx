@@ -7,8 +7,11 @@ const AdminProtected = () => {
   const userRole = localStorage.getItem("userRole");
   const { navigate } = useAppContext();
 
+  console.log(userRole);
   if (userRole !== "admin") {
     navigate("/");
+  } else {
+    navigate("/admin");
   }
 
   return admin ? <Outlet /> : <Navigate to="/" replace />;

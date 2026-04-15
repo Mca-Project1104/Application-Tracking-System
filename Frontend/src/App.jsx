@@ -151,6 +151,7 @@ function App() {
     });
   }, []);
 
+
   const handleSetIsAuthenticated = useCallback((val) => {
     setIsAuthenticated(val);
   }, []);
@@ -421,8 +422,17 @@ function App() {
         )}
 
         {/* Admin */}
-        <Route element={<AdminProtected />}>
-          <Route path="/admin" element={<AdminPanel />} />
+        <Route element={<AdminProtected userRole={userRole} />}>
+          <Route
+            path="/admin"
+            element={
+              userRole === "admin" ? (
+                <AdminPanel />
+              ) : (
+                <Navigate to={"/"} replace />
+              )
+            }
+          />
         </Route>
       </Routes>
     </div>

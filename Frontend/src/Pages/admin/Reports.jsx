@@ -4,9 +4,7 @@ const Reports = () => {
   return (
     <section id="reports">
       <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-        <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-6">
-          Reports
-        </h2>
+      
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow duration-200">
             <h3 className="text-md font-medium text-gray-900 dark:text-white mb-2">

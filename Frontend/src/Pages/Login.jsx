@@ -90,9 +90,9 @@ const Login = ({ setIsAuthenticated, setUserRole }) => {
             navigate(
               role === "company"
                 ? "/company"
-                : role === "admin"
-                  ? "/admin"
-                  : "/candidate",
+                : role === "candidate"
+                  ? "/candidate"
+                  : "/admin",
             );
           }
         } catch (err) {

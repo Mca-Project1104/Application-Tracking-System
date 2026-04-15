@@ -15,9 +15,7 @@ const Users = ({ users }) => {
     <section id="users">
       <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-lg font-medium text-gray-900 dark:text-white">
-            User Management
-          </h2>
+       
           <select
             name=""
             id=""
