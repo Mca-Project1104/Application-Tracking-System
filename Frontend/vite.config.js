@@ -12,11 +12,6 @@ export default defineConfig({
         target: "http://localhost:8000",
         changeOrigin: true,
       },
-      // You can also proxy your API calls for consistency
-      "/api": {
-        target: "http://localhost:8000",
-        changeOrigin: true,
-      },
     },
   },
 });
