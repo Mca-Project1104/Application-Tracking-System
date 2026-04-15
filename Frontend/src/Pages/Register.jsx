@@ -27,6 +27,16 @@ const Register = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handleClose = () => {
+    // If the page was opened as a popup/modal
+    if (window.opener) {
+      window.close();
+    } else {
+      // Otherwise navigate back or to home
+      navigate("/");
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -73,14 +83,34 @@ const Register = () => {
   };
 
   return (
-    <div className="flex p-3 bg-white dark:bg-black">
+    <div className="min-h-screen p-3 flex bg-white dark:bg-black relative">
       {/* Left Side - Register Form with Enhanced AOS */}
       <div
         data-aos="slide-left"
         data-aos-duration="1000"
         data-aos-easing="ease-out-cubic"
-        className="w-full lg:w-1/2 flex items-center justify-center p-2 lg:p-8  rounded-l-2xl rounded-r-0  bg-gray-200 dark:bg-gray-900"
+        className="w-full lg:w-1/2 flex items-center justify-center p-2 lg:p-8  rounded-l-2xl bg-gray-200 dark:bg-gray-900"
       >
+        <button
+          onClick={handleClose}
+          className="absolute top-4 left-4 z-50 p-2 rounded-full  dark:bg-gray-800/90 backdrop-blur-sm shadow-lg  transition-all duration-200 hover:scale-110 group"
+          aria-label="Close page"
+        >
+          <svg
+            className="h-6 w-6 text-gray-600  hover:scale-95 duration-200 dark:text-gray-300  dark:group-hover:text-white transition-colors"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+          <span className="sr-only">Close</span>
+        </button>
         <div className="w-full">
           <div
             data-aos="zoom-in"
