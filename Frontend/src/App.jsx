@@ -117,10 +117,12 @@ function App() {
   const { theme, setTheme, navigate } = useAppContext();
 
   const [isAuthenticated, setIsAuthenticated] = useState(
-    !!localStorage.getItem("token"),
+    !!localStorage.getItem("token") || !!localStorage.getItem("admin_token"),
   );
 
   const [userRole, setUserRole] = useState(() => {
+    if (localStorage.getItem("admin_token")) return "admin";
+
     const user = JSON.parse(localStorage.getItem("user"));
     return user?.accountType || null;
   });
@@ -150,7 +152,6 @@ function App() {
       once: false,
     });
   }, []);
-
 
   const handleSetIsAuthenticated = useCallback((val) => {
     setIsAuthenticated(val);
@@ -200,8 +201,10 @@ function App() {
                   <Navigate to="/candidate" />
                 ) : userRole === "company" ? (
                   <Navigate to="/company" />
-                ) : (
+                ) : userRole === "admin" ? (
                   <Navigate to="/admin" />
+                ) : (
+                  <Navigate to="/login" />
                 )
               }
             />
@@ -418,22 +421,12 @@ function App() {
             />
 
             <Route path="*" element={<NotFound />} />
+            {/* Admin */}
+            <Route element={<AdminProtected userRole={userRole} />}>
+              <Route path="/admin" element={<AdminPanel />} />
+            </Route>
           </>
         )}
-
-        {/* Admin */}
-        <Route element={<AdminProtected userRole={userRole} />}>
-          <Route
-            path="/admin"
-            element={
-              userRole === "admin" ? (
-                <AdminPanel />
-              ) : (
-                <Navigate to={"/"} replace />
-              )
-            }
-          />
-        </Route>
       </Routes>
     </div>
   );

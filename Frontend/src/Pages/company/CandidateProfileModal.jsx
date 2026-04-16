@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import api from "../../api/axios.jsx";
 
-// ─── MAIN MODAL COMPONENT ────────────────────────────────────
 const CandidateProfileModal = ({
   candidate,
   isOpen,
@@ -11,6 +10,7 @@ const CandidateProfileModal = ({
   const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(false);
   const [downloadingResume, setDownloadingResume] = useState(false);
+  const [updateapplication, setUpdateApplication] = useState({});
 
   // Schedule state
   const [scheduleForm, setScheduleForm] = useState({
@@ -23,6 +23,7 @@ const CandidateProfileModal = ({
   });
   const [interviews, setInterviews] = useState([]);
   const [showScheduleForm, setShowScheduleForm] = useState(false);
+  console.log(candidate);
 
   // Feedback state
   const [feedbackList, setFeedbackList] = useState([]);
@@ -33,8 +34,6 @@ const CandidateProfileModal = ({
     recommendation: "",
   });
   const [showFeedbackForm, setShowFeedbackForm] = useState(false);
-
-  console.log(candidate);
 
   // Process state
   const [processStages, setProcessStages] = useState([]);
@@ -219,7 +218,14 @@ const CandidateProfileModal = ({
     setLoading(true);
     try {
       // Replace with actual API call
-      // await api.patch(`/api/applications/${candidate.id}/status`, { status: newStatus }, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await api.patch(
+        `/api/applications/applications/${candidate.id}/status`,
+        { newStatus: newStatus },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+
+      console.log(res);
+      // setUpdateApplication(res.data);
 
       if (onStatusChange) {
         onStatusChange(candidate.id, newStatus);
@@ -286,9 +292,9 @@ const CandidateProfileModal = ({
               <div className="flex items-center gap-3 sm:gap-4">
                 {/* Avatar */}
                 <div className="relative">
-                  {candidate.avatar ? (
+                  {candidate.profile_image ? (
                     <img
-                      src={candidate.avatar}
+                      src={`http://localhost:8000/${candidate.profile_image}`}
                       alt={candidate.name}
                       className="h-14 w-14 sm:h-16 sm:w-16 rounded-xl object-cover ring-2 ring-gray-200 dark:ring-gray-700"
                       onError={(e) => {
@@ -631,175 +637,154 @@ const CandidateProfileModal = ({
                 </div>
               </div>
             )}
+            <div className="relative">
+              {activeTab === "process" && (
+                <div className="space-y-6">
+                  {/* Stage Timeline */}
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
+                      Recruitment Pipeline
+                    </h3>
+                    <div className="relative">
+                      {/* Progress line */}
+                      <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700"></div>
+                      <div
+                        className="absolute left-5 top-0 w-0.5 bg-blue-500 transition-all duration-500"
+                        style={{
+                          height: `${(getCurrentStageIndex() / (stages.length - 1)) * 100}%`,
+                        }}
+                      ></div>
 
-            {/* ═══ PROCESS TAB ═══ */}
-            {activeTab === "process" && (
-              <div className="space-y-6">
-                {/* Stage Timeline */}
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
-                    Recruitment Pipeline
-                  </h3>
-                  <div className="relative">
-                    {/* Progress line */}
-                    <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700"></div>
-                    <div
-                      className="absolute left-5 top-0 w-0.5 bg-blue-500 transition-all duration-500"
-                      style={{
-                        height: `${(getCurrentStageIndex() / (stages.length - 1)) * 100}%`,
-                      }}
-                    ></div>
+                      <div className="space-y-1">
+                        {stages.map((stage, index) => {
+                          const isCompleted =
+                            index <= getCurrentStageIndex() &&
+                            stage.id !== "rejected";
+                          const isCurrent =
+                            stage.id === candidate.originalStatus;
+                          const isRejected =
+                            stage.id === "rejected" &&
+                            candidate.originalStatus === "rejected";
 
-                    <div className="space-y-1">
-                      {stages.map((stage, index) => {
-                        const isCompleted =
-                          index <= getCurrentStageIndex() &&
-                          stage.id !== "rejected";
-                        const isCurrent = stage.id === candidate.originalStatus;
-                        const isRejected =
-                          stage.id === "rejected" &&
-                          candidate.originalStatus === "rejected";
-
-                        return (
-                          <div
-                            key={stage.id}
-                            className="relative flex items-center gap-4 py-3 px-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group"
-                          >
-                            {/* Stage dot */}
+                          return (
                             <div
-                              className={`relative z-10 w-10 h-10 rounded-full flex items-center justify-center text-lg transition-all shrink-0 ${
-                                isCurrent
-                                  ? "bg-blue-600 dark:bg-blue-500 ring-4 ring-blue-100 dark:ring-blue-900/50 scale-110"
-                                  : isCompleted
-                                    ? "bg-blue-500 text-white"
-                                    : isRejected
-                                      ? "bg-red-500 text-white"
-                                      : "bg-gray-200 dark:bg-gray-700 text-gray-400"
-                              }`}
+                              key={stage.id}
+                              className="relative flex items-center gap-4 py-3 px-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group"
                             >
-                              {isCompleted && !isCurrent && !isRejected ? (
-                                <svg
-                                  className="w-5 h-5"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth="2"
-                                    d="M5 13l4 4L19 7"
-                                  />
-                                </svg>
-                              ) : (
-                                <span className="text-sm">{stage.icon}</span>
-                              )}
-                            </div>
-
-                            {/* Stage info */}
-                            <div className="flex-1 flex items-center justify-between min-w-0">
-                              <div>
-                                <p
-                                  className={`text-sm font-medium ${isCurrent ? "text-blue-600 dark:text-blue-400" : isCompleted ? "text-gray-900 dark:text-white" : "text-gray-500 dark:text-gray-400"}`}
-                                >
-                                  {stage.label}
-                                </p>
-                                {isCurrent && (
-                                  <p className="text-xs text-blue-500 dark:text-blue-400">
-                                    Current Stage
-                                  </p>
+                              {/* Stage dot */}
+                              <div
+                                className={`relative  w-10 h-10 rounded-full flex items-center justify-center text-lg transition-all shrink-0 ${
+                                  isCurrent
+                                    ? "bg-blue-600 dark:bg-blue-500 ring-4 ring-blue-100 dark:ring-blue-900/50 scale-110"
+                                    : isCompleted
+                                      ? "bg-blue-500 text-white"
+                                      : isRejected
+                                        ? "bg-red-500 text-white"
+                                        : "bg-gray-200 dark:bg-gray-700 text-gray-400"
+                                }`}
+                              >
+                                {isCompleted && !isCurrent && !isRejected ? (
+                                  <svg
+                                    className="w-5 h-5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth="2"
+                                      d="M5 13l4 4L19 7"
+                                    />
+                                  </svg>
+                                ) : (
+                                  <span className="text-sm">{stage.icon}</span>
                                 )}
                               </div>
 
-                              {/* Action buttons */}
-                              {stage.id !== "rejected" &&
-                                stage.id !== candidate.originalStatus &&
-                                index === getCurrentStageIndex() + 1 && (
-                                  <button
-                                    onClick={() => handleStatusUpdate(stage.id)}
-                                    disabled={loading}
-                                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-all shrink-0"
+                              {/* Stage info */}
+                              <div className="flex-1 flex items-center justify-between min-w-0">
+                                <div>
+                                  <p
+                                    className={`text-sm font-medium ${isCurrent ? "text-blue-600 dark:text-blue-400" : isCompleted ? "text-gray-900 dark:text-white" : "text-gray-500 dark:text-gray-400"}`}
                                   >
-                                    {loading ? (
-                                      <svg
-                                        className="w-3 h-3 animate-spin"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                      >
-                                        <circle
-                                          className="opacity-25"
-                                          cx="12"
-                                          cy="12"
-                                          r="10"
+                                    {stage.label}
+                                  </p>
+                                  {isCurrent && (
+                                    <p className="text-xs text-blue-500 dark:text-blue-400">
+                                      Current Stage
+                                    </p>
+                                  )}
+                                </div>
+
+                                {/* Action buttons */}
+                                {stage.id !== "rejected" &&
+                                  stage.id !== candidate.originalStatus &&
+                                  index === getCurrentStageIndex() + 1 && (
+                                    <button
+                                      onClick={() =>
+                                        handleStatusUpdate(stage.id)
+                                      }
+                                      disabled={loading}
+                                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-all shrink-0"
+                                    >
+                                      {loading ? (
+                                        <svg
+                                          className="w-3 h-3 animate-spin"
+                                          fill="none"
+                                          viewBox="0 0 24 24"
+                                        >
+                                          <circle
+                                            className="opacity-25"
+                                            cx="12"
+                                            cy="12"
+                                            r="10"
+                                            stroke="currentColor"
+                                            strokeWidth="4"
+                                          ></circle>
+                                          <path
+                                            className="opacity-75"
+                                            fill="currentColor"
+                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                                          ></path>
+                                        </svg>
+                                      ) : (
+                                        <svg
+                                          className="w-3 h-3"
+                                          fill="none"
                                           stroke="currentColor"
-                                          strokeWidth="4"
-                                        ></circle>
-                                        <path
-                                          className="opacity-75"
-                                          fill="currentColor"
-                                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                                        ></path>
-                                      </svg>
-                                    ) : (
-                                      <svg
-                                        className="w-3 h-3"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                      >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth="2"
-                                          d="M13 7l5 5m0 0l-5 5m5-5H6"
-                                        />
-                                      </svg>
-                                    )}
-                                    Move Here
-                                  </button>
-                                )}
+                                          viewBox="0 0 24 24"
+                                        >
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth="2"
+                                            d="M13 7l5 5m0 0l-5 5m5-5H6"
+                                          />
+                                        </svg>
+                                      )}
+                                      Move Here
+                                    </button>
+                                  )}
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Quick Status Actions */}
-                <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
-                    Quick Actions
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {candidate.originalStatus !== "rejected" && (
-                      <button
-                        onClick={() => handleStatusUpdate("rejected")}
-                        disabled={loading}
-                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/30 disabled:opacity-50 transition-all"
-                      >
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
-                          />
-                        </svg>
-                        Reject Candidate
-                      </button>
-                    )}
-                    {candidate.originalStatus !== "hired" &&
-                      candidate.originalStatus !== "rejected" && (
+                  {/* Quick Status Actions */}
+                  <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
+                      Quick Actions
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      {candidate.originalStatus !== "rejected" && (
                         <button
-                          onClick={() => handleStatusUpdate("offer")}
+                          onClick={() => handleStatusUpdate("rejected")}
                           disabled={loading}
-                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 hover:bg-amber-100 dark:hover:bg-amber-900/30 disabled:opacity-50 transition-all"
+                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/30 disabled:opacity-50 transition-all"
                         >
                           <svg
                             className="w-4 h-4"
@@ -811,39 +796,64 @@ const CandidateProfileModal = ({
                               strokeLinecap="round"
                               strokeLinejoin="round"
                               strokeWidth="2"
-                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                              d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
                             />
                           </svg>
-                          Send Offer
+                          Reject Candidate
                         </button>
                       )}
-                    {(candidate.originalStatus === "offer" ||
-                      candidate.originalStatus === "interview") && (
-                      <button
-                        onClick={() => handleStatusUpdate("hired")}
-                        disabled={loading}
-                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/30 disabled:opacity-50 transition-all"
-                      >
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
+                      {candidate.originalStatus !== "hired" &&
+                        candidate.originalStatus !== "rejected" && (
+                          <button
+                            onClick={() => handleStatusUpdate("offer")}
+                            disabled={loading}
+                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 hover:bg-amber-100 dark:hover:bg-amber-900/30 disabled:opacity-50 transition-all"
+                          >
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                              />
+                            </svg>
+                            Send Offer
+                          </button>
+                        )}
+                      {(candidate.originalStatus === "offer" ||
+                        candidate.originalStatus === "interview") && (
+                        <button
+                          onClick={() => handleStatusUpdate("hired")}
+                          disabled={loading}
+                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/30 disabled:opacity-50 transition-all"
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
-                        Mark as Hired
-                      </button>
-                    )}
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M5 13l4 4L19 7"
+                            />
+                          </svg>
+                          Mark as Hired
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
+            {/* ═══ PROCESS TAB ═══ */}
 
             {/* ═══ INTERVIEWS TAB ═══ */}
             {activeTab === "interviews" && (
@@ -1384,28 +1394,22 @@ const CandidateProfileModal = ({
             {/* ═══ RESUME TAB ═══ */}
             {activeTab === "resume" && (
               <div className="space-y-6">
-                <div className="flex flex-col items-center justify-center py-8 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl">
-                  <div className="w-20 h-20 rounded-2xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center mb-4">
-                    <svg
-                      className="w-10 h-10 text-red-500"
-                      fill="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM6 20V4h5v7h7v9H6z" />
-                      <path d="M8 12h8v1.5H8zm0 3h8v1.5H8z" />
-                    </svg>
+                {/* Header / Actions Toolbar */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                      Resume Preview
+                    </h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {candidate.name}
+                    </p>
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
-                    Resume Available
-                  </h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                    Download or preview the candidate's resume
-                  </p>
+
                   <div className="flex gap-3">
                     <button
                       onClick={handleDownloadResume}
                       disabled={downloadingResume}
-                      className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 transition-all shadow-md shadow-blue-200 dark:shadow-blue-900/30"
+                      className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 transition-all shadow-md shadow-blue-200 dark:shadow-blue-900/30"
                     >
                       {downloadingResume ? (
                         <svg
@@ -1442,7 +1446,7 @@ const CandidateProfileModal = ({
                           />
                         </svg>
                       )}
-                      Download PDF
+                      Download
                     </button>
                     <button
                       onClick={() => {
@@ -1452,7 +1456,7 @@ const CandidateProfileModal = ({
                           "_blank",
                         );
                       }}
-                      className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
+                      className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
                     >
                       <svg
                         className="w-5 h-5"
@@ -1464,21 +1468,43 @@ const CandidateProfileModal = ({
                           strokeLinecap="round"
                           strokeLinejoin="round"
                           strokeWidth="2"
-                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                        />
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                          d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
                         />
                       </svg>
-                      Preview
+                      Open New Tab
                     </button>
                   </div>
                 </div>
 
-                {/* Resume Details */}
+                <div className="relative h-100  bg-gray-100 dark:bg-gray-900/80 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-inner">
+                  {/* used for  view pdf  */}
+                  {candidate.resumeUrl ? (
+                    <embed
+                      className="w-full h-full"
+                      src={`http://localhost:8000/${candidate.resumeUrl}#toolbar=0&navpanes=0&scrollbar=1`}
+                      type="application/pdf"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400 dark:text-gray-600">
+                      <svg
+                        className="w-16 h-16 mb-4 opacity-50"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        />
+                      </svg>
+                      <p className="text-sm font-medium">No resume uploaded</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Resume Details / Stats */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-center">
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">

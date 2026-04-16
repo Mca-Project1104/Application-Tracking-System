@@ -105,7 +105,7 @@ const VerifyEmail = () => {
   const handleResend = async () => {
     try {
       setLoading(true);
-      await api.post("/api/user/resend-verification", { email });
+      await api.post("/api/user/resend", { email });
       setResendTimer(60);
       setCanResend(false);
       setError("");

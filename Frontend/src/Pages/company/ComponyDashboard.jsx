@@ -26,13 +26,10 @@ const CompanyDashboard = () => {
           },
         });
 
-        if (response.status == 200) {
-          console.log(response.data);
-          setStats(response?.data?.stats);
-          setRecentApplications(response?.data?.recentApplications);
-          setPipelineStages(response?.data?.pipeline);
-          setJobPostings(response?.data?.jobs);
-        }
+        setStats(response?.data?.stats);
+        setRecentApplications(response?.data?.recentApplications);
+        setPipelineStages(response?.data?.pipeline);
+        setJobPostings(response?.data?.jobs);
         setLoading(false);
       } catch (error) {
         console.log(error?.response?.data?.message);
@@ -134,7 +131,7 @@ const CompanyDashboard = () => {
                 {recentapplications.map((app) => (
                   <div
                     key={app.id}
-                    className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200 cursor-pointer"
+                    className={`flex items-center justify-between p-3 rounded-lg  hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200 cursor-pointer`}
                   >
                     <div className="flex items-center space-x-4">
                       <div className="shrink-0">
@@ -158,9 +155,11 @@ const CompanyDashboard = () => {
                         </p>
                       </div>
                     </div>
-                    <div>
+                    <div
+                      className={`rounded ${app.status === "hired" ? "bg-green-200" : "bg-gray-400"}`}
+                    >
                       <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${app.statusColor}`}
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold capitalize ${app.status === "hired" ? "text-green-800" : ""}`}
                       >
                         {app.status}
                       </span>
@@ -298,7 +297,7 @@ const CompanyDashboard = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${job.statusColor}`}
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${job.status}`}
                       >
                         {job.status}
                       </span>

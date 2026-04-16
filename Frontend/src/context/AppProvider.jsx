@@ -28,7 +28,7 @@ export const AppProvider = ({ children }) => {
   //  Jobs initialized as empty array (NOT undefined)
   const [jobs, setJobs] = useState([]);
 
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState({});
   const [candidate, setCandidate] = useState(null); // ✅ null instead of {}
   const [applications, setApplications] = useState([]);
   const [companydata, setCompanyData] = useState(null);
@@ -41,15 +41,12 @@ export const AppProvider = ({ children }) => {
 
   // Load user from localStorage (sync)
   useEffect(() => {
-    if (token) {
-      try {
-        const userdata = JSON.parse(localStorage.getItem("user"));
-        setUser(userdata);
-      } catch {
-        setUser(null);
-      }
-    }
-  }, [token]);
+    const token = localStorage.getItem("admin_token" || "token");
+    if (!token) return;
+
+    const userdata = JSON.parse(localStorage.getItem("user"));
+    setUser(userdata);
+  }, []);
 
   //  Fetch Jobs - FIXED dependency array
   const fetchJobs = useCallback(async () => {

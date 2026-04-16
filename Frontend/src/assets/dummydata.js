@@ -533,7 +533,7 @@ export const PLANS = {
   },
   basic: {
     name: "Basic",
-    price: 29,
+    price: 199,
     jobLimit: 15,
     features: [
       "Up to 15 job postings",
@@ -552,7 +552,7 @@ export const PLANS = {
   },
   pro: {
     name: "Pro",
-    price: 79,
+    price: 299,
     jobLimit: 50,
     features: [
       "Up to 50 job postings",
@@ -572,7 +572,7 @@ export const PLANS = {
   },
   enterprise: {
     name: "Enterprise",
-    price: 199,
+    price: 799,
     jobLimit: -1, // unlimited
     features: [
       "Unlimited job postings",
@@ -615,7 +615,7 @@ export const pricingPlans = [
   {
     name: "Pro",
     subtitle: "For growing companies",
-    price: { monthly: 299, yearly: 24 },
+    price: { monthly: 299, yearly: 240 },
     icon: "⚡",
     color: "from-blue-600 to-indigo-600",
     borderColor: "border-blue-200 dark:border-blue-800",
@@ -634,7 +634,7 @@ export const pricingPlans = [
   {
     name: "Enterprise",
     subtitle: "For large organizations",
-    price: { monthly: 799, yearly: 66 },
+    price: { monthly: 799, yearly: 639 },
     icon: "🏢",
     color: "from-amber-500 to-orange-600",
     borderColor: "border-amber-200 dark:border-amber-800",

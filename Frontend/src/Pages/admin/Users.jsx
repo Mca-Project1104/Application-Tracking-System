@@ -11,11 +11,11 @@ const Users = ({ users }) => {
   }, []);
   const heading = ["Profile", "Name", "Email", "Role", "Status", "Action"];
 
+  console.log(users);
   return (
     <section id="users">
       <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
         <div className="flex justify-between items-center mb-6">
-       
           <select
             name=""
             id=""
@@ -55,7 +55,7 @@ const Users = ({ users }) => {
                   <tr key={i}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
                       <img
-                        src={`http://localhost:8000/${istype === "candidate" ? user.candidate.profile_image : `uploads/${user?.company?.logo}`}`}
+                        src={`http://localhost:8000/${istype === "candidate" ? user?.candidate?.profile_image : `uploads/${user?.company?.logo}`}`}
                         alt="logo"
                         className="w-10 h-10 rounded-full object-cover"
                       />

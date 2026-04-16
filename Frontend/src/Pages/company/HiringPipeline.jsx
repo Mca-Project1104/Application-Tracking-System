@@ -8,6 +8,7 @@ const HiringPipeline = () => {
   const [draggedCandidate, setDraggedCandidate] = useState(null);
   const [dragOverColumn, setDragOverColumn] = useState(null);
   const [stats, setStats] = useState({});
+  const [resumeanalysis, setResumeAnalysis] = useState({});
 
   const [recentApplications, setRecentApplications] = useState([]);
   const [pipelinestages, setPipelineStages] = useState([]);
@@ -234,6 +235,8 @@ const HiringPipeline = () => {
   if (loading) {
     return <Loading detail={"Loading pipeline data..."} />;
   }
+
+  console.log(recentApplications);
 
   return (
     <div className="w-380 bg-gray-50 dark:bg-gray-900 transition-colors mt-2 duration-200">
@@ -547,11 +550,11 @@ const HiringPipeline = () => {
           )}
         </div>
 
-        {/* ⭐ Pipeline Columns - uses filteredCandidates */}
+        {/*  Pipeline Columns - uses filteredCandidates */}
         <div className="flex gap-2 sm:gap-4 overflow-x-auto pb-6">
           {columns.map((column) => {
             const config = getStatusConfig(column.id);
-            // ⭐ Filter by selected job
+            // Filter by selected job
             const columnCandidates = filteredCandidates.filter(
               (candidate) => candidate.status === column.id,
             );
@@ -655,7 +658,7 @@ const HiringPipeline = () => {
                               </div>
                             </div>
                             <span
-                              className={`inline-flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full text-xs sm:text-sm font-bold ${getScoreBadgeColor(candidate.score)}`}
+                              className={`inline-flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full text-xs sm:text-sm font-bold ${getScoreBadgeColor(recentApplications?.score)}`}
                             >
                               {candidate.score || 0}
                             </span>

@@ -76,16 +76,21 @@ const Login = ({ setIsAuthenticated, setUserRole }) => {
           if (response.status === 200) {
             const { accessToken, user } = response.data;
 
+            // Store token
             if (user.accountType === "admin") {
               localStorage.setItem("admin_token", accessToken);
             } else {
               localStorage.setItem("token", accessToken);
-              setIsAuthenticated(true);
-              setUserRole(user.accountType);
             }
+
+            setIsAuthenticated(true);
+            setUserRole(user.accountType);
+
+            // Store user data
             localStorage.setItem("userRole", user.accountType);
             localStorage.setItem("user", JSON.stringify(user));
 
+            // Navigate
             const role = user.accountType;
             navigate(
               role === "company"

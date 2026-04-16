@@ -3,6 +3,7 @@ import Job from "../model/JobModel.js";
 import { Company } from "../model/CompanyModel.js";
 import Candidate from "../model/Candidate.js";
 import axios from "axios";
+import { application } from "express";
 
 // APPLY JOB
 export const applyJob = async (req, res) => {
@@ -150,5 +151,24 @@ export const getCompanyDashboard = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+//update status application
+export const manageStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { newStatus } = req.body;
+
+    console.log(newStatus);
+
+    const response = await Application.findByIdAndUpdate(id, {
+      $set: { status: newStatus },
+    });
+    console.log(response);
+
+    res.status(200).json({ message: "Update Successfully .", data: response });
+  } catch (error) {
+    res.status(500).json({ message: "server error " });
   }
 };

@@ -20,6 +20,7 @@ import Reports from "./Reports";
 import Users from "./Users";
 import { useAppContext } from "../../context/AppProvider";
 import Setting from "./Setting";
+import Loading from "../../Components/Loading/Loading";
 
 // Chart data - moved outside component to prevent re-creation
 const APPLICATION_TRENDS_DATA = [
@@ -94,18 +95,44 @@ const NAVIGATION = [
   },
 ];
 
+// Helper function to generate mock subscription data since backend doesn't have it
+const generateMockSubscription = (company) => {
+  const plans = ["free", "free", "free", "basic", "basic", "pro", "enterprise"];
+  const randomPlan = plans[Math.floor(Math.random() * plans.length)];
+  const jobLimit = PLANS[randomPlan]?.jobLimit || 3;
+  const jobsUsed =
+    company.jobsCount || Math.floor(Math.random() * (jobLimit + 2));
+  const startDate = new Date(
+    Date.now() - Math.random() * 60 * 24 * 60 * 60 * 1000,
+  );
+  const endDate =
+    randomPlan === "free"
+      ? null
+      : new Date(startDate.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+  return {
+    plan: randomPlan,
+    startDate: startDate.toISOString(),
+    endDate: endDate?.toISOString() || null,
+    jobLimit,
+    jobsUsed,
+    isExpired: endDate ? new Date(endDate) < new Date() : false,
+  };
+};
+
 const AdminPanel = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [users, setUsers] = useState([]);
   const [company, setCompany] = useState([]);
-  const [usersdata, setUsersData] = useState([]);
-  const [totaljobs, setTotalJobs] = useState(null);
+  const [usersdata, setUsersData] = useState({});
+  const [totaljobs, setTotalJobs] = useState(0);
+  const [loading, setLoading] = useState(true);
   const { HIREFLOWLOGO, currency, navigate } = useAppContext();
+  const { user } = useAppContext();
 
   // Subscription states
   const [subsCompanies, setSubsCompanies] = useState([]);
-  const [subsLoading, setSubsLoading] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -120,227 +147,134 @@ const AdminPanel = () => {
   });
 
   useEffect(() => {
-    const handlerUsers = async () => {
+    const fetchDashboardData = async () => {
+      setLoading(true);
       try {
-        const res = await api.get("/api/admin/allusers");
-        if (res.status === 200) {
-          console.log(res);
-          setUsers(res.data.users);
-          setUsersData(res.data);
+        // Fetch all users
+        const usersRes = await api.get("/api/admin/allusers");
+        if (usersRes.status === 200) {
+          setUsers(usersRes.data.users || []);
+          setUsersData(usersRes.data || {});
+        }
+
+        // Fetch all companies
+        const companyRes = await api.get("/api/admin/allcompany");
+        if (companyRes.status === 200) {
+          const companies = companyRes.data.company || [];
+          setCompany(companies);
+          setTotalJobs(companyRes.data.totalJobs || 0);
+
+          // Generate subscription data for companies (since backend doesn't have subscription system)
+          const enrichedCompanies = companies.map((comp) => {
+            const mockSub = generateMockSubscription(comp);
+            return {
+              ...comp,
+              currentPlan: mockSub.plan,
+              jobsUsed: mockSub.jobsUsed,
+              jobsLimit: mockSub.jobLimit,
+              subscriptionStart: mockSub.startDate,
+              subscriptionEnd: mockSub.endDate,
+              isExpired: mockSub.isExpired,
+            };
+          });
+          setSubsCompanies(enrichedCompanies);
+
+          // Calculate subscription stats
+          const stats = enrichedCompanies.reduce(
+            (acc, comp) => {
+              acc[comp.currentPlan] = (acc[comp.currentPlan] || 0) + 1;
+              if (comp.currentPlan !== "free") {
+                acc.totalRevenue += PLANS[comp.currentPlan]?.price || 0;
+              }
+              return acc;
+            },
+            { free: 0, basic: 0, pro: 0, enterprise: 0, totalRevenue: 0 },
+          );
+          setSubsStats(stats);
         }
       } catch (error) {
-        console.log(error);
+        console.error("Error fetching dashboard data:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
-    const handlerCompany = async () => {
-      try {
-        const response = await api.get("/api/admin/allcompany");
-        if (response.status === 200) {
-          console.log(response);
-          setCompany(response.data.company);
-          setTotalJobs(response.data.totalJobs);
-        }
-      } catch (error) {
-        console.log(error);
-      }
-    };
-
-    const fetchSubscriptionData = async () => {
-      // setSubsLoading(true);
-      // try {
-      //   const response = await api.get("/api/admin/subscriptions");
-      //   if (response.status === 200) {
-      //     const enrichedCompanies = response.data.companies.map((comp) => ({
-      //       ...comp,
-      //       currentPlan: comp.subscription?.plan || "free",
-      //       jobsUsed: comp.jobsCount || 0,
-      //       jobsLimit: PLANS[comp.subscription?.plan || "free"]?.jobLimit || 3,
-      //       subscriptionEnd: comp.subscription?.endDate || null,
-      //       subscriptionStart: comp.subscription?.startDate || null,
-      //       isExpired:
-      //         comp.subscription?.endDate &&
-      //         new Date(comp.subscription.endDate) < new Date(),
-      //     }));
-      //     setSubsCompanies(enrichedCompanies);
-      //     // Calculate stats
-      //     const stats = enrichedCompanies.reduce(
-      //       (acc, comp) => {
-      //         acc[comp.currentPlan]++;
-      //         if (comp.currentPlan !== "free") {
-      //           acc.totalRevenue += PLANS[comp.currentPlan]?.price || 0;
-      //         }
-      //         return acc;
-      //       },
-      //       { free: 0, basic: 0, pro: 0, enterprise: 0, totalRevenue: 0 },
-      //     );
-      //     setSubsStats(stats);
-      //   }
-      // } catch (error) {
-      //   console.log(error);
-      //   // Fallback: use company data with mock subscription info
-      //   const mockSubs = company.map((comp) => ({
-      //     ...comp,
-      //     currentPlan:
-      //       comp.subscription?.plan ||
-      //       ["free", "free", "free", "basic", "basic", "pro"][
-      //         Math.floor(Math.random() * 6)
-      //       ],
-      //     jobsUsed: comp.jobsCount || Math.floor(Math.random() * 20),
-      //     jobsLimit: 3,
-      //     subscriptionEnd: comp.subscription?.endDate || null,
-      //     subscriptionStart:
-      //       comp.subscription?.startDate || new Date().toISOString(),
-      //     isExpired: false,
-      //   }));
-      //   setSubsCompanies(mockSubs);
-      // } finally {
-      // setSubsLoading(false);
-      // }
-    };
-
-    handlerUsers();
-    handlerCompany();
-    // fetchSubscriptionData();
+    fetchDashboardData();
   }, []);
 
   const Logout = () => {
     if (window.confirm("Are you sure you want to logout?")) {
+      window.location.href = "/";
       localStorage.clear();
-      navigate("/"); //landing page
     }
   };
 
-  // Update job limits when plan changes - Fixed: add proper dependency
-  useEffect(() => {
-    if (subsCompanies.length > 0) {
-      setSubsCompanies((prev) =>
-        prev.map((comp) => ({
-          ...comp,
-          jobsLimit: PLANS[comp.currentPlan]?.jobLimit || 3,
-        })),
+  // Handle plan change (local only since backend doesn't support it)
+  const handleUpgradePlan = useCallback((companyId, newPlan) => {
+    setSubsCompanies((prev) => {
+      const updatedCompanies = prev.map((comp) =>
+        comp._id === companyId
+          ? {
+              ...comp,
+              currentPlan: newPlan,
+              jobsLimit: PLANS[newPlan]?.jobLimit || 3,
+              subscriptionStart: new Date().toISOString(),
+              subscriptionEnd:
+                newPlan === "free"
+                  ? null
+                  : new Date(
+                      Date.now() + 30 * 24 * 60 * 60 * 1000,
+                    ).toISOString(),
+              isExpired: false,
+            }
+          : comp,
       );
-    }
-  }, [subsCompanies]);
 
-  const handleUpgradePlan = useCallback(
-    async (companyId, newPlan) => {
-      try {
-        const response = await api.post("/api/admin/subscription/change", {
-          companyId,
-          plan: newPlan,
-        });
+      // Find the old plan of the updated company
+      const oldCompany = prev.find((c) => c._id === companyId);
+      const oldPlan = oldCompany?.currentPlan || "free";
 
-        if (response.status === 200) {
-          setSubsCompanies((prev) =>
-            prev.map((comp) =>
-              comp._id === companyId
-                ? {
-                    ...comp,
-                    currentPlan: newPlan,
-                    jobsLimit: PLANS[newPlan]?.jobLimit || 3,
-                    subscriptionStart: new Date().toISOString(),
-                    subscriptionEnd:
-                      newPlan === "free"
-                        ? null
-                        : new Date(
-                            Date.now() + 30 * 24 * 60 * 60 * 1000,
-                          ).toISOString(),
-                    isExpired: false,
-                  }
-                : comp,
-            ),
-          );
+      // Update stats
+      setSubsStats((prevStats) => ({
+        ...prevStats,
+        [oldPlan]: Math.max(0, (prevStats[oldPlan] || 0) - 1),
+        [newPlan]: (prevStats[newPlan] || 0) + 1,
+        totalRevenue:
+          prevStats.totalRevenue -
+          (PLANS[oldPlan]?.price || 0) +
+          (PLANS[newPlan]?.price || 0),
+      }));
 
-          // Update stats
-          const updatedCompany = subsCompanies.find((c) => c._id === companyId);
-          if (updatedCompany) {
-            setSubsStats((prev) => ({
-              ...prev,
-              [updatedCompany.currentPlan]: Math.max(
-                0,
-                prev[updatedCompany.currentPlan] - 1,
-              ),
-              [newPlan]: prev[newPlan] + 1,
-              totalRevenue:
-                prev.totalRevenue -
-                (PLANS[updatedCompany.currentPlan]?.price || 0) +
-                (PLANS[newPlan]?.price || 0),
-            }));
-          }
+      return updatedCompanies;
+    });
 
-          setShowPlanModal(false);
-          setSelectedCompany(null);
-          alert(`Successfully changed plan to ${PLANS[newPlan]?.name}`);
-        }
-      } catch (error) {
-        console.log(error);
-        alert("Failed to update plan. Please try again.");
-      }
-    },
-    [subsCompanies],
-  );
-
-  const handleExtendSubscription = useCallback(async (companyId, days) => {
-    // try {
-    //   const response = await api.post("/api/admin/subscription/extend", {
-    //     companyId,
-    //     days,
-    //   });
-    //   if (response.status === 200) {
-    //     setSubsCompanies((prev) =>
-    //       prev.map((comp) => {
-    //         if (comp._id === companyId && comp.subscriptionEnd) {
-    //           const newEnd = new Date(comp.subscriptionEnd);
-    //           newEnd.setDate(newEnd.getDate() + days);
-    //           return {
-    //             ...comp,
-    //             subscriptionEnd: newEnd.toISOString(),
-    //             isExpired: false,
-    //           };
-    //         }
-    //         return comp;
-    //       }),
-    //     );
-    //     setShowDetailModal(false);
-    //     alert(`Subscription extended by ${days} days`);
-    //   }
-    // } catch (error) {
-    //   console.log(error);
-    //   alert("Failed to extend subscription");
-    // }
+    setShowPlanModal(false);
+    setSelectedCompany(null);
+    alert(`Successfully changed plan to ${PLANS[newPlan]?.name}`);
   }, []);
 
-  const handleResetJobs = useCallback(async (companyId) => {
-    try {
-      const response = await api.post("/api/admin/subscription/reset-jobs", {
-        companyId,
-      });
-
-      if (response.status === 200) {
-        setSubsCompanies((prev) =>
-          prev.map((comp) =>
-            comp._id === companyId ? { ...comp, jobsUsed: 0 } : comp,
-          ),
-        );
-        setShowDetailModal(false);
-        alert("Job count reset successfully");
-      }
-    } catch (error) {
-      console.log(error);
-      alert("Failed to reset job count");
-    }
+  // Handle reset jobs count (local only)
+  const handleResetJobs = useCallback((companyId) => {
+    setSubsCompanies((prev) =>
+      prev.map((comp) =>
+        comp._id === companyId ? { ...comp, jobsUsed: 0 } : comp,
+      ),
+    );
+    setShowDetailModal(false);
+    alert("Job count reset successfully");
   }, []);
 
-  // Memoize filtered companies to avoid re-computation on every render
+  // Memoize filtered companies
   const filteredCompanies = useMemo(() => {
     return subsCompanies.filter((comp) => {
       const matchesPlan =
         planFilter === "all" || comp.currentPlan === planFilter;
       const matchesSearch =
-        comp.companyName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        comp.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        comp.name?.toLowerCase().includes(searchQuery.toLowerCase());
+        (comp.name?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+        (comp.email?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+        (comp.companyName?.toLowerCase() || "").includes(
+          searchQuery.toLowerCase(),
+        );
       return matchesPlan && matchesSearch;
     });
   }, [subsCompanies, planFilter, searchQuery]);
@@ -349,16 +283,20 @@ const AdminPanel = () => {
     const planConfig = PLANS[plan] || PLANS.free;
     return (
       <span
-        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${planConfig.badgeColor}`}
+        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${planConfig.badgeColor || "bg-gray-100 text-gray-800"}`}
       >
-        {planConfig.name}
+        {planConfig.name || "Free"}
       </span>
     );
   }, []);
 
+  // FIXED: Changed 'user' to 'used' - this was the main bug
   const getJobUsageBar = useCallback((used, limit) => {
-    const percentage = limit === -1 ? 0 : Math.min((used / limit) * 100, 100);
-    const isOverLimit = limit !== -1 && used >= limit;
+    const safeUsed = typeof used === "number" ? used : 0;
+    const safeLimit = typeof limit === "number" ? limit : 3;
+    const percentage =
+      safeLimit === -1 ? 0 : Math.min((safeUsed / safeLimit) * 100, 100);
+    const isOverLimit = safeLimit !== -1 && safeUsed >= safeLimit;
     const barColor = isOverLimit
       ? "bg-red-500"
       : percentage > 75
@@ -369,12 +307,12 @@ const AdminPanel = () => {
       <div className="w-full">
         <div className="flex justify-between text-xs mb-1">
           <span className="text-gray-600 dark:text-gray-400">
-            {user} / {limit === -1 ? "∞" : limit} jobs
+            {safeUsed} / {safeLimit === -1 ? "∞" : safeLimit} jobs
           </span>
           <span
             className={`font-medium ${isOverLimit ? "text-red-600 dark:text-red-400" : "text-gray-600 dark:text-gray-400"}`}
           >
-            {limit === -1 ? "Unlimited" : `${Math.round(percentage)}%`}
+            {safeLimit === -1 ? "Unlimited" : `${Math.round(percentage)}%`}
           </span>
         </div>
         <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
@@ -399,21 +337,20 @@ const AdminPanel = () => {
     );
   }, []);
 
+  if (loading) {
+    return <Loading detail="Loading dashboard..." />;
+  }
+
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors duration-200">
-      <div className="flex h-screen">
+      <div className="flex min-h-screen">
         {/* Sidebar */}
         <div
-          className={`${sidebarOpen ? "w-64" : "w-20"} bg-white pt-1 dark:bg-gray-800 shadow-md transition-all duration-300 ease-in-out flex flex-col`}
+          className={`${sidebarOpen ? "w-64" : "w-20"} bg-white pt-2 dark:bg-gray-800 shadow-md transition-all duration-300 ease-in-out flex flex-col`}
         >
           <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-700">
             <div className={`flex gap-3 w-10 h-10 ${!sidebarOpen && "hidden"}`}>
               <img src={HIREFLOWLOGO} alt="logo" className="rounded" />
-              <h1
-                className={`text-xl font-semibold text-gray-800 dark:text-white ${!sidebarOpen && "hidden"}`}
-              >
-                HireFlow
-              </h1>
             </div>
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -447,7 +384,7 @@ const AdminPanel = () => {
                   } group flex items-center px-2 py-2 text-sm font-medium rounded-md w-full transition-colors duration-150`}
                 >
                   <svg
-                    className={`${sidebarOpen ? "mr-3" : "mx-auto"} h-5 w-5`}
+                    className={`${sidebarOpen ? "mr-0" : "mx-0"} h-5 w-5`}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -467,7 +404,7 @@ const AdminPanel = () => {
 
           {/* Subscription Quick Stats in Sidebar */}
           {sidebarOpen && activeTab === "subscriptions" && (
-            <div className="px-4 pb-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+            <div className="px-4 pb-4 border-t border-gray-200 dark:border-gray-700 pt-5">
               <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
                 Plan Distribution
               </p>
@@ -481,7 +418,7 @@ const AdminPanel = () => {
                       {plan.name}
                     </span>
                     <span className="font-medium text-gray-900 dark:text-white">
-                      {subsStats[key]}
+                      {subsStats[key] || 0}
                     </span>
                   </div>
                 ))}
@@ -491,7 +428,7 @@ const AdminPanel = () => {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex bg-white dark:bg-gray-900/50 flex-col">
           {/* Header */}
           <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
             <div className="px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
@@ -523,7 +460,7 @@ const AdminPanel = () => {
                   </svg>
                 </button>
                 <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium">
-                  A
+                  {user?.name?.charAt(0).toUpperCase()}
                 </div>
 
                 <div className="bg-blue-600 active:scale-95 rounded">
@@ -540,16 +477,16 @@ const AdminPanel = () => {
           </header>
 
           {/* Main Content Area */}
-          <main className="flex-1 bg-gray-100 dark:bg-gray-900 p-6 overflow-y-auto transition-colors duration-200">
+          <main className="flex-1 bg-gray-100 dark:bg-gray-900 p-2 overflow-y-auto transition-colors duration-200">
             {/* ======================== DASHBOARD ======================== */}
             {activeTab === "dashboard" && (
               <div className="space-y-6">
                 {/* Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                   {[
                     {
                       label: "Total Users",
-                      value: usersdata.totalUsers,
+                      value: usersdata.totalUsers || 0,
                       change: "+12%",
                       changeColor: "text-green-600",
                       iconBg: "bg-blue-100 dark:bg-blue-900/30",
@@ -621,9 +558,7 @@ const AdminPanel = () => {
                       </div>
                       <div className="bg-gray-50 dark:bg-gray-700/50 px-5 py-3">
                         <div className="text-sm">
-                          <span
-                            className={`${card.changeColor} dark:${card.changeColor} font-medium`}
-                          >
+                          <span className={`${card.changeColor} font-medium`}>
                             {card.change}
                           </span>
                           <span className="text-gray-500 dark:text-gray-400">
@@ -827,7 +762,7 @@ const AdminPanel = () => {
                           Free Plan
                         </p>
                         <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                          {subsStats.free}
+                          {subsStats.free || 0}
                         </p>
                       </div>
                       <span className="bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 text-xs font-medium px-2 py-1 rounded-full">
@@ -843,11 +778,11 @@ const AdminPanel = () => {
                           Basic Plan
                         </p>
                         <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                          {subsStats.basic}
+                          {subsStats.basic || 0}
                         </p>
                       </div>
                       <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-medium px-2 py-1 rounded-full">
-                        $29/mo
+                        {currency}29/mo
                       </span>
                     </div>
                   </div>
@@ -859,7 +794,7 @@ const AdminPanel = () => {
                           Pro Plan
                         </p>
                         <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                          {subsStats.pro}
+                          {subsStats.pro || 0}
                         </p>
                       </div>
                       <span className="bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs font-medium px-2 py-1 rounded-full">
@@ -875,7 +810,7 @@ const AdminPanel = () => {
                           Enterprise
                         </p>
                         <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                          {subsStats.enterprise}
+                          {subsStats.enterprise || 0}
                         </p>
                       </div>
                       <span className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 text-xs font-medium px-2 py-1 rounded-full">
@@ -972,24 +907,28 @@ const AdminPanel = () => {
                     {Object.entries(PLANS).map(([key, plan]) => (
                       <div
                         key={key}
-                        className={`rounded-lg border-2 ${plan.borderColor} p-4 ${plan.bgColor} transition-all duration-200 hover:shadow-md`}
+                        className={`rounded-lg border-2 ${plan.borderColor || "border-gray-300"} p-4 ${plan.bgColor || "bg-white"} transition-all duration-200 hover:shadow-md`}
                       >
                         <div className="flex items-center justify-between mb-3">
-                          <h4 className={`font-semibold ${plan.textColor}`}>
+                          <h4
+                            className={`font-semibold ${plan.textColor || "text-gray-900"}`}
+                          >
                             {plan.name}
                           </h4>
                           <span
-                            className={`text-lg font-bold ${plan.textColor}`}
+                            className={`text-lg font-bold ${plan.textColor || "text-gray-900"}`}
                           >
-                            {plan.price === 0 ? "Free" : `$${plan.price}`}
+                            {plan.price === 0 ? "Free" : `₹${plan.price}`}
                           </span>
                         </div>
-                        <div className={`text-sm ${plan.textColor} mb-3`}>
+                        <div
+                          className={`text-sm ${plan.textColor || "text-gray-700"} mb-3`}
+                        >
                           {plan.jobLimit === -1 ? "Unlimited" : plan.jobLimit}{" "}
                           job postings
                         </div>
                         <ul className="space-y-1.5">
-                          {plan.features.slice(0, 4).map((feat, idx) => (
+                          {plan.features?.slice(0, 4).map((feat, idx) => (
                             <li
                               key={idx}
                               className="flex items-start text-xs text-gray-600 dark:text-gray-400"
@@ -1022,7 +961,6 @@ const AdminPanel = () => {
                         Recruiter Subscriptions
                       </h3>
                       <div className="flex flex-col sm:flex-row gap-3">
-                        {/* Search */}
                         <div className="relative">
                           <svg
                             className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
@@ -1045,7 +983,6 @@ const AdminPanel = () => {
                             className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full sm:w-64"
                           />
                         </div>
-                        {/* Filter */}
                         <select
                           value={planFilter}
                           onChange={(e) => setPlanFilter(e.target.value)}
@@ -1053,10 +990,10 @@ const AdminPanel = () => {
                         >
                           <option value="all">All Plans</option>
                           <option value="free">Free</option>
-                          <option value="basic">Basic ({currency}29)</option>
-                          <option value="pro">Pro ({currency}79)</option>
+                          <option value="basic">Basic ({currency}199)</option>
+                          <option value="pro">Pro ({currency}299)</option>
                           <option value="enterprise">
-                            Enterprise ({currency}199)
+                            Enterprise ({currency}799)
                           </option>
                         </select>
                       </div>
@@ -1065,11 +1002,7 @@ const AdminPanel = () => {
 
                   {/* Table */}
                   <div className="overflow-x-auto">
-                    {subsLoading ? (
-                      <div className="flex items-center justify-center py-20">
-                        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
-                      </div>
-                    ) : filteredCompanies.length === 0 ? (
+                    {filteredCompanies.length === 0 ? (
                       <div className="text-center py-20">
                         <svg
                           className="mx-auto h-12 w-12 text-gray-400"
@@ -1120,21 +1053,21 @@ const AdminPanel = () => {
                             >
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="flex items-center">
-                                  <div className="w-10 h-10 rounded-lg bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm">
-                                    {comp.companyName
-                                      ?.charAt(0)
-                                      ?.toUpperCase() ||
-                                      comp.name?.charAt(0)?.toUpperCase() ||
-                                      "C"}
+                                  <div className="w-10 h-10 rounded-lgflex items-center justify-center text-white font-semibold text-sm">
+                                    <img
+                                      src={`http://localhost:8000/uploads/${comp?.companyData?.logo}`}
+                                      alt="logo"
+                                      className=" object-cover h-full w-full"
+                                    />
                                   </div>
                                   <div className="ml-3">
                                     <div className="text-sm font-medium text-gray-900 dark:text-white">
-                                      {comp.companyName ||
-                                        comp.name ||
+                                      {comp?.companyData.name ||
+                                        comp.companyname ||
                                         "Unknown"}
                                     </div>
                                     <div className="text-xs text-gray-500 dark:text-gray-400">
-                                      {comp.email}
+                                      {comp.email || "No email"}
                                     </div>
                                   </div>
                                 </div>
@@ -1268,7 +1201,7 @@ const AdminPanel = () => {
                   </div>
 
                   {/* Pagination */}
-                  {!subsLoading && filteredCompanies.length > 0 && (
+                  {filteredCompanies.length > 0 && (
                     <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
                       <p className="text-sm text-gray-500 dark:text-gray-400">
                         Showing{" "}
@@ -1286,7 +1219,7 @@ const AdminPanel = () => {
                 </div>
 
                 {/* Free Plan Limit Warning Banner */}
-                <div className="bg-linear-to-r from-amber-50 to-orange-50 dark:from-amber-900/10 dark:to-orange-900/10 border border-amber-200 dark:border-amber-800 rounded-lg p-5">
+                <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/10 dark:to-orange-900/10 border border-amber-200 dark:border-amber-800 rounded-lg p-5">
                   <div className="flex">
                     <div className="shrink-0">
                       <svg
@@ -1338,14 +1271,14 @@ const AdminPanel = () => {
             />
             <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-3xl w-full mx-auto overflow-hidden">
               {/* Modal Header */}
-              <div className="bg-linear-to-r from-blue-600 to-purple-600 px-6 py-5">
+              <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-5">
                 <div className="flex items-center justify-between">
                   <div>
                     <h2 className="text-xl font-semibold text-white">
                       Change Subscription Plan
                     </h2>
                     <p className="text-blue-100 text-sm mt-1">
-                      {selectedCompany.companyName || selectedCompany.name}
+                      {selectedCompany.name || selectedCompany.companyName}
                     </p>
                   </div>
                   <button
@@ -1417,24 +1350,28 @@ const AdminPanel = () => {
                           </div>
                         )}
                         <div className="flex items-center justify-between mb-3">
-                          <h4 className={`font-semibold ${plan.textColor}`}>
+                          <h4
+                            className={`font-semibold ${plan.textColor || "text-gray-900"}`}
+                          >
                             {plan.name}
                           </h4>
                           <span
-                            className={`text-lg font-bold ${plan.textColor}`}
+                            className={`text-lg font-bold ${plan.textColor || "text-gray-900"}`}
                           >
-                            {plan.price === 0 ? "Free" : `$${plan.price}`}
+                            {plan.price === 0 ? "Free" : `₹${plan.price}`}
                             {plan.price > 0 && (
                               <span className="text-xs font-normal">/mo</span>
                             )}
                           </span>
                         </div>
-                        <div className={`text-xs ${plan.textColor} mb-3`}>
+                        <div
+                          className={`text-xs ${plan.textColor || "text-gray-700"} mb-3`}
+                        >
                           {plan.jobLimit === -1 ? "Unlimited" : plan.jobLimit}{" "}
                           job postings included
                         </div>
                         <ul className="space-y-1">
-                          {plan.features.slice(0, 3).map((feat, idx) => (
+                          {plan.features?.slice(0, 3).map((feat, idx) => (
                             <li
                               key={idx}
                               className="flex items-start text-xs text-gray-600 dark:text-gray-400"
@@ -1453,7 +1390,7 @@ const AdminPanel = () => {
                               {feat}
                             </li>
                           ))}
-                          {plan.features.length > 3 && (
+                          {(plan.features?.length || 0) > 3 && (
                             <li className="text-xs text-gray-400">
                               +{plan.features.length - 3} more features
                             </li>
@@ -1492,17 +1429,17 @@ const AdminPanel = () => {
               <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold">
-                      {selectedCompany.companyName?.charAt(0)?.toUpperCase() ||
-                        selectedCompany.name?.charAt(0)?.toUpperCase() ||
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold">
+                      {selectedCompany.name?.charAt(0)?.toUpperCase() ||
+                        selectedCompany.companyName?.charAt(0)?.toUpperCase() ||
                         "C"}
                     </div>
                     <div>
                       <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        {selectedCompany.companyName || selectedCompany.name}
+                        {selectedCompany.name || selectedCompany.companyName}
                       </h2>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {selectedCompany.email}
+                        {selectedCompany.email || "No email"}
                       </p>
                     </div>
                   </div>
@@ -1546,7 +1483,7 @@ const AdminPanel = () => {
                     <p className="mt-1 text-lg font-bold text-gray-900 dark:text-white">
                       {PLANS[selectedCompany.currentPlan]?.price === 0
                         ? "Free"
-                        : `$${PLANS[selectedCompany.currentPlan]?.price}/mo`}
+                        : `₹${PLANS[selectedCompany.currentPlan]?.price}/mo`}
                     </p>
                   </div>
                 </div>
@@ -1603,7 +1540,15 @@ const AdminPanel = () => {
                 {/* Status */}
                 <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
                   <div
-                    className={`w-2.5 h-2.5 rounded-full ${selectedCompany.isExpired ? "bg-red-500" : selectedCompany.jobsLimit !== -1 && selectedCompany.jobsUsed >= selectedCompany.jobsLimit ? "bg-yellow-500" : "bg-green-500"}`}
+                    className={`w-2.5 h-2.5 rounded-full ${
+                      selectedCompany.isExpired
+                        ? "bg-red-500"
+                        : selectedCompany.jobsLimit !== -1 &&
+                            selectedCompany.jobsUsed >=
+                              selectedCompany.jobsLimit
+                          ? "bg-yellow-500"
+                          : "bg-green-500"
+                    }`}
                   />
                   <span className="text-sm text-gray-700 dark:text-gray-300">
                     {selectedCompany.isExpired
@@ -1621,7 +1566,7 @@ const AdminPanel = () => {
                     Included Features
                   </p>
                   <ul className="space-y-2">
-                    {PLANS[selectedCompany.currentPlan]?.features.map(
+                    {PLANS[selectedCompany.currentPlan]?.features?.map(
                       (feat, idx) => (
                         <li
                           key={idx}
@@ -1661,9 +1606,28 @@ const AdminPanel = () => {
                   </button>
                   {selectedCompany.currentPlan !== "free" && (
                     <button
-                      onClick={() =>
-                        handleExtendSubscription(selectedCompany._id, 30)
-                      }
+                      onClick={() => {
+                        // Extend subscription locally
+                        setSubsCompanies((prev) =>
+                          prev.map((comp) => {
+                            if (
+                              comp._id === selectedCompany._id &&
+                              comp.subscriptionEnd
+                            ) {
+                              const newEnd = new Date(comp.subscriptionEnd);
+                              newEnd.setDate(newEnd.getDate() + 30);
+                              return {
+                                ...comp,
+                                subscriptionEnd: newEnd.toISOString(),
+                                isExpired: false,
+                              };
+                            }
+                            return comp;
+                          }),
+                        );
+                        setShowDetailModal(false);
+                        alert("Subscription extended by 30 days");
+                      }}
                       className="flex-1 px-4 py-2.5 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
                     >
                       Extend +30 days
