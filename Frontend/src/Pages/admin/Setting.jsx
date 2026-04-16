@@ -6,7 +6,6 @@ const Setting = () => {
       <div className="space-y-6">
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg hover:shadow-lg transition-all duration-200">
           <div className="px-4 py-3 sm:p-6">
-           
             <div className="mt-5 space-y-6">
               <div>
                 <label
