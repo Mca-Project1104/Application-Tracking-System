@@ -76,6 +76,6 @@ app.use("/api/admin", adminRouter);
 app.post("/api/refresh", refreshToken); //handle a refresh token every 15min
 
 //  Start Server -> npm start
-// app.listen(PORT, () => {
-//   console.log(`✅ Server running on port ${PORT}`);
-// });
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
