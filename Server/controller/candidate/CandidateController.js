@@ -1,5 +1,6 @@
 import Candidate from "../../model/Candidate.js";
 import { User } from "../../model/UserModel.js";
+import { upload_image } from "../../services/multerServices.js";
 
 // Get ranked candidates
 export const getRankedCandidates = async (req, res) => {
@@ -29,6 +30,9 @@ export const updateCandidate = async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
+    const file = req.file;
+
+    console.log("FILE:", file);
 
     if (!id) {
       return res.status(400).json({ message: "Candidate ID is required" });
@@ -39,16 +43,15 @@ export const updateCandidate = async (req, res) => {
       return res.status(404).json({ message: "Candidate not found" });
     }
 
-    // Update status if provided
     if (status) {
       candidate.status = status;
     }
 
-    // Handle image upload
-    if (req.file) {
-      candidate.profile_image = req.file.path;
+    if (file) {
+      const url = await upload_image(file);
+      console.log(url);
+      candidate.profile_image = url;
     }
-    // Handle image removal
     else if (req.body.profile_image === "") {
       candidate.profile_image = undefined;
     }

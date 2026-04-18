@@ -436,9 +436,6 @@ const calculateAtsScore = (resumeText, jobDescription) => {
   return { score, matched: matchCount, total: uniqueJdWords.length };
 };
 
-// ─────────────────────────────────────────────
-// Main Controller
-// ─────────────────────────────────────────────
 export const analyzeResume = async (req, res) => {
   try {
     const { jobDescription = "" } = req.body;

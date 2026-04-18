@@ -16,7 +16,7 @@ const CandidateDashboard = () => {
     candidateLoading,
   } = useAppContext();
 
-  if (candidateLoading || !user) {
+  if (candidateLoading || user === null) {
     return <Loading detail={"loading.."} />;
   }
 
@@ -128,7 +128,7 @@ const CandidateDashboard = () => {
                   <div className="shrink-0">
                     <div className="h-12 select-none w-12 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">
                       <img
-                        src={`http://localhost:8000/${candidate?.profile_image}`}
+                        src={candidate?.profile_image}
                         alt="logo"
                         className="w-full rounded-full h-full"
                       />
@@ -225,9 +225,10 @@ const CandidateDashboard = () => {
                             {item?.status}
                           </span>
                         </td>
+                        {/* Handle a application view */}
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <Link
-                            to={"#"}
+                            to={`/candidate/application/${item._id}`}
                             className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200"
                           >
                             View

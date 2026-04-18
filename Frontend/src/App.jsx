@@ -23,6 +23,7 @@ import CompanyProfile from "./Components/company/CompanyProfile.jsx";
 import AOS from "aos";
 import "aos/dist/aos.css";
 import { useAppContext } from "./context/AppProvider.jsx";
+import ApplicationDetails from "./Pages/candidate/ApplicationDetail.jsx";
 
 // ─── MOVE OUTSIDE App: prevents re-creation on every render ───
 
@@ -166,7 +167,7 @@ function App() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 dark:text-white">
+    <div className="min-h-screen  bg-white dark:bg-gray-900 dark:text-white">
       {/* Theme Toggle */}
       {location.pathname !== "/" && (
         <ThemeToggle theme={theme} setTheme={setTheme} />
@@ -299,6 +300,24 @@ function App() {
                       setUserRole={handleSetUserRole}
                     >
                       <ResumeAnalyzer />
+                    </Layout>
+                  </RoleRoute>
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/candidate/application/:id"
+              element={
+                <PrivateRoute isAuthenticated={isAuthenticated}>
+                  <RoleRoute userRole={userRole} role="candidate">
+                    <Layout
+                      userRole={userRole}
+                      showSidebar={showSidebar}
+                      setShowSidebar={handleSetShowSidebar}
+                      setIsAuthenticated={handleSetIsAuthenticated}
+                      setUserRole={handleSetUserRole}
+                    >
+                      <ApplicationDetails />
                     </Layout>
                   </RoleRoute>
                 </PrivateRoute>

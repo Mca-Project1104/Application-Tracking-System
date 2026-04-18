@@ -6,6 +6,7 @@ import {
   getCompanyDashboard,
 } from "../controller/applicationController.js";
 import authMiddleware from "../middleware/auth.js";
+import authCMiddleware from "../middleware/authMiddleware.js";
 import { companyAuthMiddleware } from "../middleware/companyAuth.js";
 
 const applicationRoute = Router();
@@ -13,8 +14,12 @@ const applicationRoute = Router();
 applicationRoute.post("/apply", authMiddleware, applyJob);
 applicationRoute.post("/find/application", authMiddleware, getapplications);
 
-applicationRoute.patch(`/applications/:id/status`, manageStatus);
+applicationRoute.patch(
+  `/applications/:id/status`,
+  authMiddleware,
+  manageStatus,
+);
 
-applicationRoute.get("/", companyAuthMiddleware, getCompanyDashboard);
+applicationRoute.get("/", authCMiddleware, getCompanyDashboard);
 
 export default applicationRoute;

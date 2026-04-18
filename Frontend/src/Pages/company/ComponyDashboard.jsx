@@ -4,6 +4,7 @@ import { useAppContext } from "../../context/AppProvider";
 import { useEffect } from "react";
 import { useState } from "react";
 import Loading from "../../Components/Loading/Loading";
+import { getpipelineColor } from "../../assets/dummydata.js";
 
 const CompanyDashboard = () => {
   const { navigate } = useAppContext();
@@ -38,24 +39,6 @@ const CompanyDashboard = () => {
 
     if (token) getDetails();
   }, []);
-
-  //function to return css matching status
-  const getpipelineColor = (name) => {
-    if (name === "applied")
-      return "bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 hover:border-2 border-blue-400";
-    else if (name === "screening")
-      return "bg-yellow-50 text-yellow-600 dark:bg-yellow-900/20 dark:text-yellow-400 hover:border-2 border-yellow-400";
-    else if (name === "interview")
-      return "bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400 hover:border-2 border-purple-400";
-    else if (name === "hired")
-      return "bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400 hover:border-2 border-green-400";
-    else if (name === "shortlisted")
-      return "bg-green-50 text-green-400 dark:bg-green-900/15 dark:text-green-400 hover:border-2 border-green-600";
-    else if (name === "rejected")
-      return "bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400 hover:border-2 border-red-400";
-    else
-      return "bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400 hover:border-2 border-red-400";
-  };
 
   if (loading) {
     return <Loading detail={"Loading  data..."} />;
@@ -131,7 +114,7 @@ const CompanyDashboard = () => {
                 {recentapplications.map((app) => (
                   <div
                     key={app.id}
-                    className={`flex items-center justify-between p-3 rounded-lg  hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200 cursor-pointer`}
+                    className={`flex items-center justify-between p-3 rounded-lg  hover:bg-gray-50  transition-colors duration-200 cursor-pointer`}
                   >
                     <div className="flex items-center space-x-4">
                       <div className="shrink-0">
@@ -139,7 +122,7 @@ const CompanyDashboard = () => {
                           className={`h-12 w-12 rounded-full  flex items-center  justify-center-safe text-white text-sm font-semibold`}
                         >
                           <img
-                            src={`http://localhost:8000/${app.candidate.profile_image}`}
+                            src={app.candidate.profile_image}
                             alt="logo"
                             className="w-full h-full rounded-full"
                           />
@@ -155,11 +138,9 @@ const CompanyDashboard = () => {
                         </p>
                       </div>
                     </div>
-                    <div
-                      className={`rounded ${app.status === "hired" ? "bg-green-200" : "bg-gray-400"}`}
-                    >
+                    <div className={`rounded`}>
                       <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold capitalize ${app.status === "hired" ? "text-green-800" : ""}`}
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold capitalize ${getpipelineColor(app.status)}`}
                       >
                         {app.status}
                       </span>

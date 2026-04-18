@@ -22,10 +22,11 @@ const companyAuthMiddleware = async (req, res, next) => {
     if (user.accountType !== "company")
       return res.status(403).json({ msg: "Only recruiters allowed" });
 
-    if (user.status !== "accepted")
+    if (user.status !== "accepted") {
       return res
         .status(403)
-        .json({ msg: "Admin has not authorized your company" });
+        .json({ message: "Admin has not authorized your company" });
+    }
 
     req.user = {
       id: decoded.id,

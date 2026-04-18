@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, Navigate, useNavigate } from "react-router-dom";
 
 import {
   candidateLinks,
@@ -7,8 +7,18 @@ import {
   adminLinks,
 } from "../assets/dummydata.js";
 
-const Sidebar = ({ userRole, showSidebar }) => {
+const Sidebar = ({ userRole, showSidebar, setShowSidebar }) => {
+  const navigate = useNavigate();
   const location = useLocation();
+
+  const handleLinks = (link) => {
+    navigate(link);
+
+    setTimeout(() => {
+      setShowSidebar(!showSidebar);
+    }, 1000);
+  };
+
   const links =
     userRole === "admin"
       ? adminLinks
@@ -25,11 +35,11 @@ const Sidebar = ({ userRole, showSidebar }) => {
       <div className="">
         <ul className="space-y-2">
           {links.map((link) => (
-            <li key={link.name}>
-              <Link
-                to={link.path}
+            <li key={link.name} className="p-1">
+              <button
+                onClick={() => handleLinks(link.path)}
                 title={link.name}
-                className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
+                className={`flex items-center px-4 py-3 w-full rounded-lg transition-colors ${
                   location.pathname === link.path
                     ? "bg-blue-50 dark:bg-white/10 dark:text-blue-400 font-medium border-l-4 border-blue-500 text-blue-500"
                     : "text-gray-700 dark:text-white dark:hover:bg-white/10 hover:bg-gray-100"
@@ -37,7 +47,7 @@ const Sidebar = ({ userRole, showSidebar }) => {
               >
                 {link.icon && <link.icon className="mr-3 text-lg" />}
                 {link.name}
-              </Link>
+              </button>
             </li>
           ))}
         </ul>

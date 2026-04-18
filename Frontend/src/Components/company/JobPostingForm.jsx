@@ -220,11 +220,10 @@ const JobPostingForm = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      console.log(res)
-
       navigate(`/${userRole}/jobs`);
     } catch (error) {
-      console.error("Job posting error:", error);
+      console.error("Server Error:", error.response.data.message);
+      alert(error.response.data.message);
     } finally {
       setIsSubmitting(false);
     }

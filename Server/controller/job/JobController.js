@@ -53,16 +53,14 @@ export const getJobs = async (req, res) => {
         .json({ message: "No jobs found", data: [], total: 0, page, limit });
     }
 
-    res
-      .status(200)
-      .json({
-        message: "ok",
-        data: jobs,
-        total,
-        page,
-        limit,
-        pages: Math.ceil(total / limit),
-      });
+    res.status(200).json({
+      message: "ok",
+      data: jobs,
+      total,
+      page,
+      limit,
+      pages: Math.ceil(total / limit),
+    });
   } catch (error) {
     console.error("Error fetching jobs:", error);
     res
@@ -97,20 +95,35 @@ export const getAllJobs = async (req, res) => {
         .json({ message: "No jobs found", data: [], total: 0, page, limit });
     }
 
-    res
-      .status(200)
-      .json({
-        message: "ok",
-        data: response,
-        total,
-        page,
-        limit,
-        pages: Math.ceil(total / limit),
-      });
+    res.status(200).json({
+      message: "ok",
+      data: response,
+      total,
+      page,
+      limit,
+      pages: Math.ceil(total / limit),
+    });
   } catch (error) {
     console.error("Error fetching all jobs:", error);
     res
       .status(500)
       .json({ message: "Error fetching jobs", error: error.message });
+  }
+};
+
+export const deleteJob = async (req, res) => {
+  try {
+    const job = await Job.findById(req.params.id);
+
+    if (!job) {
+      return res.status(404).json({ message: "Job not found" });
+    }
+
+    await JobModel.findByIdAndDelete(req.params.id);
+
+    res.status(200).json({ message: "Job deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting job:", error);
+    res.status(500).json({ message: "Server Error" });
   }
 };

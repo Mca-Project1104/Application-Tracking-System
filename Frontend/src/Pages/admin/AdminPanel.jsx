@@ -1,4 +1,10 @@
-import React, { useEffect, useState, useMemo, useCallback } from "react";
+import React, {
+  useEffect,
+  useState,
+  useMemo,
+  useCallback,
+  useRef,
+} from "react";
 import { PLANS } from "../../assets/dummydata";
 import api from "../../api/axios";
 import {
@@ -16,56 +22,10 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import Reports from "./Reports";
 import Users from "./Users";
 import { useAppContext } from "../../context/AppProvider";
 import Setting from "./Setting";
 import Loading from "../../Components/Loading/Loading";
-
-// Chart data - moved outside component to prevent re-creation
-const APPLICATION_TRENDS_DATA = [
-  { month: "Jan", applications: 400, interviews: 240, hires: 120 },
-  { month: "Feb", applications: 300, interviews: 139, hires: 80 },
-  { month: "Mar", applications: 500, interviews: 380, hires: 200 },
-  { month: "Apr", applications: 278, interviews: 190, hires: 100 },
-  { month: "May", applications: 489, interviews: 280, hires: 150 },
-  { month: "Jun", applications: 539, interviews: 390, hires: 180 },
-];
-
-const JOB_CATEGORIES_DATA = [
-  { name: "Engineering", value: 35, color: "#3B82F6" },
-  { name: "Design", value: 20, color: "#8B5CF6" },
-  { name: "Marketing", value: 15, color: "#10B981" },
-  { name: "Sales", value: 20, color: "#F59E0B" },
-  { name: "HR", value: 10, color: "#EF4444" },
-];
-
-const MONTHLY_APPLICATIONS_DATA = [
-  { month: "Jan", candidates: 65, recruiters: 28 },
-  { month: "Feb", candidates: 59, recruiters: 28 },
-  { month: "Mar", candidates: 80, recruiters: 38 },
-  { month: "Apr", candidates: 81, recruiters: 48 },
-  { month: "May", candidates: 56, recruiters: 38 },
-  { month: "Jun", candidates: 95, recruiters: 43 },
-];
-
-const SUBSCRIPTION_TRENDS_DATA = [
-  { month: "Jan", free: 45, basic: 20, pro: 8, enterprise: 2 },
-  { month: "Feb", free: 40, basic: 25, pro: 10, enterprise: 3 },
-  { month: "Mar", free: 35, basic: 30, pro: 15, enterprise: 5 },
-  { month: "Apr", free: 30, basic: 35, pro: 18, enterprise: 7 },
-  { month: "May", free: 28, basic: 38, pro: 22, enterprise: 8 },
-  { month: "Jun", free: 25, basic: 40, pro: 25, enterprise: 10 },
-];
-
-const REVENUE_DATA = [
-  { month: "Jan", revenue: 2450 },
-  { month: "Feb", revenue: 3200 },
-  { month: "Mar", revenue: 4100 },
-  { month: "Apr", revenue: 5300 },
-  { month: "May", revenue: 6200 },
-  { month: "Jun", revenue: 7800 },
-];
 
 const NAVIGATION = [
   {
@@ -84,18 +44,12 @@ const NAVIGATION = [
     icon: "M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z",
   },
   {
-    name: "Reports",
-    id: "reports",
-    icon: "M9 17v1a1 1 0 001 1h4a1 1 0 001-1v-1m3-2V8a2 2 0 00-2-2H8a2 2 0 00-2 2v6m3-2h6",
-  },
-  {
     name: "Settings",
     id: "settings",
     icon: "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z",
   },
 ];
 
-// Helper function to generate mock subscription data since backend doesn't have it
 const generateMockSubscription = (company) => {
   const plans = ["free", "free", "free", "basic", "basic", "pro", "enterprise"];
   const randomPlan = plans[Math.floor(Math.random() * plans.length)];
@@ -122,12 +76,18 @@ const generateMockSubscription = (company) => {
 
 const AdminPanel = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // --- STATE FOR DATABASE DATA ---
   const [users, setUsers] = useState([]);
   const [company, setCompany] = useState([]);
+  const [jobs, setJobs] = useState([]); // NEW: Store all jobs
+  const [applications, setApplications] = useState([]); // NEW: Store all applications
+
   const [usersdata, setUsersData] = useState({});
   const [totaljobs, setTotalJobs] = useState(0);
   const [loading, setLoading] = useState(true);
+
   const { HIREFLOWLOGO, currency, navigate } = useAppContext();
   const { user } = useAppContext();
 
@@ -146,51 +106,44 @@ const AdminPanel = () => {
     totalRevenue: 0,
   });
 
+  // --- DYNAMIC DATA FETCHING ---
   useEffect(() => {
     const fetchDashboardData = async () => {
       setLoading(true);
       try {
-        // Fetch all users
+        // 1. Fetch Users
         const usersRes = await api.get("/api/admin/allusers");
         if (usersRes.status === 200) {
           setUsers(usersRes.data.users || []);
           setUsersData(usersRes.data || {});
         }
 
-        // Fetch all companies
+        // 2. Fetch Companies
         const companyRes = await api.get("/api/admin/allcompany");
         if (companyRes.status === 200) {
           const companies = companyRes.data.company || [];
           setCompany(companies);
           setTotalJobs(companyRes.data.totalJobs || 0);
+        }
 
-          // Generate subscription data for companies (since backend doesn't have subscription system)
-          const enrichedCompanies = companies.map((comp) => {
-            const mockSub = generateMockSubscription(comp);
-            return {
-              ...comp,
-              currentPlan: mockSub.plan,
-              jobsUsed: mockSub.jobsUsed,
-              jobsLimit: mockSub.jobLimit,
-              subscriptionStart: mockSub.startDate,
-              subscriptionEnd: mockSub.endDate,
-              isExpired: mockSub.isExpired,
-            };
-          });
-          setSubsCompanies(enrichedCompanies);
+        // 3. Fetch All Jobs
+        try {
+          const jobsRes = await api.get("/api/admin/alljobs");
+          if (jobsRes.status === 200) {
+            setJobs(jobsRes.data.data || jobsRes.data || []); // Adjust path based on API response
+          }
+        } catch (err) {
+          console.log("Jobs endpoint error", err);
+        }
 
-          // Calculate subscription stats
-          const stats = enrichedCompanies.reduce(
-            (acc, comp) => {
-              acc[comp.currentPlan] = (acc[comp.currentPlan] || 0) + 1;
-              if (comp.currentPlan !== "free") {
-                acc.totalRevenue += PLANS[comp.currentPlan]?.price || 0;
-              }
-              return acc;
-            },
-            { free: 0, basic: 0, pro: 0, enterprise: 0, totalRevenue: 0 },
-          );
-          setSubsStats(stats);
+        // 4. Fetch All Applications
+        try {
+          const appsRes = await api.get("/api/admin/allapplications");
+          if (appsRes.status === 200) {
+            setApplications(appsRes.data.data || appsRes.data || []);
+          }
+        } catch (err) {
+          console.log("Applications endpoint error", err);
         }
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
@@ -201,6 +154,244 @@ const AdminPanel = () => {
 
     fetchDashboardData();
   }, []);
+  const handleUserUpdated = useCallback((updatedUser) => {
+    // This function is passed to <Users />.
+    // It finds the user with the matching ID in the main 'users' state and updates it.
+    setUsers((prevUsers) =>
+      prevUsers.map((u) => (u._id === updatedUser._id ? updatedUser : u)),
+    );
+  }, []);
+
+  const handleDeleteUser = async (id) => {
+    const token = localStorage.getItem("token");
+    try {
+      if (confirm("Are you sure delete this user ??")) {
+        const response = await api.delete(`/api/admin/user/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setLoading(true);
+        const usersRes = await api.get("/api/admin/allusers");
+        if (usersRes.status === 200) {
+          setUsers(usersRes.data.users || []);
+        }
+        console.log(usersRes);
+        setLoading(false);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const applicationTrendsData = useMemo(() => {
+    const months = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+
+    const currentYear = new Date().getFullYear();
+
+    const data = months.map((m) => ({
+      month: m,
+      applications: 0,
+      interviews: 0,
+      hires: 0,
+    }));
+
+    applications.forEach((app) => {
+      const date = new Date(app.createdAt || app.updatedAt);
+      if (date.getFullYear() === currentYear) {
+        const monthIndex = date.getMonth();
+        if (data[monthIndex]) {
+          data[monthIndex].applications += 1;
+          if (app.status === "interview") data[monthIndex].interviews += 1;
+          if (app.status === "hired") data[monthIndex].hires += 1;
+        }
+      }
+    });
+    return data;
+  }, [applications]);
+
+  // 2. Job Categories (Group by Department or WorkMode)
+  const jobCategoriesData = useMemo(() => {
+    const categoryMap = {};
+
+    jobs.forEach((job) => {
+      const key = job.department || job.workMode || "General";
+      if (!categoryMap[key]) categoryMap[key] = { name: key, value: 0 };
+      categoryMap[key].value += 1;
+    });
+
+    const colors = [
+      "#3B82F6",
+      "#8B5CF6",
+      "#10B981",
+      "#F59E0B",
+      "#EF4444",
+      "#6366F1",
+    ];
+    return Object.values(categoryMap).map((item, index) => ({
+      ...item,
+      color: colors[index % colors.length],
+    }));
+  }, [jobs]);
+
+  // 3. Subscription Trends (Derived from Enriched Companies)
+  const subscriptionTrendsData = useMemo(() => {
+    const months = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+    const currentYear = new Date().getFullYear();
+
+    const data = months.map((m) => ({
+      month: m,
+      free: 0,
+      basic: 0,
+      pro: 0,
+      enterprise: 0,
+    }));
+
+    subsCompanies.forEach((comp) => {
+      const date = new Date(comp.subscriptionStart || comp.createdAt);
+      if (date.getFullYear() === currentYear) {
+        const monthIndex = date.getMonth();
+        if (data[monthIndex] && comp.currentPlan) {
+          data[monthIndex][comp.currentPlan] += 1;
+        }
+      }
+    });
+    return data;
+  }, [subsCompanies]);
+
+  // 4. Revenue Data (Calculated from Mock Subscriptions)
+  const revenueData = useMemo(() => {
+    const months = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+    const currentYear = new Date().getFullYear();
+
+    const data = months.map((m) => ({ month: m, revenue: 0 }));
+
+    subsCompanies.forEach((comp) => {
+      if (comp.currentPlan !== "free") {
+        const price = PLANS[comp.currentPlan]?.price || 0;
+        const date = new Date(comp.subscriptionStart);
+        if (date.getFullYear() === currentYear) {
+          const monthIndex = date.getMonth();
+          if (data[monthIndex]) {
+            data[monthIndex].revenue += price;
+          }
+        }
+      }
+    });
+    return data;
+  }, [subsCompanies]);
+
+  // 5. Monthly Users (Candidates vs Recruiters)
+  const monthlyUsersData = useMemo(() => {
+    const months = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+    const currentYear = new Date().getFullYear();
+
+    const data = months.map((m) => ({
+      month: m,
+      candidates: 0,
+      recruiters: 0,
+    }));
+
+    users.forEach((u) => {
+      const date = new Date(u.createdAt);
+      if (date.getFullYear() === currentYear) {
+        const monthIndex = date.getMonth();
+        if (data[monthIndex]) {
+          if (u.accountType === "company") {
+            // Using accountType based on controller
+            data[monthIndex].recruiters += 1;
+          } else {
+            data[monthIndex].candidates += 1;
+          }
+        }
+      }
+    });
+    return data;
+  }, [users]);
+
+  // --- MOCK DATA LOGIC (Kept for demonstration of UI, but enriched with real counts) ---
+  useEffect(() => {
+    if (company.length > 0) {
+      const enrichedCompanies = company.map((comp) => {
+        const mockSub = generateMockSubscription(comp);
+        return {
+          ...comp,
+          currentPlan: mockSub.plan,
+          jobsUsed: mockSub.jobsUsed,
+          jobsLimit: mockSub.jobLimit,
+          subscriptionStart: mockSub.startDate,
+          subscriptionEnd: mockSub.endDate,
+          isExpired: mockSub.isExpired,
+          companyData: comp.companyData || comp,
+        };
+      });
+      setSubsCompanies(enrichedCompanies);
+
+      const stats = enrichedCompanies.reduce(
+        (acc, comp) => {
+          acc[comp.currentPlan] = (acc[comp.currentPlan] || 0) + 1;
+          if (comp.currentPlan !== "free") {
+            acc.totalRevenue += PLANS[comp.currentPlan]?.price || 0;
+          }
+          return acc;
+        },
+        { free: 0, basic: 0, pro: 0, enterprise: 0, totalRevenue: 0 },
+      );
+      setSubsStats(stats);
+    }
+  }, [company]);
 
   const Logout = () => {
     if (window.confirm("Are you sure you want to logout?")) {
@@ -209,7 +400,6 @@ const AdminPanel = () => {
     }
   };
 
-  // Handle plan change (local only since backend doesn't support it)
   const handleUpgradePlan = useCallback((companyId, newPlan) => {
     setSubsCompanies((prev) => {
       const updatedCompanies = prev.map((comp) =>
@@ -230,11 +420,9 @@ const AdminPanel = () => {
           : comp,
       );
 
-      // Find the old plan of the updated company
       const oldCompany = prev.find((c) => c._id === companyId);
       const oldPlan = oldCompany?.currentPlan || "free";
 
-      // Update stats
       setSubsStats((prevStats) => ({
         ...prevStats,
         [oldPlan]: Math.max(0, (prevStats[oldPlan] || 0) - 1),
@@ -253,7 +441,6 @@ const AdminPanel = () => {
     alert(`Successfully changed plan to ${PLANS[newPlan]?.name}`);
   }, []);
 
-  // Handle reset jobs count (local only)
   const handleResetJobs = useCallback((companyId) => {
     setSubsCompanies((prev) =>
       prev.map((comp) =>
@@ -264,7 +451,6 @@ const AdminPanel = () => {
     alert("Job count reset successfully");
   }, []);
 
-  // Memoize filtered companies
   const filteredCompanies = useMemo(() => {
     return subsCompanies.filter((comp) => {
       const matchesPlan =
@@ -290,7 +476,6 @@ const AdminPanel = () => {
     );
   }, []);
 
-  // FIXED: Changed 'user' to 'used' - this was the main bug
   const getJobUsageBar = useCallback((used, limit) => {
     const safeUsed = typeof used === "number" ? used : 0;
     const safeLimit = typeof limit === "number" ? limit : 3;
@@ -346,9 +531,9 @@ const AdminPanel = () => {
       <div className="flex min-h-screen">
         {/* Sidebar */}
         <div
-          className={`${sidebarOpen ? "w-64" : "w-20"} bg-white pt-2 dark:bg-gray-800 shadow-md transition-all duration-300 ease-in-out flex flex-col`}
+          className={`${sidebarOpen ? "w-64" : "w-20"} z-50 fixed  min-h-screen bg-white pt-2 dark:bg-gray-800 shadow-md transition-all duration-300 ease-in-out flex flex-col`}
         >
-          <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-700">
+          <div className=" flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-700">
             <div className={`flex gap-3 w-10 h-10 ${!sidebarOpen && "hidden"}`}>
               <img src={HIREFLOWLOGO} alt="logo" className="rounded" />
             </div>
@@ -404,7 +589,7 @@ const AdminPanel = () => {
 
           {/* Subscription Quick Stats in Sidebar */}
           {sidebarOpen && activeTab === "subscriptions" && (
-            <div className="px-4 pb-4 border-t border-gray-200 dark:border-gray-700 pt-5">
+            <div className=" px-4 pb-4 border-t border-gray-200 dark:border-gray-700 pt-5">
               <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
                 Plan Distribution
               </p>
@@ -428,11 +613,11 @@ const AdminPanel = () => {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 flex bg-white dark:bg-gray-900/50 flex-col">
+        <div className="flex-1  flex bg-white dark:bg-gray-900/50 flex-col">
           {/* Header */}
-          <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+          <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-30">
             <div className="px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-              <h1 className="text-lg font-semibold text-gray-900 dark:text-white capitalize">
+              <h1 className="text-lg pl-22 font-semibold text-gray-900 dark:text-white capitalize">
                 {activeTab === "dashboard"
                   ? "Dashboard"
                   : activeTab === "settings"
@@ -441,7 +626,7 @@ const AdminPanel = () => {
                       ? "User Management"
                       : activeTab === "subscriptions"
                         ? "Subscription Management"
-                        : "Reports"}
+                        : "dashboard"}
               </h1>
               <div className="flex items-center space-x-4">
                 <button className="p-2 rounded-full text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 focus:outline-none">
@@ -460,7 +645,7 @@ const AdminPanel = () => {
                   </svg>
                 </button>
                 <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium">
-                  {user?.name?.charAt(0).toUpperCase()}
+                  {user?.name.charAt(0).toUpperCase()}
                 </div>
 
                 <div className="bg-blue-600 active:scale-95 rounded">
@@ -477,16 +662,19 @@ const AdminPanel = () => {
           </header>
 
           {/* Main Content Area */}
-          <main className="flex-1 bg-gray-100 dark:bg-gray-900 p-2 overflow-y-auto transition-colors duration-200">
+          <main className="flex-1 pl-22 bg-gray-100 dark:bg-gray-900 p-2 overflow-y-auto  transition-colors duration-200">
             {/* ======================== DASHBOARD ======================== */}
             {activeTab === "dashboard" && (
-              <div className="space-y-6">
+              <div className="space-y-6 ">
                 {/* Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div
+                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3"
+                  style={{ marginBottom: "10px" }}
+                >
                   {[
                     {
                       label: "Total Users",
-                      value: usersdata.totalUsers || 0,
+                      value: usersdata.totalUsers || users.length,
                       change: "+12%",
                       changeColor: "text-green-600",
                       iconBg: "bg-blue-100 dark:bg-blue-900/30",
@@ -504,7 +692,7 @@ const AdminPanel = () => {
                     },
                     {
                       label: "Total Applications",
-                      value: "5,432",
+                      value: applications.length || 0, // DYNAMIC VALUE
                       change: "+15%",
                       changeColor: "text-green-600",
                       iconBg: "bg-yellow-100 dark:bg-yellow-900/30",
@@ -571,13 +759,16 @@ const AdminPanel = () => {
                   ))}
                 </div>
 
-                {/* Application Trends Line Chart */}
-                <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 hover:shadow-lg transition-all duration-200">
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                {/* Application Trends Line Chart (Dynamic) */}
+                <div
+                  style={{ marginBottom: "8px" }}
+                  className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 hover:shadow-lg transition-all duration-200"
+                >
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white ">
                     Application Trends
                   </h3>
                   <ResponsiveContainer width="100%" height={400}>
-                    <LineChart data={APPLICATION_TRENDS_DATA}>
+                    <LineChart data={applicationTrendsData}>
                       <CartesianGrid strokeDasharray="3 10" stroke="gray" />
                       <XAxis dataKey="month" stroke="#6b7280" />
                       <YAxis stroke="#6b7280" />
@@ -614,12 +805,12 @@ const AdminPanel = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 hover:shadow-lg transition-all duration-200">
                     <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                      Top Job Categories
+                      Job Categories
                     </h3>
                     <ResponsiveContainer width="100%" height={250}>
                       <PieChart>
                         <Pie
-                          data={JOB_CATEGORIES_DATA}
+                          data={jobCategoriesData}
                           cx="50%"
                           cy="50%"
                           labelLine={false}
@@ -630,7 +821,7 @@ const AdminPanel = () => {
                           fill="#8884d8"
                           dataKey="value"
                         >
-                          {JOB_CATEGORIES_DATA.map((entry, index) => (
+                          {jobCategoriesData.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={entry.color} />
                           ))}
                         </Pie>
@@ -651,7 +842,7 @@ const AdminPanel = () => {
                       Monthly User Registrations
                     </h3>
                     <ResponsiveContainer width="100%" height={250}>
-                      <BarChart data={MONTHLY_APPLICATIONS_DATA}>
+                      <BarChart data={monthlyUsersData}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                         <XAxis dataKey="month" stroke="#6b7280" />
                         <YAxis stroke="#6b7280" />
@@ -674,55 +865,9 @@ const AdminPanel = () => {
                     </ResponsiveContainer>
                   </div>
                 </div>
-
-                <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 hover:shadow-lg transition-all duration-200">
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                    User Activity
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {[
-                      {
-                        label: "Daily Active Users",
-                        value: "324",
-                        change: "+5.2% from yesterday",
-                      },
-                      {
-                        label: "Weekly Active Users",
-                        value: "856",
-                        change: "+8.1% from last week",
-                      },
-                      {
-                        label: "Monthly Active Users",
-                        value: "1,245",
-                        change: "+12% from last month",
-                      },
-                      {
-                        label: "New Users This Month",
-                        value: "142",
-                        change: "+18% growth rate",
-                      },
-                    ].map((item, idx) => (
-                      <div
-                        key={idx}
-                        className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
-                      >
-                        <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                          {item.label}
-                        </div>
-                        <div className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">
-                          {item.value}
-                        </div>
-                        <div className="mt-1 text-sm text-green-600 dark:text-green-400">
-                          {item.change}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
               </div>
             )}
 
-            {/* ======================== SUBSCRIPTIONS ======================== */}
             {activeTab === "subscriptions" && (
               <div className="space-y-6">
                 {/* Subscription Stats Cards */}
@@ -782,7 +927,7 @@ const AdminPanel = () => {
                         </p>
                       </div>
                       <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-medium px-2 py-1 rounded-full">
-                        {currency}29/mo
+                        {currency}199/mo
                       </span>
                     </div>
                   </div>
@@ -798,7 +943,7 @@ const AdminPanel = () => {
                         </p>
                       </div>
                       <span className="bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs font-medium px-2 py-1 rounded-full">
-                        {currency}79/mo
+                        {currency}299/mo
                       </span>
                     </div>
                   </div>
@@ -814,20 +959,20 @@ const AdminPanel = () => {
                         </p>
                       </div>
                       <span className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 text-xs font-medium px-2 py-1 rounded-full">
-                        {currency}199/mo
+                        {currency}799/mo
                       </span>
                     </div>
                   </div>
                 </div>
 
-                {/* Subscription Revenue Chart */}
+                {/* Subscription Revenue Chart (Dynamic) */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
                     <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
                       Monthly Recurring Revenue
                     </h3>
                     <ResponsiveContainer width="100%" height={250}>
-                      <LineChart data={REVENUE_DATA}>
+                      <LineChart data={revenueData}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                         <XAxis dataKey="month" stroke="#6b7280" />
                         <YAxis stroke="#6b7280" />
@@ -856,7 +1001,7 @@ const AdminPanel = () => {
                       Plan Migration Trends
                     </h3>
                     <ResponsiveContainer width="100%" height={250}>
-                      <BarChart data={SUBSCRIPTION_TRENDS_DATA}>
+                      <BarChart data={subscriptionTrendsData}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                         <XAxis dataKey="month" stroke="#6b7280" />
                         <YAxis stroke="#6b7280" />
@@ -1053,17 +1198,20 @@ const AdminPanel = () => {
                             >
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="flex items-center">
-                                  <div className="w-10 h-10 rounded-lgflex items-center justify-center text-white font-semibold text-sm">
+                                  <div className="w-10 h-10 rounded-lg bg-gray-200 dark:bg-gray-700 overflow-hidden">
                                     <img
-                                      src={`http://localhost:8000/uploads/${comp?.companyData?.logo}`}
+                                      src={comp?.companyData?.logo}
                                       alt="logo"
-                                      className=" object-cover h-full w-full"
+                                      className="w-full h-full object-cover"
+                                      onError={(e) => {
+                                        e.target.style.display = "none";
+                                      }}
                                     />
                                   </div>
                                   <div className="ml-3">
                                     <div className="text-sm font-medium text-gray-900 dark:text-white">
-                                      {comp?.companyData.name ||
-                                        comp.companyname ||
+                                      {comp?.companyData?.name ||
+                                        comp.name ||
                                         "Unknown"}
                                     </div>
                                     <div className="text-xs text-gray-500 dark:text-gray-400">
@@ -1075,7 +1223,7 @@ const AdminPanel = () => {
                               <td className="px-6 py-4 whitespace-nowrap">
                                 {getPlanBadge(comp.currentPlan)}
                               </td>
-                              <td className="px-6 py-4 min-w-50">
+                              <td className="px-6 py-4 min-w-[200px]">
                                 {getJobUsageBar(comp.jobsUsed, comp.jobsLimit)}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
@@ -1241,12 +1389,12 @@ const AdminPanel = () => {
                         Free Plan Limit Policy
                       </h3>
                       <p className="mt-1 text-sm text-amber-700 dark:text-amber-400">
-                        Recruiters on the <strong>Free plan</strong> can post up
-                        to <strong>3 jobs</strong>. Once the limit is reached,
-                        they must upgrade to a paid plan (Basic, Pro, or
-                        Enterprise) to post additional jobs. You can manually
-                        override limits or reset job counts from the action
-                        buttons above.
+                        Recruiters on <strong>Free plan</strong> can post up to{" "}
+                        <strong>3 jobs</strong>. Once the limit is reached, they
+                        must upgrade to a paid plan (Basic, Pro, or Enterprise)
+                        to post additional jobs. You can manually override
+                        limits or reset job counts from the action buttons
+                        above.
                       </p>
                     </div>
                   </div>
@@ -1255,8 +1403,13 @@ const AdminPanel = () => {
             )}
 
             {activeTab === "settings" && <Setting />}
-            {activeTab === "users" && <Users users={users} />}
-            {activeTab === "reports" && <Reports />}
+            {activeTab === "users" && (
+              <Users
+                users={users}
+                onUserUpdated={handleUserUpdated}
+                handleDeleteUser={handleDeleteUser}
+              />
+            )}
           </main>
         </div>
       </div>
@@ -1271,7 +1424,7 @@ const AdminPanel = () => {
             />
             <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-3xl w-full mx-auto overflow-hidden">
               {/* Modal Header */}
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-5">
+              <div className="bg-linear-to-r from-blue-600 to-purple-600 px-6 py-5">
                 <div className="flex items-center justify-between">
                   <div>
                     <h2 className="text-xl font-semibold text-white">
@@ -1416,7 +1569,6 @@ const AdminPanel = () => {
         </div>
       )}
 
-      {/* ======================== DETAIL MODAL ======================== */}
       {showDetailModal && selectedCompany && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20">
@@ -1429,7 +1581,7 @@ const AdminPanel = () => {
               <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold">
+                    <div className="w-12 h-12 rounded-xl bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold">
                       {selectedCompany.name?.charAt(0)?.toUpperCase() ||
                         selectedCompany.companyName?.charAt(0)?.toUpperCase() ||
                         "C"}

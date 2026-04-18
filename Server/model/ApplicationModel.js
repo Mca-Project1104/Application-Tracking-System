@@ -49,6 +49,8 @@ const applicationSchema = new mongoose.Schema(
       default: "applied",
     },
 
+    details: { type: Object },
+
     notes: [
       {
         text: String,
@@ -63,6 +65,6 @@ const applicationSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-applicationSchema.index({ jobId: 1, candidateId: 1 }, { unique: true });
+applicationSchema.index({ jobId: 1, candidateId: 1 }, { unique: true }); //only one job
 
 export default mongoose.model("Application", applicationSchema);

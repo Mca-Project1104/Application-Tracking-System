@@ -192,7 +192,7 @@ const CompanyProfile = () => {
               <div className="flex h-22  rounded overflow-hidden ">
                 {profileData?.companyData?.company?.logo ? (
                   <img
-                    src={`http://localhost:8000/uploads/${profileData?.companyData?.company?.logo}`}
+                    src={profileData?.companyData?.company?.logo}
                     alt="Company Logo"
                     className="max-h-full rounded-2xl  max-w-full object-contain"
                   />

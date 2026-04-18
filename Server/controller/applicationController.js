@@ -4,6 +4,7 @@ import { Company } from "../model/CompanyModel.js";
 import Candidate from "../model/Candidate.js";
 import axios from "axios";
 import { application } from "express";
+import { InterviewEmail, HiredEmial } from "../utils/sendEmail.js";
 
 // APPLY JOB
 export const applyJob = async (req, res) => {
@@ -59,11 +60,19 @@ export const getapplications = async (req, res) => {
     const { candidateId } = req.body;
     const application = await Application.find({
       candidateId: candidateId,
-    }).populate({
-      path: "jobId",
-    });
+    })
+      .populate({
+        path: "jobId",
+        populate: {
+          path: "company",
+          select: "logo",
+        },
+      })
+      .populate({
+        path: "candidateId",
+      });
 
-    if (application.length < 0) {
+    if (application.length <= 0) {
       return res.status(303).json({ message: "application not found" });
     }
 
@@ -158,14 +167,74 @@ export const getCompanyDashboard = async (req, res) => {
 export const manageStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { newStatus } = req.body;
+    const { newStatus, details } = req.body;
+    const { email } = req.user;
 
-    console.log(newStatus);
+    if (!id || !details) {
+      return res.stats(422).json({ message: "id and details not found " });
+    }
 
-    const response = await Application.findByIdAndUpdate(id, {
-      $set: { status: newStatus },
-    });
-    console.log(response);
+    const response = await Application.findByIdAndUpdate(
+      { _id: id, status: { $ne: "hired" } },
+      {
+        $set: { status: newStatus, details: details },
+      },
+      {
+        new: true,
+        runValidators: true,
+      },
+    )
+      .select("-resumeText")
+      .populate({
+        path: "jobId",
+        select: "companyName location",
+      })
+      .populate("candidateId", "email");
+
+    const candidateEmail = response.candidateId.email;
+
+    if (!candidateEmail) {
+      return res.status(404).json({ message: " Candidate Email not found" });
+    }
+
+    if (newStatus === "interview" && response.status === "interview") {
+      if (!response.details) {
+        return res
+          .status(400)
+          .json({ message: "Details not fount please set interview detail ." });
+      }
+      //manage this response not complete
+      const data = {
+        userName: response?.details[0].candidateName,
+        status: response?.status,
+        resumeScore: response.score,
+        skills: response?.resume_Analyse?.matched_skills,
+        feedback: response?.details[0].notes,
+        interviewDate: response?.details[0]?.date,
+        interviewTime: response.details[0].time,
+        interviewLocation: response.details[0].location,
+      };
+
+      await InterviewEmail({ email: response.candidateId.email, data: data });
+    }
+
+    //send mail successfully hired candidate
+    if (newStatus === "hired" && response.status === "hired") {
+      if (!response.details) {
+        return res
+          .status(400)
+          .json({ message: "Details not fount please set interview detail ." });
+      }
+
+      const data = {
+        username: response?.details[0]?.candidateName,
+        companyName: response.jobId.companyName,
+        joiningDate: response?.details[0]?.date,
+        jobLocation: response.jobId.location,
+      };
+
+      await HiredEmial({ email: response.candidateId.email, data: data });
+    }
 
     res.status(200).json({ message: "Update Successfully .", data: response });
   } catch (error) {

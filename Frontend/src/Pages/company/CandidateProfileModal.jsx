@@ -23,7 +23,6 @@ const CandidateProfileModal = ({
   });
   const [interviews, setInterviews] = useState([]);
   const [showScheduleForm, setShowScheduleForm] = useState(false);
-  console.log(candidate);
 
   // Feedback state
   const [feedbackList, setFeedbackList] = useState([]);
@@ -217,10 +216,15 @@ const CandidateProfileModal = ({
   const handleStatusUpdate = async (newStatus) => {
     setLoading(true);
     try {
+      if (interviews.length === 0) {
+        alert("Add Interview Details ");
+        return;
+      }
+
       // Replace with actual API call
       const res = await api.patch(
         `/api/applications/applications/${candidate.id}/status`,
-        { newStatus: newStatus },
+        { newStatus: newStatus, details: interviews },
         { headers: { Authorization: `Bearer ${token}` } },
       );
 
@@ -233,6 +237,7 @@ const CandidateProfileModal = ({
       onClose();
     } catch (error) {
       console.log(error);
+      alert(error.response.data.message);
     } finally {
       setLoading(false);
     }
@@ -294,7 +299,7 @@ const CandidateProfileModal = ({
                 <div className="relative">
                   {candidate.profile_image ? (
                     <img
-                      src={`http://localhost:8000/${candidate.profile_image}`}
+                      src={candidate.profile_image}
                       alt={candidate.name}
                       className="h-14 w-14 sm:h-16 sm:w-16 rounded-xl object-cover ring-2 ring-gray-200 dark:ring-gray-700"
                       onError={(e) => {

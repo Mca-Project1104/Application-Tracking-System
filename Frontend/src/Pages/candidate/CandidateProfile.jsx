@@ -223,7 +223,7 @@ const CandidateProfile = () => {
   const certifications = candidate.certifications ?? [];
 
   const profileImageSrc = candidate.profile_image
-    ? `${BASE_URL}/${candidate.profile_image}`
+    ? `${candidate.profile_image}`
     : null;
 
   return (
@@ -241,7 +241,7 @@ const CandidateProfile = () => {
               {profileImageSrc ? (
                 <img
                   className="h-20 w-20 rounded-full object-cover"
-                  src={profileImageSrc}
+                  src={candidate.profile_image}
                   alt={candidate.user_id?.firstName}
                 />
               ) : (

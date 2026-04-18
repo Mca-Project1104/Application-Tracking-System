@@ -183,12 +183,13 @@ export const forgotPassword = async (req, res) => {
     const { password, newpassword } = req.body;
     const id = req.user.id;
 
-    const user = await User.findOne({ _id: id });
+    const user = await User.findById(id);
 
     if (!user) {
       return res.status(404).json({ message: "Not found user" });
     }
 
+    console.log(password, newpassword);
     const isVerified = await bcrypt.compare(password, user.password);
 
     if (!isVerified) {

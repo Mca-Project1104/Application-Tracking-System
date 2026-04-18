@@ -14,7 +14,7 @@ const Login = ({ setIsAuthenticated, setUserRole }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [isActive, setIsActive] = useState("login");
-  const { navigate } = useAppContext();
+  const { navigate, searchRef } = useAppContext();
   const { email, password, newpassword } = formData;
   const token = localStorage.getItem("token");
 
@@ -339,6 +339,7 @@ const Login = ({ setIsAuthenticated, setUserRole }) => {
               <input
                 id="email"
                 name="email"
+                ref={searchRef}
                 type="email"
                 autoComplete="email"
                 required

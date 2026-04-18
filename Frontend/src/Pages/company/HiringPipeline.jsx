@@ -236,8 +236,6 @@ const HiringPipeline = () => {
     return <Loading detail={"Loading pipeline data..."} />;
   }
 
-  console.log(recentApplications);
-
   return (
     <div className="w-380 bg-gray-50 dark:bg-gray-900 transition-colors mt-2 duration-200">
       <div className="px-2 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8 max-w-full overflow-x-hidden">
@@ -625,7 +623,7 @@ const HiringPipeline = () => {
                                 {candidate.avatar ? (
                                   <img
                                     className="h-10 w-10 sm:h-12 sm:w-12 rounded-full object-cover ring-2 ring-gray-200 dark:ring-gray-700"
-                                    src={`http://localhost:8000/${candidate.profile_image}`}
+                                    src={candidate.profile_image}
                                     alt={candidate.name}
                                     onError={(e) => {
                                       e.target.onerror = null;

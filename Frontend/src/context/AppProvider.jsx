@@ -3,6 +3,7 @@ import React, {
   useContext,
   useEffect,
   useState,
+  useRef,
   useCallback,
 } from "react";
 import { useNavigate } from "react-router-dom";
@@ -35,18 +36,17 @@ export const AppProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const [message, setMessage] = useState(null);
   const [theme, setTheme] = useState(localStorage.getItem("theme"));
+  const searchRef = useRef(null);
 
   //  Combined loading state for convenience
   const isInitialLoading = jobsLoading && !jobs.length;
 
   // Load user from localStorage (sync)
+  const adminToken = localStorage.getItem("admin_token");
   useEffect(() => {
-    const token = localStorage.getItem("admin_token" || "token");
-    if (!token) return;
-
     const userdata = JSON.parse(localStorage.getItem("user"));
     setUser(userdata);
-  }, []);
+  }, [token, adminToken]);
 
   //  Fetch Jobs - FIXED dependency array
   const fetchJobs = useCallback(async () => {
@@ -74,7 +74,7 @@ export const AppProvider = ({ children }) => {
 
   useEffect(() => {
     fetchJobs();
-  }, [fetchJobs]); // ✅ Runs when token OR userRole changes
+  }, [fetchJobs]); //  Runs when token OR userRole changes
 
   // Fetch Candidate Data
   const fetchCandidateData = useCallback(async () => {
@@ -130,11 +130,27 @@ export const AppProvider = ({ children }) => {
   );
 
   useEffect(() => {
+    const handleGlobalKeyDown = (event) => {
+      if (event.key === "/") {
+        event.preventDefault();
+        if (searchRef.current) {
+          searchRef.current.focus();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleGlobalKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleGlobalKeyDown);
+    };
+  }, []);
+
+  useEffect(() => {
     //  Only fetch if candidate exists AND has _id
     if (userRole === "candidate" && candidate?._id) {
       fetchApplications(candidate._id);
     }
-  }, [userRole, candidate?._id, fetchApplications]); // ✅ Depends on _id specifically
+  }, [userRole, candidate?._id, fetchApplications]); //  Depends on _id specifically
 
   //  Fetch Company Profile
   const fetchProfile = useCallback(async () => {
@@ -210,6 +226,7 @@ export const AppProvider = ({ children }) => {
     setMessage,
     HIREFLOWLOGO,
     applications,
+    searchRef,
     jobs,
     companydata,
     token,
