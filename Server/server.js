@@ -18,8 +18,8 @@ import candidateRouter from "./routes/candidate/CandidateRoute.js";
 const app = express();
 
 //access static files
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+//const __filename = fileURLToPath(import.meta.url);
+//const __dirname = path.dirname(__filename);
 const PORT = process.env.PORT || 8000;
 
 let cached = global.mongoose || { conn: null, promise: null };
@@ -73,7 +73,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
 app.use(morgan("dev"));
-app.use("/uploads", express.static(path.join(__dirname, "uploads"))); // Serve uploaded files statically
+//app.use("/uploads", express.static(path.join(__dirname, "uploads"))); // Serve uploaded files statically
 
 //Routes
 app.get("/", (_, res) => {
@@ -93,4 +93,4 @@ app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
 
-// export default app;
+export default app;
