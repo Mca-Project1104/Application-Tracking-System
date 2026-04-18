@@ -22,16 +22,29 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PORT = process.env.PORT || 8000;
 
-let isConnected = false;
+let cached = global.mongoose || { conn: null, promise: null };
+
 const connect = async () => {
-  try {
-    const db = await connectDB();
-    isConnected = db?.connections?.[0]?.readyState === 1;
-    console.log("MongoDB connected");
-  } catch (error) {
-    console.error("DB connection error:", error);
-    throw error;
+  if (cached.conn) {
+    return cached.conn;
   }
+
+  if (!cached.promise) {
+    cached.promise = connectDB()
+      .then((db) => {
+        console.log("MongoDB connected");
+        return db;
+      })
+      .catch((err) => {
+        cached.promise = null;
+        throw err;
+      });
+  }
+
+  cached.conn = await cached.promise;
+  global.mongoose = cached;
+
+  return cached.conn;
 };
 
 app.use(async (_, res, next) => {
@@ -76,8 +89,8 @@ app.use("/api/admin", adminRouter);
 app.post("/api/refresh", refreshToken); //handle a refresh token every 15min
 
 //  Start Server -> npm start
-// app.listen(PORT, () => {
-//   console.log(`Server running on port ${PORT}`);
-// });
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
 
-export default app;
+// export default app;
