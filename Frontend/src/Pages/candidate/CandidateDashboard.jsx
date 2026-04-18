@@ -26,7 +26,7 @@ const CandidateDashboard = () => {
         {/* Header */}
         <div className="mb-6 mt-2">
           <Header
-            title={`Welcome ${user.name} !`}
+            title={`Welcome ${user.name} `}
             description={"Here's what's happening with your job search today."}
           />
         </div>
@@ -126,7 +126,7 @@ const CandidateDashboard = () => {
               <div className="mt-5">
                 <div className="flex items-center">
                   <div className="shrink-0">
-                    <div className="h-12 select-none w-12 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">
+                    <div className="h-12 select-none hover:scale-105 w-12 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">
                       <img
                         src={candidate?.profile_image}
                         alt="logo"

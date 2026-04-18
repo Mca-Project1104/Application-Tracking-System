@@ -1,8 +1,6 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import api from "../../api/axios";
 import { useAppContext } from "../../context/AppProvider";
-import { useEffect } from "react";
-import { useState } from "react";
 import Loading from "../../Components/Loading/Loading";
 import { getpipelineColor } from "../../assets/dummydata.js";
 
@@ -40,6 +38,22 @@ const CompanyDashboard = () => {
     if (token) getDetails();
   }, []);
 
+  console.log(arrstate);
+
+  const getSvgIcons = (state) => {
+    if (state === "totalApplicants")
+      return "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z";
+    else if (state === "activeJobs")
+      return "M9 6V4h6v2m-9 0h12a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2z";
+    else if (state === "shortlisted")
+      return "M9 12l2 2 4-4m5 2a9 9 0 11-18 0 9 9 0 0118 0z";
+    else if (state === "interviewsToday")
+      return "M8 7V3m8 4V3m-9 8h10m-11 9h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v11a2 2 0 002 2z";
+    else {
+      ("");
+    }
+  };
+
   if (loading) {
     return <Loading detail={"Loading  data..."} />;
   }
@@ -49,55 +63,49 @@ const CompanyDashboard = () => {
       <div className="px-4 sm:px-6 lg:px-4 py-8">
         {/* Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6">
-          {arrstate.map(
-            (
-              [key, value],
-              index, //using array key-value pair
-            ) => (
-              <div
-                key={index}
-                className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-xl hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
-              >
-                <div className="bg-gray-50 dark:bg-gray-700/50 px-5 py-3">
-                  <div className="text-sm capitalize text-center">
-                    <span className="text-green-600 dark:text-green-400 font-medium">
-                      {key}
-                    </span>
-                  </div>
+          {arrstate.map(([key, value], index) => (
+            <div
+              key={index}
+              className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-xl hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
+            >
+              <div className="bg-gray-50 dark:bg-gray-700/50 px-5 py-3">
+                <div className="text-sm capitalize text-center">
+                  <span className="text-green-600 dark:text-green-400 font-medium">
+                    {key}
+                  </span>
                 </div>
-                <div className="p-5">
-                  <div className="flex items-center">
-                    <div
-                      className={`shrink-0 bg-green-200 dark:bg-green-200 rounded-lg p-3 transition-all duration-200`}
+              </div>
+              <div className="p-5">
+                <div className="flex items-center">
+                  <div
+                    className={`shrink-0 bg-green-200 dark:bg-green-200 rounded-lg p-3 transition-all duration-200`}
+                  >
+                    <svg
+                      className="h-6 w-6 text-blue-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 25 25"
                     >
-                      <svg
-                        className={`h-6 w-6 text-green-600`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                        />
-                      </svg>
-                    </div>
-                    <div className="ml-5 w-0 flex-1">
-                      <dl>
-                        <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                          {value}
-                        </dt>
-                        <dd className="mt-1 text-2xl font-semibold text-gray-900 dark:text-white"></dd>
-                      </dl>
-                    </div>
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d={getSvgIcons(key)}
+                      />
+                    </svg>
+                  </div>
+                  <div className="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+                        {value}
+                      </dt>
+                      <dd className="mt-1 text-2xl font-semibold text-gray-900 dark:text-white"></dd>
+                    </dl>
                   </div>
                 </div>
               </div>
-            ),
-          )}
+            </div>
+          ))}
         </div>
 
         {/* Main Content Grid */}

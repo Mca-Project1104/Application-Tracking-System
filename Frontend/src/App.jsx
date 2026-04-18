@@ -167,7 +167,7 @@ function App() {
   }, []);
 
   return (
-    <div className="min-h-screen  bg-white dark:bg-gray-900 dark:text-white">
+    <div className="relative w-full bg-white dark:bg-gray-900 dark:text-white text-black">
       {/* Theme Toggle */}
       {location.pathname !== "/" && (
         <ThemeToggle theme={theme} setTheme={setTheme} />

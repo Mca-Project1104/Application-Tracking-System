@@ -6,7 +6,7 @@ import morgan from "morgan";
 import { fileURLToPath } from "url";
 import cookieParser from "cookie-parser";
 import jobRouter from "./routes/job/JobRoute.js";
-import { connectDB } from "./database/Connection.js";
+import connectDB from "./database/Connection.js";
 import userRouter from "./routes/user/UserRouter.js";
 import adminRouter from "./routes/admin/adminRoute.js";
 import analyzerRouter from "./routes/ResumeAnalyzer.js";
@@ -22,12 +22,31 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PORT = process.env.PORT || 8000;
 
-await connectDB();
+let isConnected = false;
+const connect = async () => {
+  try {
+    const db = await connectDB();
+    isConnected = db?.connections?.[0]?.readyState === 1;
+    console.log("MongoDB connected");
+  } catch (error) {
+    console.error("DB connection error:", error);
+    throw error;
+  }
+};
+
+app.use(async (_, res, next) => {
+  try {
+    await connect();
+    next();
+  } catch (err) {
+    return res.status(500).json({ error: "Database connection failed" });
+  }
+});
 
 // Middleware
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173", //change url deploy on cloud
+    origin: process.env.CLIENT_URL, //change url deploy on cloud
     credentials: true,
   }),
 );
@@ -56,14 +75,7 @@ app.use("/api/applications", applicationRoute);
 app.use("/api/admin", adminRouter);
 app.post("/api/refresh", refreshToken); //handle a refresh token every 15min
 
-//  Test Socket.IO endpoint
-app.get("/test-socket", (req, res) => {
-  io.emit("test", { message: "Socket.IO is working!" });
-  res.json({ success: true, message: "Test event sent" });
-});
-
 //  Start Server -> npm start
-
-app.listen(PORT, () => {
-  console.log(`✅ Server running on port ${PORT}`);
-});
+// app.listen(PORT, () => {
+//   console.log(`✅ Server running on port ${PORT}`);
+// });

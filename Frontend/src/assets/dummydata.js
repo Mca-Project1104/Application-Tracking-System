@@ -653,75 +653,74 @@ export const pricingPlans = [
   },
 ];
 
-export  const getpipelineColor = (name) => {
-    if (name === "applied")
-      return "bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 hover:border-2 border-blue-400";
-    else if (name === "screening")
-      return "bg-yellow-50 text-yellow-600 dark:bg-yellow-900/20 dark:text-yellow-400 hover:border-2 border-yellow-400";
-    else if (name === "interview")
-      return "bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400 hover:border-2 border-purple-400";
-    else if (name === "hired")
-      return "bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400 hover:border-2 border-green-400";
-    else if (name === "shortlisted")
-      return "bg-green-50 text-green-400 dark:bg-green-900/15 dark:text-green-400 hover:border-2 border-green-600";
-    else if (name === "rejected")
-      return "bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400 hover:border-2 border-red-400";
-    else
-      return "bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400 hover:border-2 border-red-400";
-  };
+export const getpipelineColor = (name) => {
+  if (name === "applied")
+    return "bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 hover:border-2 border-blue-400";
+  else if (name === "screening")
+    return "bg-yellow-50 text-yellow-600 dark:bg-yellow-900/20 dark:text-yellow-400 hover:border-2 border-yellow-400";
+  else if (name === "interview")
+    return "bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400 hover:border-2 border-purple-400";
+  else if (name === "hired")
+    return "bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400 hover:border-2 border-green-400";
+  else if (name === "shortlisted")
+    return "bg-green-50 text-green-400 dark:bg-green-900/15 dark:text-green-400 hover:border-2 border-green-600";
+  else if (name === "rejected")
+    return "bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400 hover:border-2 border-red-400";
+  else
+    return "bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400 hover:border-2 border-red-400";
+};
 
+// Helper function to determine colors based on application status
+export const getStatusColors = (status) => {
+  if (!status)
+    return {
+      badge:
+        "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400 border border-gray-200 dark:border-gray-700",
+      bar: "bg-gray-400",
+      ring: "ring-gray-200 dark:ring-gray-800",
+      icon: "⏳",
+    };
 
-    // Helper function to determine colors based on application status
- export const getStatusColors = (status) => {
-    if (!status)
+  switch (status.toLowerCase()) {
+    case "hired":
       return {
         badge:
-          "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400 border border-gray-200 dark:border-gray-700",
-        bar: "bg-gray-400",
-        ring: "ring-gray-200 dark:ring-gray-800",
+          "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border border-green-200 dark:border-green-800",
+        bar: "bg-green-500",
+        ring: "ring-green-200 dark:ring-green-800",
+        icon: "✓",
+      };
+    case "rejected":
+      return {
+        badge:
+          "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-800",
+        bar: "bg-red-500",
+        ring: "ring-red-200 dark:ring-red-800",
+        icon: "✕",
+      };
+    case "interview":
+      return {
+        badge:
+          "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 border border-purple-200 dark:border-purple-800",
+        bar: "bg-purple-500",
+        ring: "ring-purple-200 dark:ring-purple-800",
+        icon: "📅",
+      };
+    case "shortlisted":
+      return {
+        badge:
+          "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 border border-blue-200 dark:border-blue-800",
+        bar: "bg-blue-500",
+        ring: "ring-blue-200 dark:ring-blue-800",
+        icon: "★",
+      };
+    default:
+      return {
+        badge:
+          "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-800",
+        bar: "bg-yellow-500",
+        ring: "ring-yellow-200 dark:ring-yellow-800",
         icon: "⏳",
       };
-
-    switch (status.toLowerCase()) {
-      case "hired":
-        return {
-          badge:
-            "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border border-green-200 dark:border-green-800",
-          bar: "bg-green-500",
-          ring: "ring-green-200 dark:ring-green-800",
-          icon: "✓",
-        };
-      case "rejected":
-        return {
-          badge:
-            "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-800",
-          bar: "bg-red-500",
-          ring: "ring-red-200 dark:ring-red-800",
-          icon: "✕",
-        };
-      case "interview":
-        return {
-          badge:
-            "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 border border-purple-200 dark:border-purple-800",
-          bar: "bg-purple-500",
-          ring: "ring-purple-200 dark:ring-purple-800",
-          icon: "📅",
-        };
-      case "shortlisted":
-        return {
-          badge:
-            "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 border border-blue-200 dark:border-blue-800",
-          bar: "bg-blue-500",
-          ring: "ring-blue-200 dark:ring-blue-800",
-          icon: "★",
-        };
-      default: 
-        return {
-          badge:
-            "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-800",
-          bar: "bg-yellow-500",
-          ring: "ring-yellow-200 dark:ring-yellow-800",
-          icon: "⏳",
-        };
-    }
-  };
+  }
+};

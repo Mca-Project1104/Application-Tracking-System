@@ -15,7 +15,7 @@ const JobPostingForm = () => {
   const initializeFormData = useCallback(() => {
     return {
       title: "",
-      company: companydata?.company?.name || "",
+      companyName: companydata?.company?.name || "",
       location: companydata?.company?.location || "",
       type: "Full-time",
       experience: "Entry-level",
@@ -44,7 +44,7 @@ const JobPostingForm = () => {
       setIsloading(false);
       setFormData((prev) => ({
         ...prev,
-        company: companydata.company.name || "",
+        companyName: companydata.company.name || "",
         location: companydata.company.location || "",
         contactEmail: companydata.email || "",
         postedBy: companydata.name || "",
@@ -123,7 +123,8 @@ const JobPostingForm = () => {
 
     if (step === 1) {
       if (!formData.title.trim()) newErrors.title = "Job title is required";
-      if (!formData.company.trim()) newErrors.company = "Company is required";
+      if (!formData.companyName.trim())
+        newErrors.company = "Company is required";
       if (!formData.location.trim())
         newErrors.location = "Location is required";
       if (formData.salaryMin && formData.salaryMax) {
@@ -198,7 +199,7 @@ const JobPostingForm = () => {
         title: formData.title,
         description: formData.description,
         location: formData.location,
-        company: formData.company,
+        companyName: formData.company,
         employmentType: formData.type,
         experienceLevel: formData.experience,
         workMode: formData.remoteOption,
@@ -229,7 +230,6 @@ const JobPostingForm = () => {
     }
   };
 
-  //handlde a keybord
   const handleKeyPress = (e, action) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -371,7 +371,7 @@ const JobPostingForm = () => {
                       <input
                         type="text"
                         name="company"
-                        value={formData.company}
+                        value={formData.companyName}
                         readOnly
                         className="w-full capitalize px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 border-gray-300 bg-gray-100 text-gray-600 cursor-not-allowed"
                       />
