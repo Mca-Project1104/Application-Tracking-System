@@ -25,8 +25,6 @@ import "aos/dist/aos.css";
 import { useAppContext } from "./context/AppProvider.jsx";
 import ApplicationDetails from "./Pages/candidate/ApplicationDetail.jsx";
 
-// ─── MOVE OUTSIDE App: prevents re-creation on every render ───
-
 const PrivateRoute = ({ isAuthenticated, children }) => {
   return isAuthenticated ? children : <Navigate to="/login" />;
 };
@@ -53,7 +51,7 @@ const Layout = React.memo(
         setUserRole={setUserRole}
         titleName="Hire Flow"
       />
-      <div className="flex">
+      <div className="flex pt-16 min-h-screen">
         {userRole !== "admin" && (
           <Sidebar
             userRole={userRole}
@@ -61,13 +59,12 @@ const Layout = React.memo(
             setShowSidebar={setShowSidebar}
           />
         )}
-        <div
-          className={`flex-1 pt-8 transition-all duration-300 ${
-            showSidebar && userRole !== "admin" ? "lg:ml-64" : ""
-          }`}
+        {/* ✅ md:ml-64 (not lg) to match sidebar breakpoint; min-w-0 prevents flex overflow */}
+        <main
+          className={`flex-1 min-w-0 ${userRole !== "admin" ? "md:ml-64" : ""}`}
         >
           {children}
-        </div>
+        </main>
       </div>
     </>
   ),
@@ -111,8 +108,6 @@ const ThemeToggle = React.memo(({ theme, setTheme }) => (
   </button>
 ));
 
-// ─── Main App ───
-
 function App() {
   const location = useLocation();
   const { theme, setTheme, navigate } = useAppContext();
@@ -123,7 +118,6 @@ function App() {
 
   const [userRole, setUserRole] = useState(() => {
     if (localStorage.getItem("admin_token")) return "admin";
-
     const user = JSON.parse(localStorage.getItem("user"));
     return user?.accountType || null;
   });
@@ -143,9 +137,8 @@ function App() {
   useEffect(() => {
     const token = localStorage.getItem("token");
     const publicPaths = ["/", "/login", "/register", "/verify-email"];
-  }, []); // empty dependency — run once on mount
+  }, []);
 
-  // AOS init
   useEffect(() => {
     AOS.init({
       duration: 1200,
@@ -168,13 +161,12 @@ function App() {
 
   return (
     <div className="relative w-full bg-white dark:bg-gray-900 dark:text-white text-black">
-      {/* Theme Toggle */}
       {location.pathname !== "/" && (
         <ThemeToggle theme={theme} setTheme={setTheme} />
       )}
 
       <Routes>
-        {/* ─── Public Routes ─── */}
+        {/* Public Routes */}
         {!isAuthenticated && (
           <>
             <Route path="/" element={<LandinPage />} />
@@ -192,7 +184,7 @@ function App() {
           </>
         )}
 
-        {/* ─── Authenticated Routes ─── */}
+        {/* Authenticated Routes */}
         {isAuthenticated && (
           <>
             <Route
@@ -210,7 +202,7 @@ function App() {
               }
             />
 
-            {/* Candidate */}
+            {/* Candidate Routes */}
             <Route
               path="/candidate"
               element={
@@ -229,7 +221,6 @@ function App() {
                 </PrivateRoute>
               }
             />
-
             <Route
               path="/candidate/profile"
               element={
@@ -248,7 +239,6 @@ function App() {
                 </PrivateRoute>
               }
             />
-
             <Route
               path="/candidate/jobs"
               element={
@@ -267,7 +257,6 @@ function App() {
                 </PrivateRoute>
               }
             />
-
             <Route
               path="/candidate/jobs/:id"
               element={
@@ -286,7 +275,6 @@ function App() {
                 </PrivateRoute>
               }
             />
-
             <Route
               path="/candidate/resume_analyzer"
               element={
@@ -324,7 +312,7 @@ function App() {
               }
             />
 
-            {/* Company */}
+            {/* Company Routes */}
             <Route
               path="/company"
               element={
@@ -343,7 +331,6 @@ function App() {
                 </PrivateRoute>
               }
             />
-
             <Route
               path="/company/jobs"
               element={
@@ -362,7 +349,6 @@ function App() {
                 </PrivateRoute>
               }
             />
-
             <Route
               path="/company/jobs/:id"
               element={
@@ -381,7 +367,6 @@ function App() {
                 </PrivateRoute>
               }
             />
-
             <Route
               path="/company/post_job"
               element={
@@ -400,7 +385,6 @@ function App() {
                 </PrivateRoute>
               }
             />
-
             <Route
               path="/company/profile"
               element={
@@ -419,7 +403,6 @@ function App() {
                 </PrivateRoute>
               }
             />
-
             <Route
               path="/company/hiring-pipeline"
               element={
@@ -439,11 +422,12 @@ function App() {
               }
             />
 
-            <Route path="*" element={<NotFound />} />
             {/* Admin */}
             <Route element={<AdminProtected userRole={userRole} />}>
               <Route path="/admin" element={<AdminPanel />} />
             </Route>
+
+            <Route path="*" element={<NotFound />} />
           </>
         )}
       </Routes>

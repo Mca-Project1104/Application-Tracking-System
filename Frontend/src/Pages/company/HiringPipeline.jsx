@@ -19,7 +19,6 @@ const HiringPipeline = () => {
   const [jobpostings, setJobPostings] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  //  NEW: Job filter state
   const [selectedJobId, setSelectedJobId] = useState("all");
   const [jobFilterOpen, setJobFilterOpen] = useState(false);
 
@@ -56,8 +55,6 @@ const HiringPipeline = () => {
         const response = await api.get("/api/applications", {
           headers: { Authorization: `Bearer ${token}` },
         });
-
-        console.log(response);
 
         if (response.status === 200) {
           const data = response.data;
@@ -105,19 +102,16 @@ const HiringPipeline = () => {
     if (token) getDetails();
   }, [token]);
 
-  //  NEW: Filter candidates by selected job
   const filteredCandidates = useMemo(() => {
     if (selectedJobId === "all") return candidates;
     return candidates.filter((c) => c.jobId === selectedJobId);
   }, [candidates, selectedJobId]);
 
-  //  NEW: Get selected job details
   const selectedJob = useMemo(() => {
     if (selectedJobId === "all") return null;
     return jobpostings.find((j) => j.id === selectedJobId);
   }, [selectedJobId, jobpostings]);
 
-  //  NEW: Count applicants per job
   const jobApplicantCounts = useMemo(() => {
     const counts = {};
     candidates.forEach((c) => {
@@ -218,7 +212,6 @@ const HiringPipeline = () => {
     { id: "rejected", title: "Rejected" },
   ];
 
-  //  Use filteredCandidates instead of candidates
   const statistics = useMemo(() => {
     return columns.map((column) => {
       const count = filteredCandidates.filter(
@@ -237,12 +230,13 @@ const HiringPipeline = () => {
   }
 
   return (
-    <div className="w-380 bg-gray-50 dark:bg-gray-900 transition-colors mt-2 duration-200">
-      <div className="px-2 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8 max-w-full overflow-x-hidden">
+    // ✅ Removed invalid w-380 and redundant mt-2
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+      <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 max-w-full overflow-x-hidden">
         {/* Header */}
         <div className="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-4 sm:p-6 mb-4 sm:mb-6 transition-all duration-200 hover:shadow-md">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-            <div className="mb-4 sm:mb-0">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
               <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
                 Hiring Pipeline
               </h1>
@@ -250,10 +244,10 @@ const HiringPipeline = () => {
                 Track and manage candidates through the hiring process
               </p>
             </div>
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+            <div className="flex gap-2 sm:gap-3">
               <button className="inline-flex items-center justify-center px-3 sm:px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200">
                 <svg
-                  className="mr-1 sm:mr-2 -ml-1 h-4 w-4 sm:h-5 sm:w-5"
+                  className="mr-1.5 h-4 w-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -265,12 +259,11 @@ const HiringPipeline = () => {
                     d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
                   />
                 </svg>
-                <span className="hidden sm:inline">Filter</span>
-                <span className="sm:hidden">F</span>
+                Filter
               </button>
               <button className="inline-flex items-center justify-center px-3 sm:px-4 py-2 border border-transparent rounded-lg shadow-sm text-xs sm:text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:scale-105">
                 <svg
-                  className="mr-1 sm:mr-2 -ml-1 h-4 w-4 sm:h-5 sm:w-5"
+                  className="mr-1.5 h-4 w-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -282,8 +275,8 @@ const HiringPipeline = () => {
                     d="M12 6v6m0 0v6m0-6h6m-6 0H6"
                   />
                 </svg>
+                <span className="sm:hidden">Add</span>
                 <span className="hidden sm:inline">Add Candidate</span>
-                <span className="sm:hidden">+</span>
               </button>
             </div>
           </div>
@@ -291,7 +284,7 @@ const HiringPipeline = () => {
           {/* Quick Stats */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-100 dark:border-gray-700">
             <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20">
+              <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 shrink-0">
                 <svg
                   className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-400"
                   fill="none"
@@ -316,7 +309,7 @@ const HiringPipeline = () => {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-green-50 dark:bg-green-900/20">
+              <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-green-50 dark:bg-green-900/20 shrink-0">
                 <svg
                   className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-400"
                   fill="none"
@@ -341,7 +334,7 @@ const HiringPipeline = () => {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-amber-50 dark:bg-amber-900/20">
+              <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-amber-50 dark:bg-amber-900/20 shrink-0">
                 <svg
                   className="w-5 h-5 sm:w-6 sm:h-6 text-amber-600 dark:text-amber-400"
                   fill="none"
@@ -366,7 +359,7 @@ const HiringPipeline = () => {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-purple-50 dark:bg-purple-900/20">
+              <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-purple-50 dark:bg-purple-900/20 shrink-0">
                 <svg
                   className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600 dark:text-purple-400"
                   fill="none"
@@ -393,12 +386,12 @@ const HiringPipeline = () => {
           </div>
         </div>
 
-        {/* ⭐⭐⭐ JOB FILTER SECTION ⭐⭐⭐ */}
+        {/* Job Filter Section */}
         <div className="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-4 sm:p-5 mb-4 sm:mb-6 transition-all duration-200">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-center gap-2">
               <svg
-                className="w-5 h-5 text-gray-500 dark:text-gray-400"
+                className="w-5 h-5 text-gray-500 dark:text-gray-400 shrink-0"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -415,9 +408,8 @@ const HiringPipeline = () => {
               </h3>
             </div>
 
-            {/* Selected job info */}
             {selectedJob && (
-              <div className="flex items-center gap-2 text-xs sm:text-sm">
+              <div className="flex items-center gap-2 text-xs sm:text-sm flex-wrap">
                 <span
                   className={`inline-flex items-center px-2 py-0.5 rounded-full font-medium ${
                     selectedJob.status === "Open"
@@ -439,12 +431,11 @@ const HiringPipeline = () => {
             )}
           </div>
 
-          {/* Job pills / tabs */}
-          <div className="mt-3 flex flex-wrap gap-2">
-            {/* All Jobs pill */}
+          {/* ✅ Job pills — scrollable on mobile instead of wrapping */}
+          <div className="mt-3 flex gap-2 overflow-x-auto pb-1 scrollbar-thin -mx-1 px-1">
             <button
               onClick={() => setSelectedJobId("all")}
-              className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 ${
+              className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 whitespace-nowrap shrink-0 ${
                 selectedJobId === "all"
                   ? "bg-blue-600 text-white shadow-md shadow-blue-200 dark:shadow-blue-900/30"
                   : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
@@ -465,7 +456,7 @@ const HiringPipeline = () => {
               </svg>
               All Jobs
               <span
-                className={`inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full text-xs font-bold ${
+                className={`inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-xs font-bold ${
                   selectedJobId === "all"
                     ? "bg-white/20 text-white"
                     : "bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300"
@@ -475,12 +466,11 @@ const HiringPipeline = () => {
               </span>
             </button>
 
-            {/* Individual job pills */}
             {jobpostings.map((job) => (
               <button
                 key={job.id}
                 onClick={() => setSelectedJobId(job.id)}
-                className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 ${
+                className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 whitespace-nowrap shrink-0 ${
                   selectedJobId === job.id
                     ? "bg-blue-600 text-white shadow-md shadow-blue-200 dark:shadow-blue-900/30"
                     : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
@@ -488,7 +478,7 @@ const HiringPipeline = () => {
               >
                 {job.position}
                 <span
-                  className={`inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full text-xs font-bold ${
+                  className={`inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-xs font-bold ${
                     selectedJobId === job.id
                       ? "bg-white/20 text-white"
                       : "bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300"
@@ -497,18 +487,18 @@ const HiringPipeline = () => {
                   {jobApplicantCounts[job.id] || 0}
                 </span>
                 {job.status === "Closed" && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-400"></span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0"></span>
                 )}
               </button>
             ))}
           </div>
 
-          {/* Active filter indicator bar */}
+          {/* Active filter indicator */}
           {selectedJobId !== "all" && (
             <div className="mt-3 flex items-center justify-between bg-blue-50 dark:bg-blue-900/20 rounded-lg px-3 py-2">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 min-w-0">
                 <svg
-                  className="w-4 h-4 text-blue-600 dark:text-blue-400"
+                  className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -520,14 +510,14 @@ const HiringPipeline = () => {
                     d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
                   />
                 </svg>
-                <span className="text-xs sm:text-sm text-blue-700 dark:text-blue-300">
+                <span className="text-xs sm:text-sm text-blue-700 dark:text-blue-300 truncate">
                   Showing candidates for{" "}
                   <strong>{selectedJob?.position}</strong>
                 </span>
               </div>
               <button
                 onClick={() => setSelectedJobId("all")}
-                className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 transition-colors"
+                className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 transition-colors shrink-0 ml-2"
               >
                 <svg
                   className="w-3.5 h-3.5"
@@ -548,11 +538,10 @@ const HiringPipeline = () => {
           )}
         </div>
 
-        {/*  Pipeline Columns - uses filteredCandidates */}
-        <div className="flex gap-2 sm:gap-4 overflow-x-auto pb-6">
+        {/* ✅ Pipeline Columns — scroll-snap for mobile kanban */}
+        <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 scroll-smooth snap-x snap-mandatory scrollbar-thin">
           {columns.map((column) => {
             const config = getStatusConfig(column.id);
-            // Filter by selected job
             const columnCandidates = filteredCandidates.filter(
               (candidate) => candidate.status === column.id,
             );
@@ -561,20 +550,19 @@ const HiringPipeline = () => {
             return (
               <div
                 key={column.id}
-                className="shrink-0 w-64 sm:w-72 md:w-80"
+                className="shrink-0 w-[280px] sm:w-72 md:w-80 snap-start"
                 onDragOver={(e) => handleDragOver(e, column.id)}
                 onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, column.id)}
               >
                 <div
-                  className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden transition-all duration-200 ${
-                    isDragOver
-                      ? "ring-2 ring-blue-500 shadow-lg transform "
-                      : ""
+                  className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden transition-all duration-200 h-full flex flex-col ${
+                    isDragOver ? "ring-2 ring-blue-500 shadow-lg" : ""
                   }`}
                 >
+                  {/* Column Header */}
                   <div
-                    className={`${config.headerBg} px-3 sm:px-4 py-2 sm:py-3`}
+                    className={`${config.headerBg} px-3 sm:px-4 py-2.5 sm:py-3 shrink-0`}
                   >
                     <div className="flex items-center justify-between">
                       <h3 className="font-semibold text-white text-sm sm:text-base">
@@ -586,11 +574,12 @@ const HiringPipeline = () => {
                     </div>
                   </div>
 
-                  <div className="p-2 sm:p-4 space-y-2 sm:space-y-3 min-h-100 bg-gray-50 dark:bg-gray-900/50">
+                  {/* ✅ Column Body — min-h-[200px] instead of invalid min-h-100 */}
+                  <div className="p-2 sm:p-3 space-y-2 sm:space-y-3 min-h-[200px] bg-gray-50 dark:bg-gray-900/50 flex-1 overflow-y-auto">
                     {columnCandidates.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center h-24 sm:h-32 text-gray-400 dark:text-gray-500">
+                      <div className="flex flex-col items-center justify-center h-[180px] text-gray-400 dark:text-gray-500">
                         <svg
-                          className="w-8 h-8 sm:w-12 sm:h-12 mb-2"
+                          className="w-8 h-8 sm:w-10 sm:h-10 mb-2"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -598,7 +587,7 @@ const HiringPipeline = () => {
                           <path
                             strokeLinecap="round"
                             strokeLinejoin="round"
-                            strokeWidth="2"
+                            strokeWidth="1.5"
                             d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
                           />
                         </svg>
@@ -611,57 +600,64 @@ const HiringPipeline = () => {
                           draggable
                           onDragStart={() => handleDragStart(candidate)}
                           onDragEnd={handleDragEnd}
-                          className={`bg-white dark:bg-gray-800 border ${config.border} rounded-lg p-3 sm:p-4 cursor-move hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1 ${
+                          className={`bg-white dark:bg-gray-800 border ${config.border} rounded-lg p-3 sm:p-4 cursor-move hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1 active:scale-[0.98] ${
                             draggedCandidate?.id === candidate.id
-                              ? "opacity-50"
+                              ? "opacity-50 scale-95"
                               : ""
                           }`}
                         >
+                          {/* Candidate Header */}
                           <div className="flex items-start justify-between mb-2 sm:mb-3">
-                            <div className="flex items-center space-x-2 sm:space-x-3">
-                              <div className="relative">
+                            <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
+                              <div className="relative shrink-0">
                                 {candidate.avatar ? (
                                   <img
-                                    className="h-10 w-10 sm:h-12 sm:w-12 rounded-full object-cover ring-2 ring-gray-200 dark:ring-gray-700"
+                                    className="h-9 w-9 sm:h-11 sm:w-11 rounded-full object-cover ring-2 ring-gray-200 dark:ring-gray-700"
                                     src={candidate.profile_image}
                                     alt={candidate.name}
                                     onError={(e) => {
                                       e.target.onerror = null;
-                                      e.target.src =
-                                        "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' className='h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-gray-200 dark:bg-gray-700' fill='currentColor' viewBox='0 0 24 24'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
+                                      e.target.style.display = "none";
+                                      e.target.nextSibling.style.display =
+                                        "flex";
                                     }}
                                   />
-                                ) : (
-                                  <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center ring-2 ring-gray-200 dark:ring-gray-700">
-                                    <svg
-                                      className="w-5 h-5 sm:w-6 sm:h-6 text-gray-400"
-                                      fill="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                                    </svg>
-                                  </div>
-                                )}
+                                ) : null}
                                 <div
-                                  className={`absolute -bottom-1 -right-1 w-3 h-3 sm:w-4 sm:h-4 ${config.bg} rounded-full border-2 border-white dark:border-gray-800`}
+                                  className={`h-9 w-9 sm:h-11 sm:w-11 rounded-full bg-gray-200 dark:bg-gray-700 items-center justify-center ring-2 ring-gray-200 dark:ring-gray-700 ${
+                                    candidate.avatar ? "hidden" : "flex"
+                                  }`}
+                                >
+                                  <span className="text-xs sm:text-sm font-semibold text-gray-500 dark:text-gray-400">
+                                    {candidate.name
+                                      ?.split(" ")
+                                      .map((n) => n[0])
+                                      .join("")
+                                      .slice(0, 2)
+                                      .toUpperCase()}
+                                  </span>
+                                </div>
+                                <div
+                                  className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 sm:w-3.5 sm:h-3.5 ${config.bg} rounded-full border-2 border-white dark:border-gray-800`}
                                 ></div>
                               </div>
-                              <div>
-                                <h4 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">
+                              <div className="min-w-0">
+                                <h4 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white truncate">
                                   {candidate.name}
                                 </h4>
-                                <p className="text-xs text-gray-600 dark:text-gray-400">
+                                <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 truncate">
                                   {candidate.position}
                                 </p>
                               </div>
                             </div>
                             <span
-                              className={`inline-flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full text-xs sm:text-sm font-bold ${getScoreBadgeColor(recentApplications?.score)}`}
+                              className={`inline-flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-full text-xs sm:text-sm font-bold shrink-0 ml-1 ${getScoreBadgeColor(candidate.score)}`}
                             >
                               {candidate.score || 0}
                             </span>
                           </div>
 
+                          {/* Skills */}
                           <div className="mb-2 sm:mb-3">
                             <div className="flex flex-wrap gap-1">
                               {candidate.skills
@@ -669,7 +665,7 @@ const HiringPipeline = () => {
                                 .map((skill, index) => (
                                   <span
                                     key={index}
-                                    className={`inline-flex items-center px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md text-xs font-medium ${config.lightBg} ${config.text}`}
+                                    className={`inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded-md text-[10px] sm:text-xs font-medium ${config.lightBg} ${config.text}`}
                                   >
                                     {typeof skill === "string"
                                       ? skill
@@ -677,13 +673,14 @@ const HiringPipeline = () => {
                                   </span>
                                 ))}
                               {candidate.skills.length > 3 && (
-                                <span className="inline-flex items-center px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
+                                <span className="inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded-md text-[10px] sm:text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
                                   +{candidate.skills.length - 3}
                                 </span>
                               )}
                             </div>
                           </div>
 
+                          {/* Actions */}
                           <div className="flex items-center justify-between pt-2 sm:pt-3 border-t border-gray-100 dark:border-gray-700">
                             <button
                               onClick={(e) => {
@@ -693,11 +690,11 @@ const HiringPipeline = () => {
                                   candidate: candidate,
                                 });
                               }}
-                              className={`text-xs sm:text-sm font-medium ${config.text} hover:underline transition-colors duration-200`}
+                              className={`text-[10px] sm:text-xs font-medium ${config.text} hover:underline transition-colors duration-200`}
                             >
                               View Profile
                             </button>
-                            <button className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200">
+                            <button className="text-[10px] sm:text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200">
                               Schedule
                             </button>
                           </div>
@@ -717,12 +714,12 @@ const HiringPipeline = () => {
             <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
               Job Postings
             </h2>
-            <span className="text-xs text-gray-500 dark:text-gray-400">
+            <span className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">
               Click a row to filter pipeline
             </span>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
+          <div className="overflow-x-auto -mx-4 sm:mx-0">
+            <table className="w-full text-left min-w-[500px]">
               <thead>
                 <tr className="border-b border-gray-200 dark:border-gray-700">
                   <th className="pb-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -740,77 +737,92 @@ const HiringPipeline = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                {jobpostings.map((job) => (
-                  <tr
-                    key={job.id}
-                    onClick={() => setSelectedJobId(job.id)}
-                    className={`cursor-pointer transition-colors duration-150 ${
-                      selectedJobId === job.id
-                        ? "bg-blue-50 dark:bg-blue-900/20"
-                        : "hover:bg-gray-50 dark:hover:bg-gray-700/50"
-                    }`}
-                  >
-                    <td className="py-3 sm:py-4">
-                      <div className="flex items-center gap-2">
-                        {selectedJobId === job.id && (
-                          <svg
-                            className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                        )}
-                        <div>
-                          <p
-                            className={`text-sm font-medium ${selectedJobId === job.id ? "text-blue-700 dark:text-blue-300" : "text-gray-900 dark:text-white"}`}
-                          >
-                            {job.position}
-                          </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 sm:hidden">
-                            {job.department}
-                          </p>
+                {jobpostings.length > 0 ? (
+                  jobpostings.map((job) => (
+                    <tr
+                      key={job.id}
+                      onClick={() => setSelectedJobId(job.id)}
+                      className={`cursor-pointer transition-colors duration-150 ${
+                        selectedJobId === job.id
+                          ? "bg-blue-50 dark:bg-blue-900/20"
+                          : "hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                      }`}
+                    >
+                      <td className="py-3 sm:py-4">
+                        <div className="flex items-center gap-2">
+                          {selectedJobId === job.id && (
+                            <svg
+                              className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0"
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          )}
+                          <div>
+                            <p
+                              className={`text-sm font-medium ${
+                                selectedJobId === job.id
+                                  ? "text-blue-700 dark:text-blue-300"
+                                  : "text-gray-900 dark:text-white"
+                              }`}
+                            >
+                              {job.position}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 sm:hidden">
+                              {job.department}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="py-3 sm:py-4 text-sm text-gray-600 dark:text-gray-300 hidden sm:table-cell">
-                      {job.department}
-                    </td>
-                    <td className="py-3 sm:py-4 text-center">
-                      <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300">
-                        {job.applicants}
-                      </span>
-                    </td>
-                    <td className="py-3 sm:py-4 text-right">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-                          job.status === "Open"
-                            ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
-                            : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400"
-                        }`}
-                      >
-                        {job.status}
-                      </span>
+                      </td>
+                      <td className="py-3 sm:py-4 text-sm text-gray-600 dark:text-gray-300 hidden sm:table-cell">
+                        {job.department}
+                      </td>
+                      <td className="py-3 sm:py-4 text-center">
+                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300">
+                          {job.applicants}
+                        </span>
+                      </td>
+                      <td className="py-3 sm:py-4 text-right">
+                        <span
+                          className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                            job.status === "Open"
+                              ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
+                              : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400"
+                          }`}
+                        >
+                          {job.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td
+                      colSpan={4}
+                      className="py-10 text-center text-sm text-gray-500 dark:text-gray-400"
+                    >
+                      No job postings yet.
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
         </div>
 
-        {/* Statistics - uses filteredCandidates */}
+        {/* Pipeline Statistics */}
         <div className="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-4 sm:p-6 mt-4 sm:mt-6 transition-all duration-200 hover:shadow-md">
           <div className="flex items-center justify-between mb-4 sm:mb-6">
             <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
               Pipeline Overview
             </h2>
             {selectedJobId !== "all" && (
-              <span className="text-xs bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 px-2 py-1 rounded-md font-medium">
+              <span className="text-xs bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 px-2 py-1 rounded-md font-medium truncate max-w-[150px]">
                 {selectedJob?.position}
               </span>
             )}
@@ -820,14 +832,15 @@ const HiringPipeline = () => {
               const config = getStatusConfig(stat.id);
               return (
                 <div key={stat.id} className="text-center">
+                  {/* ✅ hover:scale-[0.98] instead of invalid hover:scale-98 */}
                   <div
-                    className={`relative inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-full ${config.bg} mb-2 sm:mb-3 transition-transform duration-200 hover:scale-98`}
+                    className={`relative inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-full ${config.bg} mb-2 sm:mb-3 transition-transform duration-200 hover:scale-[0.98]`}
                   >
                     <span className="text-lg sm:text-2xl font-bold text-white">
                       {stat.count}
                     </span>
-                    <div className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center">
-                      <span className="text-xs font-bold text-gray-600 dark:text-gray-400">
+                    <div className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center shadow-sm">
+                      <span className="text-[9px] sm:text-[10px] font-bold text-gray-600 dark:text-gray-400">
                         {stat.percentage}%
                       </span>
                     </div>
@@ -835,7 +848,7 @@ const HiringPipeline = () => {
                   <p className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white">
                     {stat.title}
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                     {stat.count} candidate{stat.count !== 1 ? "s" : ""}
                   </p>
                 </div>
@@ -857,22 +870,31 @@ const HiringPipeline = () => {
               </span>
             </div>
             <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 sm:h-3 overflow-hidden">
+              {/* ✅ bg-gradient-to-r instead of bg-linear-to-r */}
               <div
-                className="h-full bg-linear-to-r from-blue-500 to-green-500 rounded-full transition-all duration-500 ease-out"
+                className="h-full bg-gradient-to-r from-blue-500 to-green-500 rounded-full transition-all duration-500 ease-out"
                 style={{
-                  width: `${filteredCandidates.length > 0 ? (filteredCandidates.filter((c) => c.status === "selected").length / filteredCandidates.length) * 100 : 0}%`,
+                  width: `${
+                    filteredCandidates.length > 0
+                      ? (filteredCandidates.filter(
+                          (c) => c.status === "selected",
+                        ).length /
+                          filteredCandidates.length) *
+                        100
+                      : 0
+                  }%`,
                 }}
               ></div>
             </div>
           </div>
         </div>
       </div>
+
       <CandidateProfileModal
         candidate={profileModal.candidate}
         isOpen={profileModal.open}
         onClose={() => setProfileModal({ open: false, candidate: null })}
         onStatusChange={(candidateId, newStatus) => {
-          // Update local state when status changes from modal
           const mappedStatus = mapStatusToColumn(newStatus);
           setCandidates((prev) =>
             prev.map((c) =>

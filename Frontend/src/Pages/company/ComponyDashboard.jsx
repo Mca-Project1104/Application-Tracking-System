@@ -59,7 +59,7 @@ const CompanyDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen mt-4 bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+    <div className="min-h-screen  bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
       <div className="px-4 sm:px-6 lg:px-4 py-8">
         {/* Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6">

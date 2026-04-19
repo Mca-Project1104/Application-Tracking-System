@@ -18,6 +18,8 @@ const Login = ({ setIsAuthenticated, setUserRole }) => {
   const { email, password, newpassword } = formData;
   const token = localStorage.getItem("token");
 
+  console.log(api)
+
   const onChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
