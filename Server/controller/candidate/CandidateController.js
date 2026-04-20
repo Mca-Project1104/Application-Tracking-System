@@ -35,7 +35,7 @@ export const updateCandidate = async (req, res) => {
     console.log("FILE:", file);
 
     if (!id) {
-      return res.status(400).json({ message: "Candidate ID is required" });
+      return res.status(400).json({ message: " Detail missing " });
     }
 
     const candidate = await Candidate.findById(id);
@@ -49,10 +49,9 @@ export const updateCandidate = async (req, res) => {
 
     if (file) {
       const url = await upload_image(file);
-      console.log(url);
       candidate.profile_image = url;
-    }
-    else if (req.body.profile_image === "") {
+
+    } else if (req.body.profile_image === "") {
       candidate.profile_image = undefined;
     }
 

@@ -3,6 +3,7 @@ import api from "../api/axios";
 import { useAppContext } from "../context/AppProvider";
 import { useLocation } from "react-router-dom";
 import Header from "../Components/Header";
+import { MdDelete } from "react-icons/md";
 import Loading from "../Components/Loading/Loading";
 import { getStatusColors } from "../assets/dummydata.js";
 
@@ -22,9 +23,8 @@ const JobListings = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [jobsPerPage] = useState(8);
 
-  const userRole = localStorage.getItem("userRole");
-  const token = localStorage.getItem("token");
-  const { currency, candidate, applications, searchRef } = useAppContext();
+  const { currency, candidate, applications, searchRef, token, userRole } =
+    useAppContext();
 
   const id = useLocation();
   const paramsId = String(id.pathname.split("/")[3]);
@@ -72,7 +72,6 @@ const JobListings = () => {
     }
   }, []);
 
-  //  Handle Apply - uncommented and fixed
   const handleApply = async (jobId) => {
     // Prevent applying if already applied or closed
     if (!jobId || appliedJobs.has(jobId)) return;
@@ -105,6 +104,24 @@ const JobListings = () => {
       }
     } finally {
       setApplyingJobId(null);
+    }
+  };
+
+  const handleJobDelete = async (id) => {
+    try {
+      if (!confirm("Are you sure delete this job ?")) return;
+      setLoading(true);
+      const response = await api.delete(`/api/jobs/delete/job/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      console.log(response);
+      setLoading(false);
+      fetchJobs();
+    } catch (error) {
+      console.log(error?.response?.message);
     }
   };
 
@@ -356,9 +373,9 @@ const JobListings = () => {
   };
 
   return (
-    <div className="min-h-screen p-4 bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
       {!loading && (
-        <div className="py-8">
+        <div className="py-2 p-2">
           {/* Header */}
           {userRole !== "company" && (
             <Header
@@ -645,12 +662,23 @@ const JobListings = () => {
                             </p>
                           </div>
                         </div>
-                        <div className="mt-4 sm:mt-0">
+                        <div
+                          style={{ justifyContent: "space-between" }}
+                          className="mt-4 gap-2 sm:mt-0 flex sm:gap-50"
+                        >
                           <span
                             className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${jobTypeColors[job?.workMode]}`}
                           >
                             {job.workMode}
                           </span>
+
+                          {userRole === "company" && (
+                            <div className="relative right-0 top-0">
+                              <button onClick={() => handleJobDelete(job._id)}>
+                                <MdDelete className="text-red-600 text-2xl" />
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </div>
 
@@ -854,7 +882,7 @@ const JobListings = () => {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="bg-white dark:bg-gray-800 shadow-sm rounded-xl px-6 py-4 mt-6 transition-all duration-200 hover:shadow-md">
+            <div className="bg-white dark:bg-gray-800 shadow-sm rounded-xl px-6 py-4 p-3 mt-6 transition-all duration-200 hover:shadow-md">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                 <div className="mb-4 sm:mb-0">
                   <p className="text-sm text-gray-700 dark:text-gray-300">

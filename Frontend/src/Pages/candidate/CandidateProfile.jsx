@@ -227,10 +227,10 @@ const CandidateProfile = () => {
     : null;
 
   return (
-    <div className="space-y-2 p-4 min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="space-y-2 p-2 min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* ── Header card ── */}
       <div
-        className={`bg-white mt-10 dark:bg-gray-800 shadow-lg rounded-lg p-6 ${
+        className={`bg-white  dark:bg-gray-800 shadow-lg rounded-lg p-2 ${
           isEditingImage ? "opacity-10 pointer-events-none" : ""
         }`}
       >

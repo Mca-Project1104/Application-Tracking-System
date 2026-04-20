@@ -70,7 +70,6 @@ const ResumeAnalyzer = () => {
       formData.append("jobDescription", jobDescription);
       const token = localStorage.getItem("token");
 
-      // api instance already attaches the auth token — no need to set it manually
       const res = await api.post("/api/resume/analyze", formData, {
         headers: {
           Authorization: `Bearer ${token}`,

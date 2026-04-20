@@ -179,6 +179,8 @@ export const AppProvider = ({ children }) => {
     }
   }, [token]);
 
+ 
+
   useEffect(() => {
     if (userRole === "company" && token) {
       fetchProfile();
@@ -195,6 +197,16 @@ export const AppProvider = ({ children }) => {
     }
     localStorage.setItem("theme", theme);
   }, [theme]);
+
+    const handleClose = () => {
+    // If the page was opened as a popup/modal
+    if (window.opener) {
+      window.close();
+    } else {
+      // Otherwise navigate back or to home
+      navigate("/");
+    }
+  };
 
   const value = {
     navigate,
@@ -220,6 +232,7 @@ export const AppProvider = ({ children }) => {
     error,
     setError,
     theme,
+    handleClose,
     setTheme,
     currency,
     message,

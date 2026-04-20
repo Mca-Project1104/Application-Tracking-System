@@ -1,11 +1,5 @@
-import React, {
-  useEffect,
-  useState,
-  useMemo,
-  useCallback,
-  useRef,
-} from "react";
-import { PLANS } from "../../assets/dummydata";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
+import { PLANS, NAVIGATION } from "../../assets/dummydata";
 import api from "../../api/axios";
 import {
   BarChart,
@@ -26,29 +20,6 @@ import Users from "./Users";
 import { useAppContext } from "../../context/AppProvider";
 import Setting from "./Setting";
 import Loading from "../../Components/Loading/Loading";
-
-const NAVIGATION = [
-  {
-    name: "Dashboard",
-    id: "dashboard",
-    icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6",
-  },
-  {
-    name: "Users",
-    id: "users",
-    icon: "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z",
-  },
-  {
-    name: "Subscriptions",
-    id: "subscriptions",
-    icon: "M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z",
-  },
-  {
-    name: "Settings",
-    id: "settings",
-    icon: "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z",
-  },
-];
 
 const generateMockSubscription = (company) => {
   const plans = ["free", "free", "free", "basic", "basic", "pro", "enterprise"];
@@ -77,18 +48,19 @@ const generateMockSubscription = (company) => {
 const AdminPanel = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   // --- STATE FOR DATABASE DATA ---
   const [users, setUsers] = useState([]);
   const [company, setCompany] = useState([]);
-  const [jobs, setJobs] = useState([]); // NEW: Store all jobs
-  const [applications, setApplications] = useState([]); // NEW: Store all applications
+  const [jobs, setJobs] = useState([]);
+  const [applications, setApplications] = useState([]);
 
   const [usersdata, setUsersData] = useState({});
   const [totaljobs, setTotalJobs] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  const { HIREFLOWLOGO, currency, navigate } = useAppContext();
+  const { HIREFLOWLOGO, currency } = useAppContext();
   const { user } = useAppContext();
 
   // Subscription states
@@ -105,6 +77,33 @@ const AdminPanel = () => {
     enterprise: 0,
     totalRevenue: 0,
   });
+
+  // --- RESPONSIVENESS HOOK ---
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 1024; // Breakpoint for lg
+      setIsMobile(mobile);
+      // Auto close sidebar on resize to desktop if it was in "mobile drawer" mode
+      if (!mobile && sidebarOpen) {
+        setSidebarOpen(true);
+      }
+    };
+
+    // Initial check
+    handleResize();
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [sidebarOpen]);
+
+  // Toggle sidebar (mobile vs desktop logic)
+  const toggleSidebar = () => {
+    if (isMobile) {
+      setSidebarOpen(!sidebarOpen);
+    } else {
+      setSidebarOpen(!sidebarOpen);
+    }
+  };
 
   // --- DYNAMIC DATA FETCHING ---
   useEffect(() => {
@@ -130,7 +129,7 @@ const AdminPanel = () => {
         try {
           const jobsRes = await api.get("/api/admin/alljobs");
           if (jobsRes.status === 200) {
-            setJobs(jobsRes.data.data || jobsRes.data || []); // Adjust path based on API response
+            setJobs(jobsRes.data.data || jobsRes.data || []);
           }
         } catch (err) {
           console.log("Jobs endpoint error", err);
@@ -154,9 +153,8 @@ const AdminPanel = () => {
 
     fetchDashboardData();
   }, []);
+
   const handleUserUpdated = useCallback((updatedUser) => {
-    // This function is passed to <Users />.
-    // It finds the user with the matching ID in the main 'users' state and updates it.
     setUsers((prevUsers) =>
       prevUsers.map((u) => (u._id === updatedUser._id ? updatedUser : u)),
     );
@@ -176,7 +174,6 @@ const AdminPanel = () => {
         if (usersRes.status === 200) {
           setUsers(usersRes.data.users || []);
         }
-        console.log(usersRes);
         setLoading(false);
       }
     } catch (error) {
@@ -199,16 +196,13 @@ const AdminPanel = () => {
       "Nov",
       "Dec",
     ];
-
     const currentYear = new Date().getFullYear();
-
     const data = months.map((m) => ({
       month: m,
       applications: 0,
       interviews: 0,
       hires: 0,
     }));
-
     applications.forEach((app) => {
       const date = new Date(app.createdAt || app.updatedAt);
       if (date.getFullYear() === currentYear) {
@@ -223,16 +217,13 @@ const AdminPanel = () => {
     return data;
   }, [applications]);
 
-  // 2. Job Categories (Group by Department or WorkMode)
   const jobCategoriesData = useMemo(() => {
     const categoryMap = {};
-
     jobs.forEach((job) => {
       const key = job.department || job.workMode || "General";
       if (!categoryMap[key]) categoryMap[key] = { name: key, value: 0 };
       categoryMap[key].value += 1;
     });
-
     const colors = [
       "#3B82F6",
       "#8B5CF6",
@@ -247,7 +238,6 @@ const AdminPanel = () => {
     }));
   }, [jobs]);
 
-  // 3. Subscription Trends (Derived from Enriched Companies)
   const subscriptionTrendsData = useMemo(() => {
     const months = [
       "Jan",
@@ -264,7 +254,6 @@ const AdminPanel = () => {
       "Dec",
     ];
     const currentYear = new Date().getFullYear();
-
     const data = months.map((m) => ({
       month: m,
       free: 0,
@@ -272,7 +261,6 @@ const AdminPanel = () => {
       pro: 0,
       enterprise: 0,
     }));
-
     subsCompanies.forEach((comp) => {
       const date = new Date(comp.subscriptionStart || comp.createdAt);
       if (date.getFullYear() === currentYear) {
@@ -285,7 +273,6 @@ const AdminPanel = () => {
     return data;
   }, [subsCompanies]);
 
-  // 4. Revenue Data (Calculated from Mock Subscriptions)
   const revenueData = useMemo(() => {
     const months = [
       "Jan",
@@ -302,9 +289,7 @@ const AdminPanel = () => {
       "Dec",
     ];
     const currentYear = new Date().getFullYear();
-
     const data = months.map((m) => ({ month: m, revenue: 0 }));
-
     subsCompanies.forEach((comp) => {
       if (comp.currentPlan !== "free") {
         const price = PLANS[comp.currentPlan]?.price || 0;
@@ -320,7 +305,6 @@ const AdminPanel = () => {
     return data;
   }, [subsCompanies]);
 
-  // 5. Monthly Users (Candidates vs Recruiters)
   const monthlyUsersData = useMemo(() => {
     const months = [
       "Jan",
@@ -337,20 +321,17 @@ const AdminPanel = () => {
       "Dec",
     ];
     const currentYear = new Date().getFullYear();
-
     const data = months.map((m) => ({
       month: m,
       candidates: 0,
       recruiters: 0,
     }));
-
     users.forEach((u) => {
       const date = new Date(u.createdAt);
       if (date.getFullYear() === currentYear) {
         const monthIndex = date.getMonth();
         if (data[monthIndex]) {
           if (u.accountType === "company") {
-            // Using accountType based on controller
             data[monthIndex].recruiters += 1;
           } else {
             data[monthIndex].candidates += 1;
@@ -361,7 +342,7 @@ const AdminPanel = () => {
     return data;
   }, [users]);
 
-  // --- MOCK DATA LOGIC (Kept for demonstration of UI, but enriched with real counts) ---
+  // --- MOCK DATA LOGIC ---
   useEffect(() => {
     if (company.length > 0) {
       const enrichedCompanies = company.map((comp) => {
@@ -378,7 +359,6 @@ const AdminPanel = () => {
         };
       });
       setSubsCompanies(enrichedCompanies);
-
       const stats = enrichedCompanies.reduce(
         (acc, comp) => {
           acc[comp.currentPlan] = (acc[comp.currentPlan] || 0) + 1;
@@ -419,10 +399,8 @@ const AdminPanel = () => {
             }
           : comp,
       );
-
       const oldCompany = prev.find((c) => c._id === companyId);
       const oldPlan = oldCompany?.currentPlan || "free";
-
       setSubsStats((prevStats) => ({
         ...prevStats,
         [oldPlan]: Math.max(0, (prevStats[oldPlan] || 0) - 1),
@@ -432,10 +410,8 @@ const AdminPanel = () => {
           (PLANS[oldPlan]?.price || 0) +
           (PLANS[newPlan]?.price || 0),
       }));
-
       return updatedCompanies;
     });
-
     setShowPlanModal(false);
     setSelectedCompany(null);
     alert(`Successfully changed plan to ${PLANS[newPlan]?.name}`);
@@ -528,21 +504,53 @@ const AdminPanel = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors duration-200">
-      <div className="flex min-h-screen">
-        {/* Sidebar */}
+      {/* MOBILE BACKDROP */}
+      {isMobile && sidebarOpen && (
         <div
-          className={`${sidebarOpen ? "w-64" : "w-20"} z-50 fixed  min-h-screen bg-white pt-2 dark:bg-gray-800 shadow-md transition-all duration-300 ease-in-out flex flex-col`}
+          className="fixed inset-0 bg-gray-900/50 z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        ></div>
+      )}
+
+      <div className="flex h-screen overflow-hidden">
+        {/* SIDEBAR */}
+        {/* 
+           Logic:
+           - On Mobile: Fixed position, width w-64, transform translate-x logic
+           - On Desktop: Fixed position, width w-64 (open) or w-20 (collapsed), z-30
+        */}
+        <aside
+          className={`
+            fixed inset-y-0 left-0 z-50
+            bg-white dark:bg-gray-800
+            border-r border-gray-200 dark:border-gray-700
+            transition-all duration-300 ease-in-out
+            flex flex-col
+            ${
+              isMobile
+                ? `${sidebarOpen ? "translate-x-0 w-64" : "-translate-x-full w-64"}`
+                : `${sidebarOpen ? "w-64" : "w-20"}`
+            }
+          `}
         >
-          <div className=" flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-700">
-            <div className={`flex gap-3 w-10 h-10 ${!sidebarOpen && "hidden"}`}>
-              <img src={HIREFLOWLOGO} alt="logo" className="rounded" />
+          {/* Sidebar Header */}
+          <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-700">
+            <div
+              className={`flex items-center gap-3 transition-opacity duration-200 ${!sidebarOpen && !isMobile ? "opacity-0 w-0 overflow-hidden" : "opacity-100"}`}
+            >
+              <img src={HIREFLOWLOGO} alt="logo" className="h-8 w-8 rounded" />
+              <span className="font-bold text-gray-900 dark:text-white whitespace-nowrap">
+                Admin
+              </span>
             </div>
+
+            {/* Toggle Button (Always visible on desktop to collapse, handled by mobile close logic separately) */}
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 rounded-md text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 focus:outline-none"
+              className="p-1.5 rounded-md text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 focus:outline-none"
             >
               <svg
-                className="h-6 w-6"
+                className="h-5 w-5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -556,40 +564,51 @@ const AdminPanel = () => {
               </svg>
             </button>
           </div>
-          <nav className="mt-5 px-2 flex-1">
-            <div className="space-y-3">
-              {NAVIGATION.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveTab(item.id)}
-                  className={`${
+
+          {/* Navigation Links */}
+          <nav className="flex-1 px-2 py-4 space-y-2 overflow-y-auto">
+            {NAVIGATION.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => {
+                  setActiveTab(item.id);
+                  if (isMobile) setSidebarOpen(false); // Auto close on mobile select
+                }}
+                className={`
+                  group flex items-center px-2 py-2.5 text-sm font-medium rounded-lg w-full transition-colors duration-150
+                  ${
                     activeTab === item.id
-                      ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
+                      ? "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300"
                       : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
-                  } group flex items-center px-2 py-2 text-sm font-medium rounded-md w-full transition-colors duration-150`}
+                  }
+                  ${!sidebarOpen && !isMobile ? "justify-center" : "justify-start"}
+                `}
+              >
+                <svg
+                  className={`${!sidebarOpen && !isMobile ? "" : "mr-3"} h-5 w-5 flex-shrink-0`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
                 >
-                  <svg
-                    className={`${sidebarOpen ? "mr-0" : "mx-0"} h-5 w-5`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d={item.icon}
-                    />
-                  </svg>
-                  {sidebarOpen && item.name}
-                </button>
-              ))}
-            </div>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d={item.icon}
+                  />
+                </svg>
+                <span
+                  className={`${!sidebarOpen && !isMobile ? "hidden" : "block"}`}
+                >
+                  {item.name}
+                </span>
+              </button>
+            ))}
           </nav>
 
-          {/* Subscription Quick Stats in Sidebar */}
-          {sidebarOpen && activeTab === "subscriptions" && (
-            <div className=" px-4 pb-4 border-t border-gray-200 dark:border-gray-700 pt-5">
+          {/* Quick Stats (Only visible when sidebar is expanded on desktop or mobile) */}
+          {(sidebarOpen || isMobile) && activeTab === "subscriptions" && (
+            <div className="px-4 pb-4 border-t border-gray-200 dark:border-gray-700 pt-4">
               <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
                 Plan Distribution
               </p>
@@ -610,26 +629,46 @@ const AdminPanel = () => {
               </div>
             </div>
           )}
-        </div>
+        </aside>
 
-        {/* Main Content */}
-        <div className="flex-1  flex bg-white dark:bg-gray-900/50 flex-col">
+        {/* MAIN CONTENT WRAPPER */}
+        <div
+          className={`
+            flex-1 flex flex-col overflow-hidden relative transition-all duration-300
+            ${isMobile ? "ml-0" : sidebarOpen ? "ml-64" : "ml-20"}
+          `}
+        >
           {/* Header */}
-          <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-30">
-            <div className="px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-              <h1 className="text-lg pl-22 font-semibold text-gray-900 dark:text-white capitalize">
-                {activeTab === "dashboard"
-                  ? "Dashboard"
-                  : activeTab === "settings"
-                    ? "Settings"
-                    : activeTab === "users"
-                      ? "User Management"
-                      : activeTab === "subscriptions"
-                        ? "Subscription Management"
-                        : "dashboard"}
-              </h1>
-              <div className="flex items-center space-x-4">
-                <button className="p-2 rounded-full text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 focus:outline-none">
+          <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 z-10">
+            <div className="px-4 sm:px-6 lg:px-8 h-16 flex justify-between items-center">
+              <div className="flex items-center gap-4">
+                {/* Mobile Hamburger */}
+                <button
+                  onClick={toggleSidebar}
+                  className="lg:hidden p-2 rounded-md text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+                >
+                  <svg
+                    className="h-6 w-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M4 6h16M4 12h16M4 18h16"
+                    />
+                  </svg>
+                </button>
+
+                <h1 className="text-xl font-semibold text-gray-900 dark:text-white capitalize truncate">
+                  {activeTab}
+                </h1>
+              </div>
+
+              <div className="flex items-center space-x-2 sm:space-x-4">
+                <button className="p-2 rounded-full text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
                   <svg
                     className="h-5 w-5"
                     fill="none"
@@ -644,33 +683,45 @@ const AdminPanel = () => {
                     />
                   </svg>
                 </button>
-                <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium">
-                  {user?.name.charAt(0).toUpperCase()}
+                <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium shrink-0">
+                  {user?.name?.charAt(0).toUpperCase()}
                 </div>
-
-                <div className="bg-blue-600 active:scale-95 rounded">
-                  <button
-                    type="button"
-                    onClick={Logout}
-                    className=" text-white font-medium p-2"
+                <button
+                  onClick={Logout}
+                  className="hidden sm:inline-flex bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
+                >
+                  Logout
+                </button>
+                {/* Mobile Logout Icon */}
+                <button
+                  onClick={Logout}
+                  className="sm:hidden p-2 text-blue-600 font-medium"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
                   >
-                    Logout
-                  </button>
-                </div>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                    />
+                  </svg>
+                </button>
               </div>
             </div>
           </header>
 
-          {/* Main Content Area */}
-          <main className="flex-1 pl-22 bg-gray-100 dark:bg-gray-900 p-2 overflow-y-auto  transition-colors duration-200">
+          {/* Main Content Area - Scrollable */}
+          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 dark:bg-gray-900 p-4 sm:p-6 lg:p-8">
             {/* ======================== DASHBOARD ======================== */}
             {activeTab === "dashboard" && (
-              <div className="space-y-6 ">
+              <div className="space-y-6">
                 {/* Stats Cards */}
-                <div
-                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3"
-                  style={{ marginBottom: "10px" }}
-                >
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   {[
                     {
                       label: "Total Users",
@@ -678,7 +729,7 @@ const AdminPanel = () => {
                       change: "+12%",
                       changeColor: "text-green-600",
                       iconBg: "bg-blue-100 dark:bg-blue-900/30",
-                      iconColor: "text-blue-600 dark:text-blue-400",
+                      iconColor: "text-blue-600",
                       icon: "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z",
                     },
                     {
@@ -687,16 +738,16 @@ const AdminPanel = () => {
                       change: "+8%",
                       changeColor: "text-green-600",
                       iconBg: "bg-green-100 dark:bg-green-900/30",
-                      iconColor: "text-green-600 dark:text-green-400",
+                      iconColor: "text-green-600",
                       icon: "M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z",
                     },
                     {
                       label: "Total Applications",
-                      value: applications.length || 0, // DYNAMIC VALUE
+                      value: applications.length || 0,
                       change: "+15%",
                       changeColor: "text-green-600",
                       iconBg: "bg-yellow-100 dark:bg-yellow-900/30",
-                      iconColor: "text-yellow-600 dark:text-yellow-400",
+                      iconColor: "text-yellow-600",
                       icon: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z",
                     },
                     {
@@ -705,410 +756,20 @@ const AdminPanel = () => {
                       change: "-5%",
                       changeColor: "text-red-600",
                       iconBg: "bg-purple-100 dark:bg-purple-900/30",
-                      iconColor: "text-purple-600 dark:text-purple-400",
+                      iconColor: "text-purple-600",
                       icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z",
                     },
                   ].map((card, idx) => (
                     <div
                       key={idx}
-                      className="bg-white dark:bg-gray-800 shadow rounded-lg hover:shadow-lg transition-all duration-200"
+                      className="bg-white dark:bg-gray-800 shadow rounded-lg p-5 hover:shadow-lg transition-all duration-200"
                     >
-                      <div className="p-5">
-                        <div className="flex items-center">
-                          <div
-                            className={`shrink-0 ${card.iconBg} rounded-md p-3`}
-                          >
-                            <svg
-                              className={`h-6 w-6 ${card.iconColor}`}
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                d={card.icon}
-                              />
-                            </svg>
-                          </div>
-                          <div className="ml-5 w-0 flex-1">
-                            <dl>
-                              <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                                {card.label}
-                              </dt>
-                              <dd className="text-lg font-medium text-gray-900 dark:text-white">
-                                {card.value}
-                              </dd>
-                            </dl>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="bg-gray-50 dark:bg-gray-700/50 px-5 py-3">
-                        <div className="text-sm">
-                          <span className={`${card.changeColor} font-medium`}>
-                            {card.change}
-                          </span>
-                          <span className="text-gray-500 dark:text-gray-400">
-                            {" "}
-                            from last month
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Application Trends Line Chart (Dynamic) */}
-                <div
-                  style={{ marginBottom: "8px" }}
-                  className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 hover:shadow-lg transition-all duration-200"
-                >
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white ">
-                    Application Trends
-                  </h3>
-                  <ResponsiveContainer width="100%" height={400}>
-                    <LineChart data={applicationTrendsData}>
-                      <CartesianGrid strokeDasharray="3 10" stroke="gray" />
-                      <XAxis dataKey="month" stroke="#6b7280" />
-                      <YAxis stroke="#6b7280" />
-                      <Tooltip
-                        contentStyle={{ backgroundColor: "#1f2937" }}
-                        labelStyle={{ color: "#f3f4f6" }}
-                      />
-                      <Legend />
-                      <Line
-                        type="monotone"
-                        dataKey="applications"
-                        stroke="#3B82F6"
-                        strokeWidth={3}
-                        name="Applications"
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="interviews"
-                        stroke="#10B981"
-                        strokeWidth={3}
-                        name="Interviews"
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="hires"
-                        stroke="#F59E0B"
-                        strokeWidth={3}
-                        name="Hires"
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 hover:shadow-lg transition-all duration-200">
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                      Job Categories
-                    </h3>
-                    <ResponsiveContainer width="100%" height={250}>
-                      <PieChart>
-                        <Pie
-                          data={jobCategoriesData}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={false}
-                          label={({ name, percent }) =>
-                            `${name} ${(percent * 100).toFixed(0)}%`
-                          }
-                          outerRadius={80}
-                          fill="#8884d8"
-                          dataKey="value"
-                        >
-                          {jobCategoriesData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: "#1f2937",
-                            border: "1px solid #374151",
-                            borderRadius: "0.375rem",
-                          }}
-                          labelStyle={{ color: "#f3f4f6" }}
-                        />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-
-                  <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 hover:shadow-lg transition-all duration-200">
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                      Monthly User Registrations
-                    </h3>
-                    <ResponsiveContainer width="100%" height={250}>
-                      <BarChart data={monthlyUsersData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                        <XAxis dataKey="month" stroke="#6b7280" />
-                        <YAxis stroke="#6b7280" />
-                        <Tooltip
-                          contentStyle={{ backgroundColor: "#1f2937" }}
-                          labelStyle={{ color: "#f3f4f6" }}
-                        />
-                        <Legend />
-                        <Bar
-                          dataKey="candidates"
-                          fill="#3B82F6"
-                          name="Candidates"
-                        />
-                        <Bar
-                          dataKey="recruiters"
-                          fill="#8B5CF6"
-                          name="Recruiters"
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === "subscriptions" && (
-              <div className="space-y-6">
-                {/* Subscription Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                  <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-5 hover:shadow-lg transition-all duration-200">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                          Total Recruiters
-                        </p>
-                        <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                          {company.length}
-                        </p>
-                      </div>
-                      <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-3">
-                        <svg
-                          className="w-6 h-6 text-gray-600 dark:text-gray-400"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
-                          />
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                          Free Plan
-                        </p>
-                        <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                          {subsStats.free || 0}
-                        </p>
-                      </div>
-                      <span className="bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 text-xs font-medium px-2 py-1 rounded-full">
-                        3 jobs
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-lg p-5">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-blue-600 dark:text-blue-400">
-                          Basic Plan
-                        </p>
-                        <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                          {subsStats.basic || 0}
-                        </p>
-                      </div>
-                      <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-medium px-2 py-1 rounded-full">
-                        {currency}199/mo
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="bg-purple-50 dark:bg-purple-900/10 border border-purple-200 dark:border-purple-800 rounded-lg p-5">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-purple-600 dark:text-purple-400">
-                          Pro Plan
-                        </p>
-                        <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                          {subsStats.pro || 0}
-                        </p>
-                      </div>
-                      <span className="bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs font-medium px-2 py-1 rounded-full">
-                        {currency}299/mo
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-800 rounded-lg p-5">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-yellow-600 dark:text-yellow-400">
-                          Enterprise
-                        </p>
-                        <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                          {subsStats.enterprise || 0}
-                        </p>
-                      </div>
-                      <span className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 text-xs font-medium px-2 py-1 rounded-full">
-                        {currency}799/mo
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Subscription Revenue Chart (Dynamic) */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                      Monthly Recurring Revenue
-                    </h3>
-                    <ResponsiveContainer width="100%" height={250}>
-                      <LineChart data={revenueData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                        <XAxis dataKey="month" stroke="#6b7280" />
-                        <YAxis stroke="#6b7280" />
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: "#1f2937",
-                            border: "1px solid #374151",
-                            borderRadius: "0.375rem",
-                          }}
-                          labelStyle={{ color: "#f3f4f6" }}
-                          formatter={(value) => [`$${value}`, "Revenue"]}
-                        />
-                        <Line
-                          type="monotone"
-                          dataKey="revenue"
-                          stroke="#10B981"
-                          strokeWidth={3}
-                          dot={{ fill: "#10B981", r: 5 }}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-
-                  <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                      Plan Migration Trends
-                    </h3>
-                    <ResponsiveContainer width="100%" height={250}>
-                      <BarChart data={subscriptionTrendsData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                        <XAxis dataKey="month" stroke="#6b7280" />
-                        <YAxis stroke="#6b7280" />
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: "#1f2937",
-                            border: "1px solid #374151",
-                            borderRadius: "0.375rem",
-                          }}
-                          labelStyle={{ color: "#f3f4f6" }}
-                        />
-                        <Legend />
-                        <Bar
-                          dataKey="free"
-                          fill="#9CA3AF"
-                          name="Free"
-                          stackId="a"
-                        />
-                        <Bar
-                          dataKey="basic"
-                          fill="#3B82F6"
-                          name="Basic"
-                          stackId="a"
-                        />
-                        <Bar
-                          dataKey="pro"
-                          fill="#8B5CF6"
-                          name="Pro"
-                          stackId="a"
-                        />
-                        <Bar
-                          dataKey="enterprise"
-                          fill="#F59E0B"
-                          name="Enterprise"
-                          stackId="a"
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-
-                {/* Plans Configuration Overview */}
-                <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                    Plan Configuration
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {Object.entries(PLANS).map(([key, plan]) => (
-                      <div
-                        key={key}
-                        className={`rounded-lg border-2 ${plan.borderColor || "border-gray-300"} p-4 ${plan.bgColor || "bg-white"} transition-all duration-200 hover:shadow-md`}
-                      >
-                        <div className="flex items-center justify-between mb-3">
-                          <h4
-                            className={`font-semibold ${plan.textColor || "text-gray-900"}`}
-                          >
-                            {plan.name}
-                          </h4>
-                          <span
-                            className={`text-lg font-bold ${plan.textColor || "text-gray-900"}`}
-                          >
-                            {plan.price === 0 ? "Free" : `₹${plan.price}`}
-                          </span>
-                        </div>
+                      <div className="flex items-center">
                         <div
-                          className={`text-sm ${plan.textColor || "text-gray-700"} mb-3`}
+                          className={`shrink-0 ${card.iconBg} rounded-md p-3`}
                         >
-                          {plan.jobLimit === -1 ? "Unlimited" : plan.jobLimit}{" "}
-                          job postings
-                        </div>
-                        <ul className="space-y-1.5">
-                          {plan.features?.slice(0, 4).map((feat, idx) => (
-                            <li
-                              key={idx}
-                              className="flex items-start text-xs text-gray-600 dark:text-gray-400"
-                            >
-                              <svg
-                                className="w-3.5 h-3.5 mr-1.5 mt-0.5 text-green-500 shrink-0"
-                                fill="currentColor"
-                                viewBox="0 0 20 20"
-                              >
-                                <path
-                                  fillRule="evenodd"
-                                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                  clipRule="evenodd"
-                                />
-                              </svg>
-                              {feat}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Company Subscription Table */}
-                <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
-                  <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                      <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                        Recruiter Subscriptions
-                      </h3>
-                      <div className="flex flex-col sm:flex-row gap-3">
-                        <div className="relative">
                           <svg
-                            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
+                            className={`h-6 w-6 ${card.iconColor}`}
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -1117,58 +778,334 @@ const AdminPanel = () => {
                               strokeLinecap="round"
                               strokeLinejoin="round"
                               strokeWidth="2"
-                              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                              d={card.icon}
                             />
                           </svg>
-                          <input
-                            type="text"
-                            placeholder="Search companies..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full sm:w-64"
-                          />
                         </div>
-                        <select
-                          value={planFilter}
-                          onChange={(e) => setPlanFilter(e.target.value)}
-                          className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        >
-                          <option value="all">All Plans</option>
-                          <option value="free">Free</option>
-                          <option value="basic">Basic ({currency}199)</option>
-                          <option value="pro">Pro ({currency}299)</option>
-                          <option value="enterprise">
-                            Enterprise ({currency}799)
-                          </option>
-                        </select>
+                        <div className="ml-4 w-0 flex-1">
+                          <dl>
+                            <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+                              {card.label}
+                            </dt>
+                            <dd className="text-lg font-bold text-gray-900 dark:text-white">
+                              {card.value}
+                            </dd>
+                          </dl>
+                        </div>
                       </div>
+                      <div className="mt-4 flex items-center text-sm">
+                        <span className={`${card.changeColor} font-medium`}>
+                          {card.change}
+                        </span>
+                        <span className="text-gray-500 dark:text-gray-400 ml-2">
+                          from last month
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Application Trends */}
+                <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-4 sm:p-6">
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                    Application Trends
+                  </h3>
+                  <div className="h-64 sm:h-80 lg:h-96 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={applicationTrendsData}>
+                        <CartesianGrid
+                          strokeDasharray="3 10"
+                          stroke="gray"
+                          vertical={false}
+                        />
+                        <XAxis dataKey="month" stroke="#6b7280" />
+                        <YAxis stroke="#6b7280" />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: "#1f2937",
+                            borderRadius: "0.5rem",
+                          }}
+                          labelStyle={{ color: "#f3f4f6" }}
+                        />
+                        <Legend />
+                        <Line
+                          type="monotone"
+                          dataKey="applications"
+                          stroke="#3B82F6"
+                          strokeWidth={2}
+                          name="Applications"
+                          dot={false}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="interviews"
+                          stroke="#10B981"
+                          strokeWidth={2}
+                          name="Interviews"
+                          dot={false}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="hires"
+                          stroke="#F59E0B"
+                          strokeWidth={2}
+                          name="Hires"
+                          dot={false}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                      Job Categories
+                    </h3>
+                    <div className="h-64 w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={jobCategoriesData}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            label={({ name, percent }) =>
+                              `${name} ${(percent * 100).toFixed(0)}%`
+                            }
+                            outerRadius={80}
+                            fill="#8884d8"
+                            dataKey="value"
+                          >
+                            {jobCategoriesData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: "#1f2937",
+                              borderRadius: "0.5rem",
+                            }}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
                     </div>
                   </div>
 
-                  {/* Table */}
+                  <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                      Monthly User Registrations
+                    </h3>
+                    <div className="h-64 w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={monthlyUsersData}>
+                          <CartesianGrid
+                            strokeDasharray="3 3"
+                            stroke="#e5e7eb"
+                            vertical={false}
+                          />
+                          <XAxis dataKey="month" stroke="#6b7280" />
+                          <YAxis stroke="#6b7280" />
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: "#1f2937",
+                              borderRadius: "0.5rem",
+                            }}
+                          />
+                          <Legend />
+                          <Bar
+                            dataKey="candidates"
+                            fill="#3B82F6"
+                            name="Candidates"
+                            radius={[4, 4, 0, 0]}
+                          />
+                          <Bar
+                            dataKey="recruiters"
+                            fill="#8B5CF6"
+                            name="Recruiters"
+                            radius={[4, 4, 0, 0]}
+                          />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "subscriptions" && (
+              <div className="space-y-6">
+                {/* Stats Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                  {[
+                    {
+                      label: "Total Recruiters",
+                      value: company.length,
+                      bg: "bg-white",
+                      border: "border-gray-200",
+                    },
+                    {
+                      label: "Free Plan",
+                      value: subsStats.free || 0,
+                      bg: "bg-gray-50",
+                      border: "border-gray-200",
+                    },
+                    {
+                      label: "Basic Plan",
+                      value: subsStats.basic || 0,
+                      bg: "bg-blue-50",
+                      border: "border-blue-200",
+                    },
+                    {
+                      label: "Pro Plan",
+                      value: subsStats.pro || 0,
+                      bg: "bg-purple-50",
+                      border: "border-purple-200",
+                    },
+                    {
+                      label: "Enterprise",
+                      value: subsStats.enterprise || 0,
+                      bg: "bg-yellow-50",
+                      border: "border-yellow-200",
+                    },
+                  ].map((stat, idx) => (
+                    <div
+                      key={idx}
+                      className={`${stat.bg} border ${stat.border} dark:bg-gray-800 dark:border-gray-700 shadow rounded-lg p-4`}
+                    >
+                      <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        {stat.label}
+                      </p>
+                      <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                        {stat.value}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Charts */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                      Monthly Recurring Revenue
+                    </h3>
+                    <div className="h-64 w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={revenueData}>
+                          <CartesianGrid
+                            strokeDasharray="3 3"
+                            stroke="#e5e7eb"
+                            vertical={false}
+                          />
+                          <XAxis dataKey="month" stroke="#6b7280" />
+                          <YAxis stroke="#6b7280" />
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: "#1f2937",
+                              borderRadius: "0.5rem",
+                            }}
+                            formatter={(value) => [`$${value}`, "Revenue"]}
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="revenue"
+                            stroke="#10B981"
+                            strokeWidth={3}
+                            dot={{ fill: "#10B981", r: 4 }}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                  <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                      Plan Migration Trends
+                    </h3>
+                    <div className="h-64 w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={subscriptionTrendsData}>
+                          <CartesianGrid
+                            strokeDasharray="3 3"
+                            stroke="#e5e7eb"
+                            vertical={false}
+                          />
+                          <XAxis dataKey="month" stroke="#6b7280" />
+                          <YAxis stroke="#6b7280" />
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: "#1f2937",
+                              borderRadius: "0.5rem",
+                            }}
+                          />
+                          <Legend />
+                          <Bar
+                            dataKey="free"
+                            fill="#9CA3AF"
+                            name="Free"
+                            stackId="a"
+                          />
+                          <Bar
+                            dataKey="basic"
+                            fill="#3B82F6"
+                            name="Basic"
+                            stackId="a"
+                          />
+                          <Bar
+                            dataKey="pro"
+                            fill="#8B5CF6"
+                            name="Pro"
+                            stackId="a"
+                          />
+                          <Bar
+                            dataKey="enterprise"
+                            fill="#F59E0B"
+                            name="Enterprise"
+                            stackId="a"
+                          />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Table Section */}
+                <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+                  <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                      Recruiter Subscriptions
+                    </h3>
+                    <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                      <input
+                        type="text"
+                        placeholder="Search companies..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white w-full sm:w-64"
+                      />
+                      <select
+                        value={planFilter}
+                        onChange={(e) => setPlanFilter(e.target.value)}
+                        className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white w-full sm:w-auto"
+                      >
+                        <option value="all">All Plans</option>
+                        <option value="free">Free</option>
+                        <option value="basic">Basic</option>
+                        <option value="pro">Pro</option>
+                        <option value="enterprise">Enterprise</option>
+                      </select>
+                    </div>
+                  </div>
+
                   <div className="overflow-x-auto">
                     {filteredCompanies.length === 0 ? (
-                      <div className="text-center py-20">
-                        <svg
-                          className="mx-auto h-12 w-12 text-gray-400"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="1.5"
-                            d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                          />
-                        </svg>
-                        <p className="mt-4 text-gray-500 dark:text-gray-400">
+                      <div className="text-center py-12">
+                        <p className="text-gray-500 dark:text-gray-400">
                           No companies found
                         </p>
                       </div>
                     ) : (
                       <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                        <thead className="bg-gray-50 dark:bg-gray-800">
+                        <thead className="bg-gray-50 dark:bg-gray-800/50">
                           <tr>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                               Company
@@ -1176,11 +1113,8 @@ const AdminPanel = () => {
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                               Plan
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-[200px]">
                               Job Usage
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                              Subscription
                             </th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                               Status
@@ -1194,28 +1128,31 @@ const AdminPanel = () => {
                           {filteredCompanies.map((comp) => (
                             <tr
                               key={comp._id}
-                              className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150"
+                              className="hover:bg-gray-50 dark:hover:bg-gray-700/50"
                             >
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="flex items-center">
-                                  <div className="w-10 h-10 rounded-lg bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                                  <div className="h-10 w-10 flex-shrink-0">
                                     <img
+                                      className="h-10 w-10 rounded-full object-cover bg-gray-200"
                                       src={comp?.companyData?.logo}
-                                      alt="logo"
-                                      className="w-full h-full object-cover"
-                                      onError={(e) => {
-                                        e.target.style.display = "none";
-                                      }}
+                                      alt=""
+                                      onError={(e) =>
+                                        (e.target.style.display = "none")
+                                      }
                                     />
+                                    {!comp?.companyData?.logo && (
+                                      <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-xs">
+                                        {comp.name?.charAt(0)}
+                                      </div>
+                                    )}
                                   </div>
-                                  <div className="ml-3">
+                                  <div className="ml-4">
                                     <div className="text-sm font-medium text-gray-900 dark:text-white">
-                                      {comp?.companyData?.name ||
-                                        comp.name ||
-                                        "Unknown"}
+                                      {comp?.companyData?.name || comp.name}
                                     </div>
                                     <div className="text-xs text-gray-500 dark:text-gray-400">
-                                      {comp.email || "No email"}
+                                      {comp.email}
                                     </div>
                                   </div>
                                 </div>
@@ -1223,123 +1160,43 @@ const AdminPanel = () => {
                               <td className="px-6 py-4 whitespace-nowrap">
                                 {getPlanBadge(comp.currentPlan)}
                               </td>
-                              <td className="px-6 py-4 min-w-[200px]">
+                              <td className="px-6 py-4">
                                 {getJobUsageBar(comp.jobsUsed, comp.jobsLimit)}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="text-sm text-gray-900 dark:text-white">
-                                  {comp.subscriptionStart
-                                    ? new Date(
-                                        comp.subscriptionStart,
-                                      ).toLocaleDateString("en-US", {
-                                        month: "short",
-                                        day: "numeric",
-                                        year: "numeric",
-                                      })
-                                    : "N/A"}
-                                </div>
-                                {comp.subscriptionEnd && (
-                                  <div className="text-xs text-gray-500 dark:text-gray-400">
-                                    to{" "}
-                                    {new Date(
-                                      comp.subscriptionEnd,
-                                    ).toLocaleDateString("en-US", {
-                                      month: "short",
-                                      day: "numeric",
-                                      year: "numeric",
-                                    })}
-                                  </div>
-                                )}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
                                 {comp.isExpired ? (
-                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400">
-                                    <svg
-                                      className="w-3 h-3 mr-1"
-                                      fill="currentColor"
-                                      viewBox="0 0 20 20"
-                                    >
-                                      <path
-                                        fillRule="evenodd"
-                                        d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                                        clipRule="evenodd"
-                                      />
-                                    </svg>
+                                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
                                     Expired
                                   </span>
-                                ) : comp.jobsLimit !== -1 &&
-                                  comp.jobsUsed >= comp.jobsLimit ? (
-                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400">
-                                    <svg
-                                      className="w-3 h-3 mr-1"
-                                      fill="currentColor"
-                                      viewBox="0 0 20 20"
-                                    >
-                                      <path
-                                        fillRule="evenodd"
-                                        d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                                        clipRule="evenodd"
-                                      />
-                                    </svg>
-                                    Limit Reached
+                                ) : comp.jobsUsed >= comp.jobsLimit ? (
+                                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                    Limit
                                   </span>
                                 ) : (
-                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
-                                    <svg
-                                      className="w-3 h-3 mr-1"
-                                      fill="currentColor"
-                                      viewBox="0 0 20 20"
-                                    >
-                                      <path
-                                        fillRule="evenodd"
-                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                        clipRule="evenodd"
-                                      />
-                                    </svg>
+                                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
                                     Active
                                   </span>
                                 )}
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-right">
-                                <div className="flex items-center justify-end gap-2">
-                                  <button
-                                    onClick={() => {
-                                      setSelectedCompany(comp);
-                                      setShowDetailModal(true);
-                                    }}
-                                    className="p-1.5 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition-colors"
-                                    title="View Details"
-                                  >
-                                    <svg
-                                      className="w-4 h-4"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth="2"
-                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                                      />
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth="2"
-                                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                                      />
-                                    </svg>
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      setSelectedCompany(comp);
-                                      setShowPlanModal(true);
-                                    }}
-                                    className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
-                                  >
-                                    Change Plan
-                                  </button>
-                                </div>
+                              <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <button
+                                  onClick={() => {
+                                    setSelectedCompany(comp);
+                                    setShowDetailModal(true);
+                                  }}
+                                  className="text-indigo-600 hover:text-indigo-900 mr-3"
+                                >
+                                  View
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setSelectedCompany(comp);
+                                    setShowPlanModal(true);
+                                  }}
+                                  className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs"
+                                >
+                                  Change
+                                </button>
                               </td>
                             </tr>
                           ))}
@@ -1347,56 +1204,9 @@ const AdminPanel = () => {
                       </table>
                     )}
                   </div>
-
-                  {/* Pagination */}
-                  {filteredCompanies.length > 0 && (
-                    <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Showing{" "}
-                        <span className="font-medium">
-                          {filteredCompanies.length}
-                        </span>{" "}
-                        of{" "}
-                        <span className="font-medium">
-                          {subsCompanies.length}
-                        </span>{" "}
-                        companies
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Free Plan Limit Warning Banner */}
-                <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/10 dark:to-orange-900/10 border border-amber-200 dark:border-amber-800 rounded-lg p-5">
-                  <div className="flex">
-                    <div className="shrink-0">
-                      <svg
-                        className="h-6 w-6 text-amber-600 dark:text-amber-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                      </svg>
-                    </div>
-                    <div className="ml-4">
-                      <h3 className="text-sm font-medium text-amber-800 dark:text-amber-300">
-                        Free Plan Limit Policy
-                      </h3>
-                      <p className="mt-1 text-sm text-amber-700 dark:text-amber-400">
-                        Recruiters on <strong>Free plan</strong> can post up to{" "}
-                        <strong>3 jobs</strong>. Once the limit is reached, they
-                        must upgrade to a paid plan (Basic, Pro, or Enterprise)
-                        to post additional jobs. You can manually override
-                        limits or reset job counts from the action buttons
-                        above.
-                      </p>
-                    </div>
+                  <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-xs text-gray-500">
+                    Showing {filteredCompanies.length} of {subsCompanies.length}{" "}
+                    companies
                   </div>
                 </div>
               </div>
@@ -1414,155 +1224,95 @@ const AdminPanel = () => {
         </div>
       </div>
 
-      {/* ======================== CHANGE PLAN MODAL ======================== */}
+      {/* ======================== MODALS ======================== */}
       {showPlanModal && selectedCompany && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20">
+        <div
+          className="fixed inset-0 z-[60] overflow-y-auto"
+          aria-labelledby="modal-title"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             <div
-              className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity"
+              className="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity"
+              aria-hidden="true"
               onClick={() => setShowPlanModal(false)}
-            />
-            <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-3xl w-full mx-auto overflow-hidden">
-              {/* Modal Header */}
-              <div className="bg-linear-to-r from-blue-600 to-purple-600 px-6 py-5">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-xl font-semibold text-white">
-                      Change Subscription Plan
-                    </h2>
-                    <p className="text-blue-100 text-sm mt-1">
-                      {selectedCompany.name || selectedCompany.companyName}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setShowPlanModal(false)}
-                    className="text-white/80 hover:text-white transition-colors"
+            ></div>
+            <span
+              className="hidden sm:inline-block sm:align-middle sm:h-screen"
+              aria-hidden="true"
+            >
+              &#8203;
+            </span>
+            <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full">
+              <div className="bg-blue-600 px-4 py-3 sm:px-6 flex justify-between items-center">
+                <h3
+                  className="text-lg leading-6 font-medium text-white"
+                  id="modal-title"
+                >
+                  Change Subscription Plan
+                </h3>
+                <button
+                  onClick={() => setShowPlanModal(false)}
+                  className="text-blue-200 hover:text-white focus:outline-none"
+                >
+                  <svg
+                    className="h-6 w-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
                   >
-                    <svg
-                      className="w-6 h-6"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
-                  </button>
-                </div>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
               </div>
-
-              {/* Current Plan Info */}
-              <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">
-                    Current Plan:
+              <div className="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <p className="text-sm text-gray-500 mb-4">
+                  Select a new plan for{" "}
+                  <span className="font-bold text-gray-900">
+                    {selectedCompany.name || selectedCompany.companyName}
                   </span>
-                  <div className="flex items-center gap-3">
-                    {getPlanBadge(selectedCompany.currentPlan)}
-                    <span className="text-sm text-gray-500 dark:text-gray-400">
-                      ({selectedCompany.jobsUsed}/
-                      {selectedCompany.jobsLimit === -1
-                        ? "∞"
-                        : selectedCompany.jobsLimit}{" "}
-                      jobs used)
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Plan Selection */}
-              <div className="p-6">
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">
-                  Select new plan:
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {Object.entries(PLANS).map(([key, plan]) => {
-                    const isCurrentPlan = selectedCompany.currentPlan === key;
+                    const isCurrent = selectedCompany.currentPlan === key;
                     return (
                       <button
                         key={key}
                         onClick={() =>
                           handleUpgradePlan(selectedCompany._id, key)
                         }
-                        disabled={isCurrentPlan}
-                        className={`relative text-left rounded-xl border-2 p-5 transition-all duration-200 ${
-                          isCurrentPlan
-                            ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20 cursor-default"
-                            : "border-gray-200 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md cursor-pointer"
-                        }`}
+                        disabled={isCurrent}
+                        className={`relative p-4 border-2 rounded-xl text-left transition-all ${isCurrent ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-blue-300 dark:border-gray-600 dark:hover:border-blue-500"}`}
                       >
-                        {isCurrentPlan && (
-                          <div className="absolute -top-2.5 right-3">
-                            <span className="bg-blue-600 text-white text-xs font-medium px-2 py-0.5 rounded-full">
-                              Current
-                            </span>
-                          </div>
+                        {isCurrent && (
+                          <span className="absolute top-2 right-2 bg-blue-600 text-white text-xs px-2 py-0.5 rounded-full">
+                            Current
+                          </span>
                         )}
-                        <div className="flex items-center justify-between mb-3">
-                          <h4
-                            className={`font-semibold ${plan.textColor || "text-gray-900"}`}
-                          >
+                        <div className="flex justify-between items-center mb-2">
+                          <h4 className="font-bold text-gray-900">
                             {plan.name}
                           </h4>
-                          <span
-                            className={`text-lg font-bold ${plan.textColor || "text-gray-900"}`}
-                          >
-                            {plan.price === 0 ? "Free" : `₹${plan.price}`}
-                            {plan.price > 0 && (
-                              <span className="text-xs font-normal">/mo</span>
-                            )}
+                          <span className="font-bold text-gray-900">
+                            {plan.price === 0
+                              ? "Free"
+                              : `${currency}${plan.price}`}
                           </span>
                         </div>
-                        <div
-                          className={`text-xs ${plan.textColor || "text-gray-700"} mb-3`}
-                        >
+                        <p className="text-sm text-gray-600">
                           {plan.jobLimit === -1 ? "Unlimited" : plan.jobLimit}{" "}
-                          job postings included
-                        </div>
-                        <ul className="space-y-1">
-                          {plan.features?.slice(0, 3).map((feat, idx) => (
-                            <li
-                              key={idx}
-                              className="flex items-start text-xs text-gray-600 dark:text-gray-400"
-                            >
-                              <svg
-                                className="w-3 h-3 mr-1.5 mt-0.5 text-green-500 shrink-0"
-                                fill="currentColor"
-                                viewBox="0 0 20 20"
-                              >
-                                <path
-                                  fillRule="evenodd"
-                                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                  clipRule="evenodd"
-                                />
-                              </svg>
-                              {feat}
-                            </li>
-                          ))}
-                          {(plan.features?.length || 0) > 3 && (
-                            <li className="text-xs text-gray-400">
-                              +{plan.features.length - 3} more features
-                            </li>
-                          )}
-                        </ul>
+                          Jobs
+                        </p>
                       </button>
                     );
                   })}
                 </div>
-              </div>
-
-              {/* Modal Footer */}
-              <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700 flex justify-end">
-                <button
-                  onClick={() => setShowPlanModal(false)}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-500 transition-colors"
-                >
-                  Cancel
-                </button>
               </div>
             </div>
           </div>
@@ -1570,229 +1320,74 @@ const AdminPanel = () => {
       )}
 
       {showDetailModal && selectedCompany && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20">
+        <div
+          className="fixed inset-0 z-[60] overflow-y-auto"
+          aria-labelledby="modal-title"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             <div
-              className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity"
+              className="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity"
+              aria-hidden="true"
               onClick={() => setShowDetailModal(false)}
-            />
-            <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-lg w-full mx-auto overflow-hidden">
-              {/* Modal Header */}
-              <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold">
-                      {selectedCompany.name?.charAt(0)?.toUpperCase() ||
-                        selectedCompany.companyName?.charAt(0)?.toUpperCase() ||
-                        "C"}
-                    </div>
-                    <div>
-                      <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        {selectedCompany.name || selectedCompany.companyName}
-                      </h2>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {selectedCompany.email || "No email"}
-                      </p>
-                    </div>
+            ></div>
+            <span
+              className="hidden sm:inline-block sm:align-middle sm:h-screen"
+              aria-hidden="true"
+            >
+              &#8203;
+            </span>
+            <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+              <div className="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="h-12 w-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold">
+                    {selectedCompany.name?.charAt(0)}
                   </div>
-                  <button
-                    onClick={() => setShowDetailModal(false)}
-                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-                  >
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-
-              {/* Modal Body */}
-              <div className="p-6 space-y-5">
-                {/* Plan Info */}
-                <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
                   <div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Current Plan
-                    </p>
-                    <div className="mt-1">
-                      {getPlanBadge(selectedCompany.currentPlan)}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Price
-                    </p>
-                    <p className="mt-1 text-lg font-bold text-gray-900 dark:text-white">
-                      {PLANS[selectedCompany.currentPlan]?.price === 0
-                        ? "Free"
-                        : `₹${PLANS[selectedCompany.currentPlan]?.price}/mo`}
+                    <h3 className="text-lg leading-6 font-medium text-gray-900">
+                      {selectedCompany.name}
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      {selectedCompany.email}
                     </p>
                   </div>
                 </div>
-
-                {/* Job Usage */}
-                <div>
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Job Usage
-                  </p>
-                  <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded">
+                    <span className="text-sm font-medium text-gray-500">
+                      Current Plan
+                    </span>
+                    {getPlanBadge(selectedCompany.currentPlan)}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-500 mb-2">
+                      Job Usage
+                    </p>
                     {getJobUsageBar(
                       selectedCompany.jobsUsed,
                       selectedCompany.jobsLimit,
                     )}
                   </div>
                 </div>
-
-                {/* Subscription Dates */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Start Date
-                    </p>
-                    <p className="mt-1 text-sm font-medium text-gray-900 dark:text-white">
-                      {selectedCompany.subscriptionStart
-                        ? new Date(
-                            selectedCompany.subscriptionStart,
-                          ).toLocaleDateString("en-US", {
-                            month: "long",
-                            day: "numeric",
-                            year: "numeric",
-                          })
-                        : "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      End Date
-                    </p>
-                    <p className="mt-1 text-sm font-medium text-gray-900 dark:text-white">
-                      {selectedCompany.subscriptionEnd
-                        ? new Date(
-                            selectedCompany.subscriptionEnd,
-                          ).toLocaleDateString("en-US", {
-                            month: "long",
-                            day: "numeric",
-                            year: "numeric",
-                          })
-                        : "No expiry"}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Status */}
-                <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                  <div
-                    className={`w-2.5 h-2.5 rounded-full ${
-                      selectedCompany.isExpired
-                        ? "bg-red-500"
-                        : selectedCompany.jobsLimit !== -1 &&
-                            selectedCompany.jobsUsed >=
-                              selectedCompany.jobsLimit
-                          ? "bg-yellow-500"
-                          : "bg-green-500"
-                    }`}
-                  />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">
-                    {selectedCompany.isExpired
-                      ? "Subscription Expired"
-                      : selectedCompany.jobsLimit !== -1 &&
-                          selectedCompany.jobsUsed >= selectedCompany.jobsLimit
-                        ? "Job limit reached - upgrade required"
-                        : "Active & in good standing"}
-                  </span>
-                </div>
-
-                {/* Plan Features */}
-                <div>
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Included Features
-                  </p>
-                  <ul className="space-y-2">
-                    {PLANS[selectedCompany.currentPlan]?.features?.map(
-                      (feat, idx) => (
-                        <li
-                          key={idx}
-                          className="flex items-start text-sm text-gray-600 dark:text-gray-400"
-                        >
-                          <svg
-                            className="w-4 h-4 mr-2 mt-0.5 text-green-500 shrink-0"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                          {feat}
-                        </li>
-                      ),
-                    )}
-                  </ul>
-                </div>
               </div>
-
-              {/* Modal Footer Actions */}
-              <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700">
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() => {
-                      setShowDetailModal(false);
-                      setSelectedCompany(selectedCompany);
-                      setShowPlanModal(true);
-                    }}
-                    className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
-                  >
-                    Change Plan
-                  </button>
-                  {selectedCompany.currentPlan !== "free" && (
-                    <button
-                      onClick={() => {
-                        // Extend subscription locally
-                        setSubsCompanies((prev) =>
-                          prev.map((comp) => {
-                            if (
-                              comp._id === selectedCompany._id &&
-                              comp.subscriptionEnd
-                            ) {
-                              const newEnd = new Date(comp.subscriptionEnd);
-                              newEnd.setDate(newEnd.getDate() + 30);
-                              return {
-                                ...comp,
-                                subscriptionEnd: newEnd.toISOString(),
-                                isExpired: false,
-                              };
-                            }
-                            return comp;
-                          }),
-                        );
-                        setShowDetailModal(false);
-                        alert("Subscription extended by 30 days");
-                      }}
-                      className="flex-1 px-4 py-2.5 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
-                    >
-                      Extend +30 days
-                    </button>
-                  )}
-                  <button
-                    onClick={() => handleResetJobs(selectedCompany._id)}
-                    className="px-4 py-2.5 text-sm font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/30 rounded-lg transition-colors"
-                    title="Reset job count to 0"
-                  >
-                    Reset Jobs
-                  </button>
-                </div>
+              <div className="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse gap-2">
+                <button
+                  onClick={() => {
+                    setShowDetailModal(false);
+                    setSelectedCompany(selectedCompany);
+                    setShowPlanModal(true);
+                  }}
+                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 sm:ml-3 sm:w-auto sm:text-sm"
+                >
+                  Change Plan
+                </button>
+                <button
+                  onClick={() => handleResetJobs(selectedCompany._id)}
+                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700"
+                >
+                  Reset Jobs
+                </button>
               </div>
             </div>
           </div>

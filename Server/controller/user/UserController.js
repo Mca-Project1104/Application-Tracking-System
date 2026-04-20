@@ -45,7 +45,6 @@ export const registration = async (req, res) => {
       message: "User registered. Please verify your email.",
     });
   } catch (error) {
-    console.error(error);
     res.status(500).json({
       message: "Internal Server Error",
     });
@@ -114,7 +113,7 @@ export const login = async (req, res) => {
     const user = await User.findOne({ email: email });
 
     if (!user) {
-      return res.status(400).json({ message: "User not found" });
+      return res.status(400).json({ message: "Please Register your Account." });
     }
 
     if (!user.isVerified) {

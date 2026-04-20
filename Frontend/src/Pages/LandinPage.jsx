@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useAppContext } from "../context/AppProvider.jsx";
 import Company from "../Components/company/CompanyStory.jsx";
+import { HiArrowSmallUp } from "react-icons/hi2";
 import {
   candidateFlow,
   recruiterFlow,
@@ -13,6 +14,10 @@ function LandingPage() {
   const [userType, setUserType] = useState("candidate");
   const [billingCycle, setBillingCycle] = useState("monthly");
   const { theme, setTheme } = useAppContext();
+
+  const handleTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   const candidateBenefits = [
     {
@@ -156,7 +161,7 @@ function LandingPage() {
       >
         <div className="container mx-auto px-6 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-white dark:bg-gray-900 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8  rounded-lg flex items-center justify-center">
               <img
                 src={HIREFLOWLOGO}
                 alt=""
@@ -254,6 +259,15 @@ function LandingPage() {
         </div>
       </nav>
 
+      <div className="fixed bottom-5 right-4 z-50 bg-blue-600 rounded-full   shadow-lg  focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all duration-200">
+        <button
+          onClick={() => handleTop()}
+          className="text-2xl rounded-full text-white p-2 font-medium"
+        >
+          <HiArrowSmallUp />
+        </button>
+      </div>
+
       <div className="h-18.25]"></div>
 
       <main>
@@ -277,7 +291,7 @@ function LandingPage() {
                 data-aos-duration="1000"
                 data-aos-delay="200"
               >
-                <span className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
+                <span className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse "></span>
                 Now hiring: 5,000+ opportunities
               </div>
 

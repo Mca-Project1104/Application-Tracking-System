@@ -125,7 +125,7 @@ const CompanyProfile = () => {
   }
 
   return (
-    <div className="select-none mt-8">
+    <div className="select-none mt-2 min-h-screen">
       {/* Alert/Message Box */}
       {message.text && (
         <div
@@ -146,7 +146,7 @@ const CompanyProfile = () => {
       >
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
-            Company Profile
+            Recruiter Profile
           </h1>
           {profileData.companyData.company == null && (
             <button

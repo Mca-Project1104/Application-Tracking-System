@@ -1,5 +1,7 @@
 import Job from "../../model/JobModel.js";
 import { User } from "../../model/UserModel.js";
+import { Company } from "../../model/CompanyModel.js";
+import ApplicationModel from "../../model/ApplicationModel.js";
 
 export const createJob = async (req, res) => {
   try {
@@ -14,9 +16,12 @@ export const createJob = async (req, res) => {
       });
     }
 
+    const company = await Company.findOne({ userId: user._id }).select("name");
+
     const job = await Job.create({
       ...req.body,
       company: user.company,
+      companyName: company.name,
     });
 
     res.status(201).json({
@@ -119,7 +124,10 @@ export const deleteJob = async (req, res) => {
       return res.status(404).json({ message: "Job not found" });
     }
 
-    await JobModel.findByIdAndDelete(req.params.id);
+    await Job.findByIdAndDelete(req.params.id);
+
+    //delete all the application this related
+    await ApplicationModel.deleteOne({ jobId: req.params.id });
 
     res.status(200).json({ message: "Job deleted successfully" });
   } catch (error) {

@@ -5,13 +5,12 @@ import Loading from "../../Components/Loading/Loading";
 import { getpipelineColor } from "../../assets/dummydata.js";
 
 const CompanyDashboard = () => {
-  const { navigate } = useAppContext();
+  const { navigate, token } = useAppContext();
   const [stats, setStats] = useState({});
   const [recentapplications, setRecentApplications] = useState([]);
   const [pipelinestages, setPipelineStages] = useState([]);
   const [jobpostings, setJobPostings] = useState([]);
   const [loading, setLoading] = useState(false);
-  const token = localStorage.getItem("token");
   const arrstate = Object.entries(stats); //convert into array
   const user = JSON.stringify(localStorage.getItem("user"));
 
@@ -112,7 +111,10 @@ const CompanyDashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {/* Recent Applications */}
           <div className="bg-white dark:bg-gray-800 shadow-sm rounded-xl hover:shadow-lg transition-all duration-200">
-            <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
+            <div
+              onClick={() => navigate("/company/hiring-pipeline")}
+              className="px-6 py-5 border-b border-gray-200 dark:border-gray-700"
+            >
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                 Recent Applications
               </h3>
@@ -122,7 +124,7 @@ const CompanyDashboard = () => {
                 {recentapplications.map((app) => (
                   <div
                     key={app.id}
-                    className={`flex items-center justify-between p-3 rounded-lg  hover:bg-gray-50  transition-colors duration-200 cursor-pointer`}
+                    className={`flex items-center justify-between p-3 rounded-lg hover:bg-gray-200  dark:hover:bg-gray-300  transition-colors duration-200 cursor-pointer`}
                   >
                     <div className="flex items-center space-x-4">
                       <div className="shrink-0">
@@ -156,7 +158,11 @@ const CompanyDashboard = () => {
                   </div>
                 ))}
               </div>
-              <div className="mt-6">
+
+              <div
+                className="mt-6"
+                onClick={() => navigate("/company/hiring-pipeline")}
+              >
                 <button className="w-full flex justify-center items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-all duration-200">
                   View all applications
                 </button>
@@ -184,11 +190,11 @@ const CompanyDashboard = () => {
                   </div>
                 ))}
               </div>
-              <div className="mt-6">
-                <button
-                  onClick={() => navigate("/company/hiring-pipeline")}
-                  className="w-full flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:scale-105"
-                >
+              <div
+                onClick={() => navigate("/company/hiring-pipeline")}
+                className="mt-6"
+              >
+                <button className="w-full flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:scale-105">
                   Manage Pipeline
                 </button>
               </div>

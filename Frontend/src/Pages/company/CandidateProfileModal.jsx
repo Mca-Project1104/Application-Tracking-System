@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import api from "../../api/axios.jsx";
+import { useAppContext } from "../../context/AppProvider.jsx";
 
 const CandidateProfileModal = ({
   candidate,
@@ -11,6 +12,7 @@ const CandidateProfileModal = ({
   const [loading, setLoading] = useState(false);
   const [downloadingResume, setDownloadingResume] = useState(false);
   const [updateapplication, setUpdateApplication] = useState({});
+  const { token } = useAppContext();
 
   // Schedule state
   const [scheduleForm, setScheduleForm] = useState({
@@ -36,8 +38,6 @@ const CandidateProfileModal = ({
 
   // Process state
   const [processStages, setProcessStages] = useState([]);
-
-  const token = localStorage.getItem("token");
 
   const stages = [
     { id: "applied", label: "Applied", icon: "📋" },

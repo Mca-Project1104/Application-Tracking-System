@@ -18,23 +18,13 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const { HIREFLOWLOGO, navigate } = useAppContext();
+  const { HIREFLOWLOGO, navigate, handleClose } = useAppContext();
 
   const { firstName, lastName, email, password, confirmPassword, accountType } =
     formData;
 
   const onChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleClose = () => {
-    // If the page was opened as a popup/modal
-    if (window.opener) {
-      window.close();
-    } else {
-      // Otherwise navigate back or to home
-      navigate("/");
-    }
   };
 
   const handleSubmit = async (e) => {
@@ -429,9 +419,9 @@ const Register = () => {
             </div>
 
             <div
-              data-aos="fade-up"
-              data-aos-delay="200"
-              data-aos-duration="200"
+              // data-aos="fade-up"
+              // data-aos-delay="200"
+              // data-aos-duration="200"
               className="flex items-start"
             >
               <input
@@ -463,9 +453,9 @@ const Register = () => {
             </div>
 
             <div
-              data-aos="zoom-in"
-              data-aos-delay="600"
-              data-aos-duration="600"
+            // data-aos="zoom-in"
+            // data-aos-delay="600"
+            // data-aos-duration="600"
             >
               <button
                 type="submit"
@@ -504,9 +494,9 @@ const Register = () => {
           </form>
 
           <div
-            data-aos="fade-up"
-            data-aos-delay="400"
-            data-aos-duration="400"
+            // data-aos="fade-up"
+            // data-aos-delay="400"
+            // data-aos-duration="400"
             className="mt-6"
           >
             <div className="relative">
@@ -670,9 +660,9 @@ const Register = () => {
             </div>
 
             <div
-              data-aos="zoom-in"
-              data-aos-delay="800"
-              data-aos-duration="600"
+              // data-aos="zoom-in"
+              // data-aos-delay="800"
+              // data-aos-duration="600"
               className="mt-12 p-6 bg-white/10 backdrop-blur-sm rounded-xl"
             >
               <div className="flex items-center mb-2">

@@ -14,24 +14,11 @@ const Login = ({ setIsAuthenticated, setUserRole }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [isActive, setIsActive] = useState("login");
-  const { navigate, searchRef } = useAppContext();
+  const { navigate, searchRef, token, handleClose } = useAppContext();
   const { email, password, newpassword } = formData;
-  const token = localStorage.getItem("token");
-
-  console.log(api)
 
   const onChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleClose = () => {
-    // If the page was opened as a popup/modal
-    if (window.opener) {
-      window.close();
-    } else {
-      // Otherwise navigate back or to home
-      navigate("/");
-    }
   };
 
   const handleSubmit = async (e) => {
@@ -41,7 +28,6 @@ const Login = ({ setIsAuthenticated, setUserRole }) => {
     if (loading) return;
 
     setLoading(true);
-    console.log(isActive);
 
     switch (isActive) {
       case "forgot_password":

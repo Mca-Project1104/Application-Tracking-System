@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import CandidateProfileModal from "./CandidateProfileModal.jsx";
 import Loading from "../../Components/Loading/Loading.jsx";
 import api from "../../api/axios.jsx";
+import { useAppContext } from "../../context/AppProvider.jsx";
 
 const HiringPipeline = () => {
   const [candidates, setCandidates] = useState([]);
@@ -22,7 +23,7 @@ const HiringPipeline = () => {
   const [selectedJobId, setSelectedJobId] = useState("all");
   const [jobFilterOpen, setJobFilterOpen] = useState(false);
 
-  const token = localStorage.getItem("token");
+  const { token } = useAppContext();
 
   const mapStatusToColumn = (status) => {
     const statusMap = {
@@ -230,11 +231,10 @@ const HiringPipeline = () => {
   }
 
   return (
-    // ✅ Removed invalid w-380 and redundant mt-2
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-      <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 max-w-full overflow-x-hidden">
+      <div className=" sm:px-4 md:px-6 lg:px-4 py-1 p-2 sm:py-4 max-w-full overflow-x-hidden">
         {/* Header */}
-        <div className="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-4 sm:p-6 mb-4 sm:mb-6 transition-all duration-200 hover:shadow-md">
+        <div className="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-4 sm:p-4 mb-4 sm:mb-4 transition-all duration-200 hover:shadow-md">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
@@ -243,41 +243,6 @@ const HiringPipeline = () => {
               <p className="mt-1 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                 Track and manage candidates through the hiring process
               </p>
-            </div>
-            <div className="flex gap-2 sm:gap-3">
-              <button className="inline-flex items-center justify-center px-3 sm:px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200">
-                <svg
-                  className="mr-1.5 h-4 w-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-                  />
-                </svg>
-                Filter
-              </button>
-              <button className="inline-flex items-center justify-center px-3 sm:px-4 py-2 border border-transparent rounded-lg shadow-sm text-xs sm:text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:scale-105">
-                <svg
-                  className="mr-1.5 h-4 w-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                  />
-                </svg>
-                <span className="sm:hidden">Add</span>
-                <span className="hidden sm:inline">Add Candidate</span>
-              </button>
             </div>
           </div>
 
@@ -718,8 +683,8 @@ const HiringPipeline = () => {
               Click a row to filter pipeline
             </span>
           </div>
-          <div className="overflow-x-auto -mx-4 sm:mx-0">
-            <table className="w-full text-left min-w-[500px]">
+          <div className="overflow-x-auto p-2 -mx-4 sm:mx-0">
+            <table className="w-full text-left min-w-125">
               <thead>
                 <tr className="border-b border-gray-200 dark:border-gray-700">
                   <th className="pb-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">

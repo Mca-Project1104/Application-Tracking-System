@@ -25,7 +25,6 @@ const Navbar = ({
   };
 
   return (
-    // ✅ h-16 for consistent height; z-50 above sidebar (z-40)
     <nav className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700 h-16 fixed top-0 left-0 right-0 z-50 flex items-center px-3 sm:px-4">
       <div className="flex items-center justify-between w-full">
         {/* Left: hamburger + logo */}
@@ -60,7 +59,6 @@ const Navbar = ({
           </Link>
         </div>
 
-        {/* ✅ Desktop: hidden below md, flex at md+ (matches sidebar breakpoint) */}
         <div className="hidden md:flex items-center space-x-4">
           <div className="flex items-center">
             <div
@@ -82,7 +80,7 @@ const Navbar = ({
               )}
             </div>
             <div className="ml-2 hidden sm:block">
-              <p className="capitalize text-sm font-medium text-gray-700 dark:text-gray-200 truncate max-w-[120px]">
+              <p className="capitalize text-sm font-medium text-gray-700 dark:text-gray-200 truncate max-w-30">
                 {user?.name}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">
@@ -100,7 +98,6 @@ const Navbar = ({
           </button>
         </div>
 
-        {/* ✅ Mobile menu button: visible below md */}
         <button
           type="button"
           onClick={() => setShowMobileMenu(!showMobileMenu)}
@@ -123,17 +120,14 @@ const Navbar = ({
         </button>
       </div>
 
-      {/* ✅ Mobile Menu Dropdown */}
       {showMobileMenu && (
         <>
-          {/* Overlay */}
           <div
             className="fixed inset-0 top-16 bg-black/40 z-40 md:hidden"
             onClick={() => setShowMobileMenu(false)}
           />
 
-          {/* Panel — fixed below navbar */}
-          <div className="fixed top-16 right-2 w-[90%] max-w-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg z-50 p-4 md:hidden">
+          <div className="fixed top-16  w-full left-1 max-w-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl rounded-tl-none rounded-tr-none shadow-lg z-50 p-4 md:hidden">
             {/* Profile */}
             <div
               onClick={() => {
