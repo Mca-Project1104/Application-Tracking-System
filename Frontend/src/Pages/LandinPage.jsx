@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useAppContext } from "../context/AppProvider.jsx";
 import Company from "../Components/company/CompanyStory.jsx";
 import { HiArrowSmallUp } from "react-icons/hi2";
@@ -8,16 +8,36 @@ import {
   pricingPlans,
 } from "../assets/dummydata.js";
 import Footer from "../Components/LandingPage/Footer.jsx";
+import { WineOff } from "lucide-react";
 
 function LandingPage() {
   const { navigate, HIREFLOWLOGO, currency } = useAppContext();
   const [userType, setUserType] = useState("candidate");
   const [billingCycle, setBillingCycle] = useState("monthly");
+  const [isbutton, setIsButton] = useState(false);
   const { theme, setTheme } = useAppContext();
 
   const handleTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 300) {
+        setIsButton(true);
+      } else {
+        setIsButton(false);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+
+    handleScroll();
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
 
   const candidateBenefits = [
     {
@@ -259,14 +279,20 @@ function LandingPage() {
         </div>
       </nav>
 
-      <div className="fixed bottom-5 right-4 z-50 bg-blue-600 rounded-full   shadow-lg  focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all duration-200">
-        <button
-          onClick={() => handleTop()}
-          className="text-2xl rounded-full text-white p-2 font-medium"
+      {isbutton && (
+        <div
+          data-aos="fade-up"
+          data-duration="100"
+          className="fixed bottom-5 right-4 z-50 bg-blue-600 rounded-full delay-500   shadow-lg  focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all duration-200"
         >
-          <HiArrowSmallUp />
-        </button>
-      </div>
+          <button
+            onClick={() => handleTop()}
+            className="text-2xl rounded-full text-white p-2 font-medium"
+          >
+            <HiArrowSmallUp />
+          </button>
+        </div>
+      )}
 
       <div className="h-18.25]"></div>
 

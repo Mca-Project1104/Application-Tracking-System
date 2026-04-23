@@ -59,7 +59,6 @@ const Layout = React.memo(
             setShowSidebar={setShowSidebar}
           />
         )}
-        {/* ✅ md:ml-64 (not lg) to match sidebar breakpoint; min-w-0 prevents flex overflow */}
         <main
           className={`flex-1 min-w-0 ${userRole !== "admin" ? "md:ml-64" : ""}`}
         >

@@ -235,19 +235,8 @@ const HiringPipeline = () => {
       <div className=" sm:px-4 md:px-6 lg:px-4 py-1 p-2 sm:py-4 max-w-full overflow-x-hidden">
         {/* Header */}
         <div className="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-4 sm:p-4 mb-4 sm:mb-4 transition-all duration-200 hover:shadow-md">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
-                Hiring Pipeline
-              </h1>
-              <p className="mt-1 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                Track and manage candidates through the hiring process
-              </p>
-            </div>
-          </div>
-
           {/* Quick Stats */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-100 dark:border-gray-700">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="flex items-center gap-3">
               <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 shrink-0">
                 <svg
@@ -539,7 +528,6 @@ const HiringPipeline = () => {
                     </div>
                   </div>
 
-                  {/* ✅ Column Body — min-h-[200px] instead of invalid min-h-100 */}
                   <div className="p-2 sm:p-3 space-y-2 sm:space-y-3 min-h-[200px] bg-gray-50 dark:bg-gray-900/50 flex-1 overflow-y-auto">
                     {columnCandidates.length === 0 ? (
                       <div className="flex flex-col items-center justify-center h-[180px] text-gray-400 dark:text-gray-500">

@@ -167,7 +167,7 @@ export const getCompanyDashboard = async (req, res) => {
 export const manageStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { newStatus, details } = req.body;
+    const { newStatus, details = "" } = req.body;
     const { email } = req.user;
 
     if (!id || !details) {
