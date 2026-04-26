@@ -29,10 +29,9 @@ export const refreshToken = async (req, res) => {
 
     res.cookie("refreshToken", newRefreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      secure: true,
+      sameSite: "lax",
     });
-
     const newAccessToken = jwt.sign(
       { id: user._id, role: user.accountType },
       process.env.ACCESS_TOKEN_SECRET,
