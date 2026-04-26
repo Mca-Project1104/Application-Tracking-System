@@ -19,8 +19,8 @@ export const createCheckoutSession = async (req, res) => {
       },
     };
 
-    if (!priceMap[plan]) {
-      return res.status(400).json({ error: "Invalid plan" });
+    if (!priceMap[plan] || !priceMap[plan][billingCycle]) {
+      return res.status(400).json({ error: "Invalid plan or billing cycle" });
     }
 
     const priceId = priceMap[plan][billingCycle];
@@ -28,12 +28,7 @@ export const createCheckoutSession = async (req, res) => {
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       payment_method_types: ["card"],
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
-        },
-      ],
+      line_items: [{ price: priceId, quantity: 1 }],
 
       metadata: {
         userId: req.user?.id,
@@ -41,30 +36,27 @@ export const createCheckoutSession = async (req, res) => {
         billingCycle,
       },
 
-      //client url
+      expand: ["subscription"],
+
       success_url: `${process.env.CLIENT_URL}/billing/success`,
       cancel_url: `${process.env.CLIENT_URL}/pricing`,
     });
-    console.log(session);
 
-    res.json({ url: session.url });
+    return res.json({ url: session.url });
   } catch (error) {
     console.error("Stripe Error:", error);
-    res.status(500).json({ error: "Stripe session failed" });
+    return res.status(500).json({ error: "Stripe session failed" });
   }
 };
 
 export const stripeWebhookHandler = async (req, res) => {
-  console.log("running...");
   const sig = req.headers["stripe-signature"];
 
   let event;
 
-  console.log(event);
-
   if (!process.env.STRIPE_WEBHOOK_SECRET) {
-    console.log("not found STRIPE_WEBHOOK_SECRET");
-    return;
+    console.log("Missing STRIPE_WEBHOOK_SECRET");
+    return res.sendStatus(500);
   }
 
   try {
@@ -74,121 +66,128 @@ export const stripeWebhookHandler = async (req, res) => {
       process.env.STRIPE_WEBHOOK_SECRET,
     );
   } catch (err) {
-    console.log(" Webhook signature error:", err.message);
+    console.log("Webhook signature error:", err.message);
     return res.sendStatus(400);
   }
 
-  console.log(" Event:", event.type);
+  console.log("Stripe Event:", event.type);
 
   try {
-    switch (event.type) {
-      case "checkout.session.completed": {
-        const session = event.data.object;
+    /* =========================
+       SUBSCRIPTION CREATED
+    ========================= */
+    if (event.type === "customer.subscription.created") {
+      const subscription = event.data.object;
 
-        const { userId, plan, billingCycle } = session.metadata;
+      const { metadata } = subscription;
 
-        const company = await Company.findOne({ userId });
+      const company = await Company.findOne({
+        userId: metadata.userId,
+      });
 
-        if (!company) {
-          console.log(" Company not found");
-          break;
-        }
+      if (!company) return res.sendStatus(200);
 
-        const startDate = new Date();
-        const endDate = new Date();
+      const startDate = new Date();
 
-        if (billingCycle === "yearly") {
-          endDate.setFullYear(endDate.getFullYear() + 1);
-        } else {
-          endDate.setMonth(endDate.getMonth() + 1);
-        }
-
-        company.subscription = {
-          plan,
-          status: "ACTIVE",
-          startDate,
-          endDate,
-          paymentId: session.payment_intent,
-          stripeCustomerId: session.customer,
-          stripeSubscriptionId: session.subscription,
-        };
-
-        company.limits.maxJobs =
-          plan === "PRO" ? 9999 : plan === "BASIC" ? 15 : 3;
-
-        await company.save();
-
-        console.log(" Subscription Activated");
-        break;
+      const endDate = new Date(startDate);
+      if (metadata.billingCycle === "yearly") {
+        endDate.setFullYear(endDate.getFullYear() + 1);
+      } else {
+        endDate.setMonth(endDate.getMonth() + 1);
       }
 
-      case "invoice.payment_succeeded": {
-        const invoice = event.data.object;
+      company.subscription = {
+        plan: metadata.plan,
+        status: "ACTIVE",
+        billingCycle: metadata.billingCycle,
 
-        const company = await Company.findOne({
-          "subscription.stripeSubscriptionId": invoice.subscription,
-        });
+        startDate,
+        endDate,
 
-        if (company) {
-          const newEndDate = new Date(company.subscription.endDate);
+        stripeSubscriptionId: subscription.id,
+        stripeCustomerId: subscription.customer,
 
-          newEndDate.setMonth(newEndDate.getMonth() + 1);
+        paymentId: null,
+      };
 
-          company.subscription.endDate = newEndDate;
-          company.subscription.status = "ACTIVE";
+      company.limits.maxJobs =
+        metadata.plan === "PRO" ? 9999 : metadata.plan === "BASIC" ? 15 : 3;
 
-          await company.save();
+      await company.save();
 
-          console.log(" Subscription Renewed");
-        }
-
-        break;
-      }
-
-      case "customer.subscription.deleted": {
-        const subscription = event.data.object;
-
-        const company = await Company.findOne({
-          "subscription.stripeSubscriptionId": subscription.id,
-        });
-
-        if (company) {
-          company.subscription.status = "CANCELLED";
-          company.subscription.plan = "FREE";
-          company.limits.maxJobs = 3;
-
-          await company.save();
-
-          console.log(" Subscription Cancelled");
-        }
-
-        break;
-      }
-
-      case "invoice.payment_failed": {
-        const invoice = event.data.object;
-
-        const company = await Company.findOne({
-          "subscription.stripeSubscriptionId": invoice.subscription,
-        });
-
-        if (company) {
-          company.subscription.status = "EXPIRED";
-
-          await company.save();
-
-          console.log(" Payment Failed");
-        }
-
-        break;
-      }
-
-      default:
-        console.log("Unhandled event:", event.type);
+      console.log("Subscription Created");
     }
-  } catch (err) {
-    console.error(" Webhook DB Error:", err);
-  }
 
-  res.json({ received: true });
+    if (event.type === "invoice.payment_succeeded") {
+      const invoice = event.data.object;
+
+      const company = await Company.findOne({
+        "subscription.stripeSubscriptionId": invoice.subscription,
+      });
+
+      if (!company) return res.sendStatus(200);
+
+      const currentEnd = company.subscription?.endDate
+        ? new Date(company.subscription.endDate)
+        : new Date();
+
+      const newEndDate = new Date(currentEnd);
+
+      const cycle = company.subscription.billingCycle || "monthly";
+
+      if (cycle === "yearly") {
+        newEndDate.setFullYear(newEndDate.getFullYear() + 1);
+      } else {
+        newEndDate.setMonth(newEndDate.getMonth() + 1);
+      }
+
+      company.subscription.endDate = newEndDate;
+      company.subscription.status = "ACTIVE";
+
+      await company.save();
+
+      console.log("Subscription Renewed");
+    }
+
+    if (event.type === "customer.subscription.deleted") {
+      const subscription = event.data.object;
+
+      const company = await Company.findOne({
+        "subscription.stripeSubscriptionId": subscription.id,
+      });
+
+      if (!company) return res.sendStatus(200);
+
+      company.subscription.status = "CANCELLED";
+      company.subscription.plan = "FREE";
+      company.subscription.billingCycle = null;
+
+      company.limits.maxJobs = 3;
+
+      await company.save();
+
+      console.log("Subscription Cancelled");
+    }
+
+    if (event.type === "invoice.payment_failed") {
+      const invoice = event.data.object;
+
+      const company = await Company.findOne({
+        "subscription.stripeSubscriptionId": invoice.subscription,
+      });
+
+      if (!company) return res.sendStatus(200);
+
+      company.subscription.status = "PAST_DUE";
+
+      await company.save();
+
+      console.log("Payment Failed");
+    }
+
+    return res.json({ received: true });
+  } catch (err) {
+    console.error("Webhook DB Error:", err);
+    return res.sendStatus(500);
+  }
 };

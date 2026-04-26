@@ -23,14 +23,24 @@ const companySchema = new mongoose.Schema(
 
       status: {
         type: String,
-        enum: ["ACTIVE", "EXPIRED", "CANCELLED"],
-        default: "ACTIVE",
+        enum: ["ACTIVE", "EXPIRED", "CANCELLED", "INACTIVE"],
+        default: "INACTIVE",
+      },
+
+      billingCycle: {
+        type: String,
+        enum: ["monthly", "yearly"],
+        default: null,
       },
 
       startDate: { type: Date, default: null },
       endDate: { type: Date, default: null },
 
       paymentId: { type: String, default: null },
+
+      stripeCustomerId: { type: String, default: null },
+
+      stripeSubscriptionId: { type: String, default: null },
     },
 
     limits: {
