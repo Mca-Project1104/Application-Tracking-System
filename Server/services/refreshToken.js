@@ -34,6 +34,7 @@ export const refreshToken = async (req, res) => {
       path: "/",
       maxAge: 7 * 24 * 60 * 60 * 1000, //7d
     });
+    
     const newAccessToken = jwt.sign(
       { id: user._id, role: user.accountType },
       process.env.ACCESS_TOKEN_SECRET,

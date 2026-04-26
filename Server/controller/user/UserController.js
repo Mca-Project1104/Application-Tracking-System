@@ -145,12 +145,12 @@ export const login = async (req, res) => {
     //  Save refresh token
     user.refreshToken = refreshToken;
     await user.save();
-
     //  Send as cookie used for refresh token
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: false, // true in production
-      sameSite: "Strict",
+      secure: true,
+      sameSite:  "none",
+      path: "/",
     });
 
     if (user.accountType === "candidate") {
