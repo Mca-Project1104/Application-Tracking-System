@@ -995,7 +995,6 @@ function LandingPage() {
             <p
               className="text-center text-gray-600 dark:text-gray-400 mb-10 text-lg font-medium"
               data-aos="fade-up"
-              Works
               data-aos-duration="800"
               data-aos-delay="100"
             >

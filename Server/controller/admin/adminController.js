@@ -1,6 +1,7 @@
 import JobModel from "../../model/JobModel.js";
 import { User } from "../../model/UserModel.js";
 import Application from "../../model/ApplicationModel.js";
+import { Company } from "../../model/CompanyModel.js";
 
 export const getUsers = async (_, res) => {
   try {
@@ -34,49 +35,74 @@ export const getUsers = async (_, res) => {
   }
 };
 
-export const getallCompany = async (req, res) => {
+// export const getallCompany = async (req, res) => {
+//   try {
+//     const result = await JobModel.find().sort("createdAt");
+
+//     const totalJobs = await JobModel.countDocuments({
+//       status: "Open",
+//     });
+
+//     res.status(200).json({ message: "Data found", totalJobs, company: result });
+//   } catch (error) {
+//     console.error("Error fetching companies:", error);
+//     res.status(500).json({ message: "Server error" });
+//   }
+// };
+
+export const getAllCompanies = async (req, res) => {
   try {
-    const result = await JobModel.aggregate([
-      {
-        $group: {
-          _id: "$company",
-          jobCount: { $sum: 1 },
-        },
-      },
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const search = req.query.search || "";
+
+    const matchQuery = search
+      ? {
+          $or: [
+            { name: { $regex: search, $options: "i" } },
+            { email: { $regex: search, $options: "i" } },
+          ],
+        }
+      : {};
+
+    // Use Aggregation to count jobs dynamically
+    const result = await Company.aggregate([
+      { $match: matchQuery },
       {
         $lookup: {
-          from: "users",
+          from: "jobs",
           localField: "_id",
-          foreignField: "_id",
-          as: "companyData",
+          foreignField: "company",
+          as: "postedJobs",
         },
       },
       {
-        $unwind: {
-          path: "$companyData",
-          preserveNullAndEmptyArrays: true,
+        $addFields: {
+          jobsUsed: { $size: "$postedJobs" },
         },
       },
+      { $sort: { createdAt: -1 } },
       {
-        $project: {
-          _id: 1,
-          jobCount: 1,
-          "companyData.name": 1,
-          "companyData.location": 1,
-          "companyData.logo": 1,
-          "companyData.email": 1,
+        $facet: {
+          metadata: [{ $count: "total" }],
+          data: [{ $skip: (page - 1) * limit }, { $limit: limit }],
         },
-      },
-      {
-        $sort: { jobCount: -1 },
       },
     ]);
 
-    const totalJobs = await JobModel.countDocuments({
-      status: "Open",
-    });
+    const companies = result[0].data;
+    const total = result[0].metadata[0]?.total || 0;
+    const totalJobs = await JobModel.countDocuments({ status: "Open" });
 
-    res.status(200).json({ message: "Data found", totalJobs, company: result });
+    res.status(200).json({
+      message: "Companies fetched successfully",
+      company: companies,
+      totalJobs,
+      total,
+      page,
+      limit,
+      pages: Math.ceil(total / limit),
+    });
   } catch (error) {
     console.error("Error fetching companies:", error);
     res.status(500).json({ message: "Server error" });

@@ -13,6 +13,36 @@ const companySchema = new mongoose.Schema(
     },
 
     isVerified: { type: Boolean, default: false },
+
+    subscription: {
+      plan: {
+        type: String,
+        enum: ["FREE", "BASIC", "PRO"],
+        default: "FREE",
+      },
+
+      status: {
+        type: String,
+        enum: ["ACTIVE", "EXPIRED", "CANCELLED"],
+        default: "ACTIVE",
+      },
+
+      startDate: { type: Date, default: null },
+      endDate: { type: Date, default: null },
+
+      paymentId: { type: String, default: null },
+    },
+
+    limits: {
+      maxJobs: {
+        type: Number,
+        default: 3,
+      },
+      activeJobs: {
+        type: Number,
+        default: 0,
+      },
+    },
   },
   { timestamps: true },
 );

@@ -3,7 +3,7 @@ import { useAppContext } from "../../context/AppProvider";
 import api from "../../api/axios";
 
 const JobPostingForm = () => {
-  const { companydata, navigate } = useAppContext();
+  const { companydata, navigate, currency } = useAppContext();
   const [isloading, setIsloading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
@@ -31,6 +31,7 @@ const JobPostingForm = () => {
       benefits: [],
       requirements: "",
       responsibilities: "",
+      openingJob: "",
       applicationDeadline: "",
       contactEmail: companydata?.email || "",
     };
@@ -44,11 +45,11 @@ const JobPostingForm = () => {
       setIsloading(false);
       setFormData((prev) => ({
         ...prev,
-        companyName: companydata.company.name || "",
-        location: companydata.company.location || "",
-        contactEmail: companydata.email || "",
-        postedBy: companydata.name || "",
-        department: companydata.department || "",
+        companyName: companydata?.company.name || "",
+        location: companydata?.company.location || "",
+        contactEmail: companydata?.email || "",
+        postedBy: companydata?.name || "",
+        department: companydata?.department || "",
       }));
     }
   }, [companydata]);
@@ -123,7 +124,7 @@ const JobPostingForm = () => {
 
     if (step === 1) {
       if (!formData.title.trim()) newErrors.title = "Job title is required";
-      if (!formData.companyName.trim())
+      if (!formData?.companyName.trim())
         newErrors.company = "Company is required";
       if (!formData.location.trim())
         newErrors.location = "Location is required";
@@ -212,6 +213,7 @@ const JobPostingForm = () => {
         responsibilities: formData.responsibilities,
         applicationDeadline: formData.applicationDeadline || undefined,
         contactEmail: formData.contactEmail,
+        openingJob: formData.openingJob,
         isFeatured: formData.featured,
         status: publish ? "Open" : "Draft",
         postedBy: formData.postedBy,
@@ -243,11 +245,13 @@ const JobPostingForm = () => {
     }
   };
 
-  if (isloading) {
+  if (isloading || !companydata?.company) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>{" "}
-        {/* Round loading */}
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        <p className="ml-3 text-gray-600 dark:text-gray-300">
+          Loading company data...
+        </p>
       </div>
     );
   }
@@ -255,7 +259,7 @@ const JobPostingForm = () => {
   return (
     <div className=" relative top-8 w-full dark:bg-gray-900 bg-gray-50">
       <div className="dark:bg-gray-900 bg-gray-50">
-        <div className="py-5 px-5 dark:bg-gray-900 bg-gray-50 mx-auto w-full">
+        <div className="py-5 px-2 dark:bg-gray-900 bg-gray-50 mx-auto w-ful">
           {/* Step Indicators */}
           <div className="mb-8">
             <div className="flex items-center justify-between">
@@ -322,7 +326,7 @@ const JobPostingForm = () => {
           </div>
 
           {/* Form Container */}
-          <div className="w-full dark:bg-gray-900 bg-white shadow-xl rounded-xl overflow-hidden transition-all duration-300">
+          <div className="w-full p-2 dark:bg-gray-900 bg-white shadow-xl rounded-xl overflow-hidden transition-all duration-300">
             <div className=" sm:p-8 lg:p-10">
               {currentStep === 1 && (
                 <div className="space-y-6">
@@ -371,7 +375,7 @@ const JobPostingForm = () => {
                       <input
                         type="text"
                         name="company"
-                        value={formData.companyName}
+                        value={formData?.companyName}
                         readOnly
                         className="w-full capitalize px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 border-gray-300 bg-gray-100 text-gray-600 cursor-not-allowed"
                       />
@@ -712,6 +716,19 @@ const JobPostingForm = () => {
                           </p>
                         )}
                       </div>
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium dark:text-gray-300 text-gray-700">
+                          No Of Vacancies
+                        </label>
+                        <input
+                          type="number"
+                          name="openingJob"
+                          value={formData.openingJob}
+                          onChange={handleInputChange}
+                          className="flex-1 px-4 py-3 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 border dark:border-gray-600 dark:bg-gray-700 dark:text-white border-gray-300 bg-white text-gray-900"
+                          placeholder="Vacancies"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -744,7 +761,7 @@ const JobPostingForm = () => {
                           Company:
                         </span>
                         <p className="dark:text-white text-gray-900">
-                          {formData.company}
+                          {formData.companyName}
                         </p>
                       </div>
                       <div>
@@ -793,11 +810,11 @@ const JobPostingForm = () => {
                         </span>
                         <p className="dark:text-white text-gray-900">
                           {formData.salaryMin && formData.salaryMax
-                            ? `$${formData.salaryMin}k - $${formData.salaryMax}k`
+                            ? `${currency}${formData.salaryMin}k - ${currency}${formData.salaryMax}k`
                             : formData.salaryMin
-                              ? `From $${formData.salaryMin}k`
+                              ? `From ${currency}${formData.salaryMin}k`
                               : formData.salaryMax
-                                ? `Up to $${formData.salaryMax}k`
+                                ? `Up to ${currency}${formData.salaryMax}k`
                                 : "Not specified"}
                         </p>
                       </div>

@@ -7,7 +7,6 @@ export const createJob = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    // Get user's company
     const user = await User.findById(userId);
 
     if (!user.company) {
@@ -16,12 +15,36 @@ export const createJob = async (req, res) => {
       });
     }
 
-    const company = await Company.findOne({ userId: user._id }).select("name");
+    // 🔥 Get full company (NOT just name)
+    const company = await Company.findById(user.company);
 
+    // 🚨 Subscription check
+    if (company.subscription.status !== "ACTIVE") {
+      return res.status(403).json({
+        message: "Subscription expired. Please upgrade your plan.",
+      });
+    }
+
+    // 🚨 Job limit check
+    if (
+      company.limits.maxJobs !== -1 &&
+      company.limits.activeJobs >= company.limits.maxJobs
+    ) {
+      return res.status(403).json({
+        message: "Job limit reached. Upgrade your plan.",
+      });
+    }
+
+    // ✅ Create job
     const job = await Job.create({
       ...req.body,
-      company: user.company,
+      company: company._id,
       companyName: company.name,
+    });
+
+    // 🔥 Increment active jobs count
+    await Company.findByIdAndUpdate(company._id, {
+      $inc: { "limits.activeJobs": 1 },
     });
 
     res.status(201).json({
@@ -33,7 +56,6 @@ export const createJob = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
 export const getJobs = async (req, res) => {
   try {
     const id = req.user.company;
@@ -116,6 +138,26 @@ export const getAllJobs = async (req, res) => {
   }
 };
 
+// export const deleteJob = async (req, res) => {
+//   try {
+//     const job = await Job.findById(req.params.id);
+
+//     if (!job) {
+//       return res.status(404).json({ message: "Job not found" });
+//     }
+
+//     await Job.findByIdAndDelete(req.params.id);
+
+//     //delete all the application this related
+//     await ApplicationModel.deleteOne({ jobId: req.params.id });
+
+//     res.status(200).json({ message: "Job deleted successfully" });
+//   } catch (error) {
+//     console.error("Error deleting job:", error);
+//     res.status(500).json({ message: "Server Error" });
+//   }
+// };
+
 export const deleteJob = async (req, res) => {
   try {
     const job = await Job.findById(req.params.id);
@@ -126,8 +168,11 @@ export const deleteJob = async (req, res) => {
 
     await Job.findByIdAndDelete(req.params.id);
 
-    //delete all the application this related
-    await ApplicationModel.deleteOne({ jobId: req.params.id });
+    await Company.findByIdAndUpdate(job.company, {
+      $inc: { "limits.activeJobs": -1 },
+    });
+
+    await ApplicationModel.deleteMany({ jobId: req.params.id });
 
     res.status(200).json({ message: "Job deleted successfully" });
   } catch (error) {

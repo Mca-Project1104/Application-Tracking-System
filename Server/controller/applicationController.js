@@ -156,6 +156,7 @@ export const getCompanyDashboard = async (req, res) => {
       pipeline,
       recentApplications,
       jobs: jobPostings,
+      company: company,
     });
   } catch (error) {
     console.error(error);

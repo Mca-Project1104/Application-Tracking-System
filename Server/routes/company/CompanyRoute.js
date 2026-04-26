@@ -15,16 +15,13 @@ companyRouter.post(
   "/jobs",
   companyAuthMiddleware,
   authorizeRecruiter,
-  (req, res) => {
-    // Only approved recruiters can post jobs
-  },
 );
 
 companyRouter.get("/profile", authMiddleware, companyProfile);
 
 companyRouter.post(
   "/profile",
-  authMiddleware, //fixed
+  authMiddleware, 
   upload.single("logo"),
   createCompanyProfile,
 );

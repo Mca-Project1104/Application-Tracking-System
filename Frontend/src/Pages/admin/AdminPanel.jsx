@@ -21,30 +21,6 @@ import { useAppContext } from "../../context/AppProvider";
 import Setting from "./Setting";
 import Loading from "../../Components/Loading/Loading";
 
-const generateMockSubscription = (company) => {
-  const plans = ["free", "free", "free", "basic", "basic", "pro", "enterprise"];
-  const randomPlan = plans[Math.floor(Math.random() * plans.length)];
-  const jobLimit = PLANS[randomPlan]?.jobLimit || 3;
-  const jobsUsed =
-    company.jobsCount || Math.floor(Math.random() * (jobLimit + 2));
-  const startDate = new Date(
-    Date.now() - Math.random() * 60 * 24 * 60 * 60 * 1000,
-  );
-  const endDate =
-    randomPlan === "free"
-      ? null
-      : new Date(startDate.getTime() + 30 * 24 * 60 * 60 * 1000);
-
-  return {
-    plan: randomPlan,
-    startDate: startDate.toISOString(),
-    endDate: endDate?.toISOString() || null,
-    jobLimit,
-    jobsUsed,
-    isExpired: endDate ? new Date(endDate) < new Date() : false,
-  };
-};
-
 const AdminPanel = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -81,28 +57,20 @@ const AdminPanel = () => {
   // --- RESPONSIVENESS HOOK ---
   useEffect(() => {
     const handleResize = () => {
-      const mobile = window.innerWidth < 1024; // Breakpoint for lg
+      const mobile = window.innerWidth < 1024;
       setIsMobile(mobile);
-      // Auto close sidebar on resize to desktop if it was in "mobile drawer" mode
       if (!mobile && sidebarOpen) {
         setSidebarOpen(true);
       }
     };
 
-    // Initial check
     handleResize();
-
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, [sidebarOpen]);
 
-  // Toggle sidebar (mobile vs desktop logic)
   const toggleSidebar = () => {
-    if (isMobile) {
-      setSidebarOpen(!sidebarOpen);
-    } else {
-      setSidebarOpen(!sidebarOpen);
-    }
+    setSidebarOpen(!sidebarOpen);
   };
 
   // --- DYNAMIC DATA FETCHING ---
@@ -117,7 +85,6 @@ const AdminPanel = () => {
           setUsersData(usersRes.data || {});
         }
 
-        // 2. Fetch Companies
         const companyRes = await api.get("/api/admin/allcompany");
         if (companyRes.status === 200) {
           const companies = companyRes.data.company || [];
@@ -125,7 +92,6 @@ const AdminPanel = () => {
           setTotalJobs(companyRes.data.totalJobs || 0);
         }
 
-        // 3. Fetch All Jobs
         try {
           const jobsRes = await api.get("/api/admin/alljobs");
           if (jobsRes.status === 200) {
@@ -135,7 +101,6 @@ const AdminPanel = () => {
           console.log("Jobs endpoint error", err);
         }
 
-        // 4. Fetch All Applications
         try {
           const appsRes = await api.get("/api/admin/allapplications");
           if (appsRes.status === 200) {
@@ -154,6 +119,82 @@ const AdminPanel = () => {
     fetchDashboardData();
   }, []);
 
+  const handleUserStatus = async (id, newStatus) => {
+    // Optimistic UI Update: Update the specific user in the 'users' state immediately
+    setUsers((prevUsers) =>
+      prevUsers.map((u) => (u._id === id ? { ...u, status: newStatus } : u)),
+    );
+
+    try {
+      const response = await api.put(`/api/admin/user/status/${id}`, {
+        status: newStatus,
+      });
+
+      if (response.status === 200) {
+        // If the API returns the updated user object, sync it again to be safe
+        if (response.data.user) {
+          setUsers((prevUsers) =>
+            prevUsers.map((u) => (u._id === id ? response.data.user : u)),
+          );
+        }
+        console.log("Status updated successfully");
+      }
+    } catch (error) {
+      console.log("Error updating status:", error);
+      alert("Failed to update status");
+    }
+  };
+
+  useEffect(() => {
+    if (company.length > 0) {
+      const normalizedCompanies = company.map((comp) => {
+        const planKey = comp.currentPlan || comp.plan || "free";
+
+        const isExpired = comp.subscriptionEnd
+          ? new Date(comp.subscriptionEnd) < new Date()
+          : false;
+
+        return {
+          ...comp,
+          currentPlan: planKey,
+          jobsUsed: comp.jobsUsed ?? 0, // Default to 0 if undefined
+          jobsLimit: comp.jobsLimit ?? (planKey === "enterprise" ? -1 : 3), // Default limit if undefined
+          subscriptionStart: comp.subscriptionStart || comp.createdAt,
+          subscriptionEnd: comp.subscriptionEnd || null,
+          isExpired: isExpired,
+          companyData: comp.companyData || comp,
+        };
+      });
+
+      setSubsCompanies(normalizedCompanies);
+
+      const stats = normalizedCompanies.reduce(
+        (acc, comp) => {
+          const plan = comp.currentPlan || "free";
+          acc[plan] = (acc[plan] || 0) + 1;
+
+          // Sum revenue for paid plans
+          if (plan !== "free") {
+            acc.totalRevenue += PLANS[plan]?.price || 0;
+          }
+          return acc;
+        },
+        { free: 0, basic: 0, pro: 0, enterprise: 0, totalRevenue: 0 },
+      );
+      setSubsStats(stats);
+    } else {
+      // Reset if no companies
+      setSubsCompanies([]);
+      setSubsStats({
+        free: 0,
+        basic: 0,
+        pro: 0,
+        enterprise: 0,
+        totalRevenue: 0,
+      });
+    }
+  }, [company]);
+
   const handleUserUpdated = useCallback((updatedUser) => {
     setUsers((prevUsers) =>
       prevUsers.map((u) => (u._id === updatedUser._id ? updatedUser : u)),
@@ -164,10 +205,8 @@ const AdminPanel = () => {
     const token = localStorage.getItem("token");
     try {
       if (confirm("Are you sure delete this user ??")) {
-        const response = await api.delete(`/api/admin/user/${id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        await api.delete(`/api/admin/user/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
         });
         setLoading(true);
         const usersRes = await api.get("/api/admin/allusers");
@@ -180,6 +219,8 @@ const AdminPanel = () => {
       console.log(error);
     }
   };
+
+  // --- DATA CHART LOGIC (Now uses subsCompanies derived from real data) ---
 
   const applicationTrendsData = useMemo(() => {
     const months = [
@@ -203,6 +244,7 @@ const AdminPanel = () => {
       interviews: 0,
       hires: 0,
     }));
+
     applications.forEach((app) => {
       const date = new Date(app.createdAt || app.updatedAt);
       if (date.getFullYear() === currentYear) {
@@ -261,7 +303,9 @@ const AdminPanel = () => {
       pro: 0,
       enterprise: 0,
     }));
+
     subsCompanies.forEach((comp) => {
+      // Use subscriptionStart or fallback to createdAt
       const date = new Date(comp.subscriptionStart || comp.createdAt);
       if (date.getFullYear() === currentYear) {
         const monthIndex = date.getMonth();
@@ -290,10 +334,11 @@ const AdminPanel = () => {
     ];
     const currentYear = new Date().getFullYear();
     const data = months.map((m) => ({ month: m, revenue: 0 }));
+
     subsCompanies.forEach((comp) => {
       if (comp.currentPlan !== "free") {
         const price = PLANS[comp.currentPlan]?.price || 0;
-        const date = new Date(comp.subscriptionStart);
+        const date = new Date(comp.subscriptionStart || comp.createdAt);
         if (date.getFullYear() === currentYear) {
           const monthIndex = date.getMonth();
           if (data[monthIndex]) {
@@ -326,6 +371,7 @@ const AdminPanel = () => {
       candidates: 0,
       recruiters: 0,
     }));
+
     users.forEach((u) => {
       const date = new Date(u.createdAt);
       if (date.getFullYear() === currentYear) {
@@ -341,37 +387,6 @@ const AdminPanel = () => {
     });
     return data;
   }, [users]);
-
-  // --- MOCK DATA LOGIC ---
-  useEffect(() => {
-    if (company.length > 0) {
-      const enrichedCompanies = company.map((comp) => {
-        const mockSub = generateMockSubscription(comp);
-        return {
-          ...comp,
-          currentPlan: mockSub.plan,
-          jobsUsed: mockSub.jobsUsed,
-          jobsLimit: mockSub.jobLimit,
-          subscriptionStart: mockSub.startDate,
-          subscriptionEnd: mockSub.endDate,
-          isExpired: mockSub.isExpired,
-          companyData: comp.companyData || comp,
-        };
-      });
-      setSubsCompanies(enrichedCompanies);
-      const stats = enrichedCompanies.reduce(
-        (acc, comp) => {
-          acc[comp.currentPlan] = (acc[comp.currentPlan] || 0) + 1;
-          if (comp.currentPlan !== "free") {
-            acc.totalRevenue += PLANS[comp.currentPlan]?.price || 0;
-          }
-          return acc;
-        },
-        { free: 0, basic: 0, pro: 0, enterprise: 0, totalRevenue: 0 },
-      );
-      setSubsStats(stats);
-    }
-  }, [company]);
 
   const Logout = () => {
     if (window.confirm("Are you sure you want to logout?")) {
@@ -399,6 +414,8 @@ const AdminPanel = () => {
             }
           : comp,
       );
+
+      // Recalculate stats immediately
       const oldCompany = prev.find((c) => c._id === companyId);
       const oldPlan = oldCompany?.currentPlan || "free";
       setSubsStats((prevStats) => ({
@@ -412,12 +429,15 @@ const AdminPanel = () => {
       }));
       return updatedCompanies;
     });
+
     setShowPlanModal(false);
     setSelectedCompany(null);
     alert(`Successfully changed plan to ${PLANS[newPlan]?.name}`);
   }, []);
 
   const handleResetJobs = useCallback((companyId) => {
+    // NOTE: API call needed here: api.patch(`/api/admin/company/${companyId}/reset-jobs`)
+
     setSubsCompanies((prev) =>
       prev.map((comp) =>
         comp._id === companyId ? { ...comp, jobsUsed: 0 } : comp,
@@ -514,11 +534,6 @@ const AdminPanel = () => {
 
       <div className="flex h-screen overflow-hidden">
         {/* SIDEBAR */}
-        {/* 
-           Logic:
-           - On Mobile: Fixed position, width w-64, transform translate-x logic
-           - On Desktop: Fixed position, width w-64 (open) or w-20 (collapsed), z-30
-        */}
         <aside
           className={`
             fixed inset-y-0 left-0 z-50
@@ -540,11 +555,10 @@ const AdminPanel = () => {
             >
               <img src={HIREFLOWLOGO} alt="logo" className="h-8 w-8 rounded" />
               <span className="font-bold text-gray-900 dark:text-white whitespace-nowrap">
-                Admin
+                Hire Flow
               </span>
             </div>
 
-            {/* Toggle Button (Always visible on desktop to collapse, handled by mobile close logic separately) */}
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
               className="p-1.5 rounded-md text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 focus:outline-none"
@@ -572,7 +586,7 @@ const AdminPanel = () => {
                 key={item.id}
                 onClick={() => {
                   setActiveTab(item.id);
-                  if (isMobile) setSidebarOpen(false); // Auto close on mobile select
+                  if (isMobile) setSidebarOpen(false);
                 }}
                 className={`
                   group flex items-center px-2 py-2.5 text-sm font-medium rounded-lg w-full transition-colors duration-150
@@ -585,7 +599,7 @@ const AdminPanel = () => {
                 `}
               >
                 <svg
-                  className={`${!sidebarOpen && !isMobile ? "" : "mr-3"} h-5 w-5 flex-shrink-0`}
+                  className={`${!sidebarOpen && !isMobile ? "" : "mr-3"} h-5 w-5 shrink-0`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -606,7 +620,7 @@ const AdminPanel = () => {
             ))}
           </nav>
 
-          {/* Quick Stats (Only visible when sidebar is expanded on desktop or mobile) */}
+          {/* Quick Stats */}
           {(sidebarOpen || isMobile) && activeTab === "subscriptions" && (
             <div className="px-4 pb-4 border-t border-gray-200 dark:border-gray-700 pt-4">
               <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
@@ -642,7 +656,6 @@ const AdminPanel = () => {
           <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 z-10">
             <div className="px-4 sm:px-6 lg:px-8 h-16 flex justify-between items-center">
               <div className="flex items-center gap-4">
-                {/* Mobile Hamburger */}
                 <button
                   onClick={toggleSidebar}
                   className="lg:hidden p-2 rounded-md text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
@@ -692,7 +705,6 @@ const AdminPanel = () => {
                 >
                   Logout
                 </button>
-                {/* Mobile Logout Icon */}
                 <button
                   onClick={Logout}
                   className="sm:hidden p-2 text-blue-600 font-medium"
@@ -715,8 +727,8 @@ const AdminPanel = () => {
             </div>
           </header>
 
-          {/* Main Content Area - Scrollable */}
-          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 dark:bg-gray-900 p-4 sm:p-6 lg:p-8">
+          {/* Main Content Area */}
+          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 dark:bg-gray-900 p-2 sm:p-4 lg:p-">
             {/* ======================== DASHBOARD ======================== */}
             {activeTab === "dashboard" && (
               <div className="space-y-6">
@@ -1113,7 +1125,7 @@ const AdminPanel = () => {
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                               Plan
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-[200px]">
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-200">
                               Job Usage
                             </th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -1132,7 +1144,7 @@ const AdminPanel = () => {
                             >
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="flex items-center">
-                                  <div className="h-10 w-10 flex-shrink-0">
+                                  <div className="h-10 w-10 shrink-0">
                                     <img
                                       className="h-10 w-10 rounded-full object-cover bg-gray-200"
                                       src={comp?.companyData?.logo}
@@ -1182,15 +1194,6 @@ const AdminPanel = () => {
                                 <button
                                   onClick={() => {
                                     setSelectedCompany(comp);
-                                    setShowDetailModal(true);
-                                  }}
-                                  className="text-indigo-600 hover:text-indigo-900 mr-3"
-                                >
-                                  View
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    setSelectedCompany(comp);
                                     setShowPlanModal(true);
                                   }}
                                   className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs"
@@ -1212,29 +1215,28 @@ const AdminPanel = () => {
               </div>
             )}
 
-            {activeTab === "settings" && <Setting />}
             {activeTab === "users" && (
               <Users
                 users={users}
                 onUserUpdated={handleUserUpdated}
                 handleDeleteUser={handleDeleteUser}
+                handleUserStatus={handleUserStatus}
               />
             )}
           </main>
         </div>
       </div>
 
-      {/* ======================== MODALS ======================== */}
       {showPlanModal && selectedCompany && (
         <div
-          className="fixed inset-0 z-[60] overflow-y-auto"
+          className="fixed inset-1 z-60 overflow-y-auto "
           aria-labelledby="modal-title"
           role="dialog"
           aria-modal="true"
         >
           <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             <div
-              className="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity"
+              className="fixed inset-0  bg-opacity-75 transition-opacity"
               aria-hidden="true"
               onClick={() => setShowPlanModal(false)}
             ></div>
@@ -1274,8 +1276,8 @@ const AdminPanel = () => {
               <div className="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                 <p className="text-sm text-gray-500 mb-4">
                   Select a new plan for{" "}
-                  <span className="font-bold text-gray-900">
-                    {selectedCompany.name || selectedCompany.companyName}
+                  <span className="font-bold text-white">
+                    {selectedCompany?.name}
                   </span>
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1295,17 +1297,19 @@ const AdminPanel = () => {
                             Current
                           </span>
                         )}
-                        <div className="flex justify-between items-center mb-2">
-                          <h4 className="font-bold text-gray-900">
-                            {plan.name}
-                          </h4>
-                          <span className="font-bold text-gray-900">
+                        <div
+                          className={`font-bold  ${isCurrent ? "text-white dark:text-black" : "text-gray-900 dark:text-white"} `}
+                        >
+                          <h4 className="font-bold  ">{plan.name}</h4>
+                          <span className="font-bold ">
                             {plan.price === 0
-                              ? "Free"
+                              ? `${currency} 0.0`
                               : `${currency}${plan.price}`}
                           </span>
                         </div>
-                        <p className="text-sm text-gray-600">
+                        <p
+                          className={`  ${isCurrent ? "text-white dark:text-black" : "text-gray-900 dark:text-white"} `}
+                        >
                           {plan.jobLimit === -1 ? "Unlimited" : plan.jobLimit}{" "}
                           Jobs
                         </p>
@@ -1321,7 +1325,7 @@ const AdminPanel = () => {
 
       {showDetailModal && selectedCompany && (
         <div
-          className="fixed inset-0 z-[60] overflow-y-auto"
+          className="fixed inset-0 z-60 overflow-y-auto"
           aria-labelledby="modal-title"
           role="dialog"
           aria-modal="true"
@@ -1341,7 +1345,7 @@ const AdminPanel = () => {
             <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
               <div className="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="h-12 w-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold">
+                  <div className="h-12 w-12 rounded-full bg-linear-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold">
                     {selectedCompany.name?.charAt(0)}
                   </div>
                   <div>

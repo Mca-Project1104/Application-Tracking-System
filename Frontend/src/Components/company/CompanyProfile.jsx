@@ -125,7 +125,7 @@ const CompanyProfile = () => {
   }
 
   return (
-    <div className="select-none mt-2 min-h-screen">
+    <div className="select-none mt-2">
       {/* Alert/Message Box */}
       {message.text && (
         <div
@@ -141,7 +141,7 @@ const CompanyProfile = () => {
       )}
 
       <div
-        className="bg-white lg:h-167.5 h-195
+        className="bg-white rounded min-h-screen lg:h-167.5 h-195
           dark:bg-gray-800 p-4 shadow-md lg:p-6"
       >
         <div className="flex justify-between items-center mb-6">
@@ -185,11 +185,11 @@ const CompanyProfile = () => {
               </div>
             </div>
 
-            <div className="relative left-0 ">
-              <h2 className=" text-lg font-semibold text-gray-700 dark:text-gray-300 mb-4">
+            <div className="relative ">
+              <h2 className=" text-lg text-center font-semibold text-gray-700 dark:text-gray-300 mb-4">
                 Company Logo
               </h2>
-              <div className="flex h-22  rounded overflow-hidden ">
+              <div className="flex h-22 justify-center-safe  rounded overflow-hidden ">
                 {profileData?.companyData?.company?.logo ? (
                   <img
                     src={profileData?.companyData?.company?.logo}
@@ -263,7 +263,7 @@ const CompanyProfile = () => {
 
       {/* Edit Profile Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div className="fixed inset-0 bg-opacity-50 overflow-y-auto h-fu w-full z-50">
           <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white dark:bg-gray-800">
             <div className="mt-3">
               <div className="flex justify-between items-center mb-4">

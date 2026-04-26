@@ -146,7 +146,6 @@ export const AppProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    //  Only fetch if candidate exists AND has _id
     if (userRole === "candidate" && candidate?._id) {
       fetchApplications(candidate._id);
     }
@@ -179,8 +178,6 @@ export const AppProvider = ({ children }) => {
     }
   }, [token]);
 
- 
-
   useEffect(() => {
     if (userRole === "company" && token) {
       fetchProfile();
@@ -198,7 +195,7 @@ export const AppProvider = ({ children }) => {
     localStorage.setItem("theme", theme);
   }, [theme]);
 
-    const handleClose = () => {
+  const handleClose = () => {
     // If the page was opened as a popup/modal
     if (window.opener) {
       window.close();

@@ -216,10 +216,10 @@ const CandidateProfileModal = ({
   const handleStatusUpdate = async (newStatus) => {
     setLoading(true);
     try {
-      // if (interviews.length === 0) {
-      //   alert("Add Interview Details ");
-      //   return;
-      // }
+      if (newStatus === "hired") {
+        alert("Add Interview Details ");
+        return;
+      }
 
       // Replace with actual API call
       const res = await api.patch(

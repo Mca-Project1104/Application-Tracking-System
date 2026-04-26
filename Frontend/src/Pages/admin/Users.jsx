@@ -2,34 +2,33 @@ import React, { useEffect, useState } from "react";
 import api from "../../api/axios";
 import { useAppContext } from "../../context/AppProvider";
 
-const Users = ({ users, handleDeleteUser, onUserUpdated }) => {
+const Users = ({ users, handleDeleteUser, handleUserStatus }) => {
   const [user, setUser] = useState([]);
   const [company, setCompany] = useState([]);
   const [searchtext, setSearchText] = useState("");
-  const [status, setStatus] = useState("");
   const [istype, setIsType] = useState("candidate");
 
   const { searchRef } = useAppContext();
 
   useEffect(() => {
-    if (searchtext.length === 0) {
-      setUser(users.filter((role) => role.accountType !== "company"));
-      setCompany(users.filter((role) => role.accountType !== "candidate"));
-    }
-  }, [searchtext]);
+    // Separate users into candidates and companies
+    let candidates = users.filter((role) => role.accountType !== "company");
+    let recruiters = users.filter((role) => role.accountType !== "candidate");
 
-  useEffect(() => {
-    const filterdData = (istype === "candidate" ? user : company).filter(
-      (names) =>
-        names.firstName
-          .toLowerCase()
-          .trim()
-          .includes(searchtext.trim().toLowerCase()),
-    );
+    // Apply search filter if text exists
     if (searchtext.length > 0) {
-      istype === "candidate" ? setUser(filterdData) : setCompany(filterdData);
+      const lowerSearch = searchtext.toLowerCase().trim();
+      candidates = candidates.filter((names) =>
+        names.firstName.toLowerCase().trim().includes(lowerSearch),
+      );
+      recruiters = recruiters.filter((names) =>
+        names.firstName.toLowerCase().trim().includes(lowerSearch),
+      );
     }
-  }, [searchtext, istype]);
+
+    setUser(candidates);
+    setCompany(recruiters);
+  }, [searchtext, users]);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -44,30 +43,15 @@ const Users = ({ users, handleDeleteUser, onUserUpdated }) => {
     }
   };
 
-  const handleUserStatus = async (id) => {
-    setUser((prevUsers) =>
-      prevUsers.map((u) => (u._id === id ? { ...u, status: status } : u)),
-    );
+  // Helper to update local state immediately when dropdown changes
+  const handleStatusChange = (id, newStatus) => {
+    const updateList = (list) =>
+      list.map((u) => (u._id === id ? { ...u, status: newStatus } : u));
 
-    try {
-      const response = await api.put(`/api/admin/user/status/${id}`, {
-        status: status,
-      });
-
-      if (response.status === 200) {
-        if (response.data.user) {
-          onUserUpdated(response.data.user);
-          console.log(response.data.user);
-        } else {
-          console.log("Status updated, but no user data returned from API");
-        }
-      }
-    } catch (error) {
-      console.log("Error updating status:", error);
-      alert("Failed to update status");
-      setUser((prevUsers) =>
-        prevUsers.map((u) => (u._id === id ? { ...u, status: u.status } : u)),
-      );
+    if (istype === "candidate") {
+      setUser(updateList(user));
+    } else {
+      setCompany(updateList(company));
     }
   };
 
@@ -98,7 +82,7 @@ const Users = ({ users, handleDeleteUser, onUserUpdated }) => {
             value={searchtext}
             onChange={(e) => setSearchText(e.target.value)}
             placeholder="Search candidate and Recruiter"
-            className="border-0 border-b-2 border-gray-500 outline-0   w-[50%] rounded p-1 placeholder:text-gray-400 placeholder:capitalize"
+            className="border-0 border-b-2 border-gray-500 outline-0 placeholder:text-wrap w-[50%] rounded p-1 placeholder:text-gray-400 placeholder:capitalize"
           />
         </div>
         <div></div>
@@ -152,7 +136,9 @@ const Users = ({ users, handleDeleteUser, onUserUpdated }) => {
                       ) : (
                         <select
                           value={user.status}
-                          onChange={(e) => setStatus(e.target.value)}
+                          onChange={(e) =>
+                            handleStatusChange(user._id, e.target.value)
+                          }
                           className={`capitalize px-2 rounded-2xl text-xs p-0.5 leading-10 font-semibold ${getStatusColor(user.status)}`}
                         >
                           <option
@@ -179,7 +165,9 @@ const Users = ({ users, handleDeleteUser, onUserUpdated }) => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       {istype === "company" && (
                         <button
-                          onClick={() => handleUserStatus(user._id)}
+                          onClick={() =>
+                            handleUserStatus(user._id, user.status)
+                          }
                           className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 mr-3"
                         >
                           Update

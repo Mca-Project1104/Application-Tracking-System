@@ -8,10 +8,11 @@ import {
 import { companyAuthMiddleware } from "../../middleware/companyAuth.js";
 import authMiddleware from "../../middleware/authMiddleware.js";
 import userAuth from "../../middleware/auth.js";
+import checkJobLimit from "../../middleware/checkJobLimit.js";
 
 const jobRouter = Router();
 
-jobRouter.post("/create", companyAuthMiddleware, createJob);
+jobRouter.post("/create", companyAuthMiddleware, checkJobLimit, createJob);
 
 jobRouter.get("/company", authMiddleware, getJobs); //company middleware
 

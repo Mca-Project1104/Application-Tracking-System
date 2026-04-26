@@ -24,6 +24,9 @@ import AOS from "aos";
 import "aos/dist/aos.css";
 import { useAppContext } from "./context/AppProvider.jsx";
 import ApplicationDetails from "./Pages/candidate/ApplicationDetail.jsx";
+import Pricing from "./Pages/company/Pricing.jsx";
+import BillingSuccess from "./Components/Strip/BillingSuccess.jsx";
+import BillingCancel from "./Components/Strip/BillingCancle.jsx";
 
 const PrivateRoute = ({ isAuthenticated, children }) => {
   return isAuthenticated ? children : <Navigate to="/login" />;
@@ -157,6 +160,12 @@ function App() {
   const handleSetShowSidebar = useCallback((val) => {
     setShowSidebar(val);
   }, []);
+
+  useEffect(() => {
+    const handleScrill = () => {
+      window.scroll({ behavior: "smooth", top: 0 });
+    };
+  }, [location]);
 
   return (
     <div className="relative w-full bg-white dark:bg-gray-900 dark:text-white text-black">
@@ -349,6 +358,24 @@ function App() {
               }
             />
             <Route
+              path="/pricing"
+              element={
+                <PrivateRoute isAuthenticated={isAuthenticated}>
+                  <RoleRoute userRole={userRole} role="company">
+                    <Layout
+                      userRole={userRole}
+                      showSidebar={showSidebar}
+                      setShowSidebar={handleSetShowSidebar}
+                      setIsAuthenticated={handleSetIsAuthenticated}
+                      setUserRole={handleSetUserRole}
+                    >
+                      <Pricing />
+                    </Layout>
+                  </RoleRoute>
+                </PrivateRoute>
+              }
+            />
+            <Route
               path="/company/jobs/:id"
               element={
                 <PrivateRoute isAuthenticated={isAuthenticated}>
@@ -366,6 +393,10 @@ function App() {
                 </PrivateRoute>
               }
             />
+
+            <Route path="/billing/success" element={<BillingSuccess />} />
+            <Route path="/billing/cancel" element={<BillingCancel />} />
+
             <Route
               path="/company/post_job"
               element={

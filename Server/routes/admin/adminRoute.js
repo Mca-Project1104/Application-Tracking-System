@@ -1,7 +1,7 @@
 import Router from "express";
 import {
   getUsers,
-  getallCompany,
+  getAllCompanies,
   getAllJobs,
   getAllApplications,
   deleteUser,
@@ -17,16 +17,16 @@ adminRouter.get("/", (_, res) => {
 });
 
 // --- USER MANAGEMENT ---
-adminRouter.get("/allusers", getUsers); // GET all users
-adminRouter.delete("/user/:id", deleteUser); // DELETE user
+adminRouter.get("/allusers", getUsers);
+adminRouter.delete("/user/:id", deleteUser);
 
 // --- COMPANY/JOBS MANAGEMENT ---
-adminRouter.get("/allcompany", getallCompany); // Get companies with stats
-adminRouter.get("/alljobs", getAllJobs); // GET all jobs
+adminRouter.get("/allcompany", getAllCompanies);
+adminRouter.get("/alljobs", getAllJobs);
 
 // --- APPLICATIONS MANAGEMENT ---
-adminRouter.get("/allapplications", getAllApplications); // GET all applications
-adminRouter.put("/application/:id", updateApplicationStatus); // UPDATE application status
+adminRouter.get("/allapplications", getAllApplications);
+adminRouter.put("/application/:id", updateApplicationStatus);
 
-adminRouter.put("/user/status/:id", updateUserStatus); // UPDATE application status
+adminRouter.put("/user/status/:id", updateUserStatus);
 export default adminRouter;

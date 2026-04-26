@@ -1,6 +1,6 @@
 // routes/analyzerRouter.js
 import { Router } from "express";
-import { upload } from "../services/multerServices.js";
+import upload from "../services/MulterDiskstorage.js";
 import { analyzeResume } from "../controller/ResumeController.js";
 import authMiddleware from "../middleware/auth.js";
 

@@ -48,32 +48,34 @@ const JobListings = () => {
     }
   }, [applications]);
 
-  useEffect(() => {
-    const fetchJobs = async () => {
-      const url = userRole === "company" ? "company" : "candidate";
-      try {
-        setLoading(true);
-        const res = await api.get(`/api/jobs/${url}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        if (res.status === 200) {
-          setJobs(res.data.data);
-          setLoading(false);
-        }
-      } catch (error) {
-        console.log(error);
+  const fetchJobs = async () => {
+    // const url = userRole === "company" ? "company" : "candidate";
+    try {
+      setLoading(true);
+      const res = await api.get(`/api/jobs/${userRole}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (res.status === 200) {
+        setJobs(res.data.data);
         setLoading(false);
       }
-    };
+
+      console.log(res);
+    } catch (error) {
+      console.log(error);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     if (token) {
       fetchJobs();
     }
   }, []);
 
   const handleApply = async (jobId) => {
-    // Prevent applying if already applied or closed
     if (!jobId || appliedJobs.has(jobId)) return;
 
     const job = jobs.find((j) => j._id === jobId);
@@ -118,8 +120,8 @@ const JobListings = () => {
       });
 
       console.log(response);
-      setLoading(false);
       fetchJobs();
+      setLoading(false);
     } catch (error) {
       console.log(error?.response?.message);
     }
@@ -163,6 +165,8 @@ const JobListings = () => {
     jobs,
     companies,
   ]);
+
+  console.log(Math.ceil(9.9));
 
   // Pagination calculations
   const totalJobs = filteredJobs.length;
@@ -373,7 +377,7 @@ const JobListings = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+    <div className="min-h-screen mt-3 bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
       {!loading && (
         <div className="py-2 p-2">
           {/* Header */}

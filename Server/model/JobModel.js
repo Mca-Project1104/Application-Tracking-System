@@ -36,6 +36,8 @@ const jobSchema = new mongoose.Schema(
       enum: ["On-site", "Remote", "Hybrid"],
     },
 
+    openingJob: { type: Number, required: true, default: 0 },
+
     skillsRequired: [String],
 
     salaryMin: Number,

@@ -14,12 +14,19 @@ import { refreshToken } from "./services/refreshToken.js";
 import applicationRoute from "./routes/applicationRoute.js";
 import companyRouter from "./routes/company/CompanyRoute.js";
 import candidateRouter from "./routes/candidate/CandidateRoute.js";
+import Stripe from "stripe";
+import { Company } from "./model/CompanyModel.js";
 
+import {
+  createCheckoutSession,
+  stripeWebhookHandler,
+} from "./services/StripServices.js";
+
+const stripe = new Stripe(process.env.SECRET_KEY);
 const app = express();
-
 //access static files
-//const __filename = fileURLToPath(import.meta.url);
-//const __dirname = path.dirname(__filename);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const PORT = process.env.PORT || 8000;
 
 let cached = global.mongoose || { conn: null, promise: null };
@@ -64,16 +71,22 @@ app.use(
   }),
 );
 
+app.post(
+  "/webhook",
+  express.raw({ type: "application/json" }),
+  stripeWebhookHandler,
+);
+
 //set Client Browser
 app.set("trust proxy", true);
 app.use(cookieParser());
 
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true })); //form data extract
 app.use(express.static("public"));
 
 app.use(morgan("dev"));
-//app.use("/uploads", express.static(path.join(__dirname, "uploads"))); // Serve uploaded files statically
+app.use("/uploads", express.static(path.join(__dirname, "uploads"))); // Serve uploaded files statically
 
 //Routes
 app.get("/", (_, res) => {
@@ -87,6 +100,7 @@ app.use("/api/jobs", jobRouter);
 app.use("/api/applications", applicationRoute);
 app.use("/api/admin", adminRouter);
 app.post("/api/refresh", refreshToken); //handle a refresh token every 15min
+app.post("/api/payment/create-checkout-session", createCheckoutSession);
 
 //  Start Server -> npm start
 // app.listen(PORT, () => {

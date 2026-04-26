@@ -128,7 +128,7 @@ const ResumeAnalyzer = () => {
 
   return (
     <div className="space-y-6 p-4 dark:bg-gray-900 min-h-screen transition-colors duration-200">
-      <div className="bg-white dark:bg-gray-800 shadow mt-10 rounded-lg hover:shadow-lg transition-all duration-200">
+      <div className="bg-white dark:bg-gray-800 shadow mt-3 rounded-lg hover:shadow-lg transition-all duration-200">
         <Header
           title={"Resume Analyzer"}
           description={"Upload your resume and get instant feedback"}
