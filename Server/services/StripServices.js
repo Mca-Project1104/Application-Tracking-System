@@ -55,9 +55,17 @@ export const createCheckoutSession = async (req, res) => {
 };
 
 export const stripeWebhookHandler = async (req, res) => {
+  console.log("running...");
   const sig = req.headers["stripe-signature"];
 
   let event;
+
+  console.log(event);
+
+  if (!process.env.STRIPE_WEBHOOK_SECRET) {
+    console.log("not found STRIPE_WEBHOOK_SECRET");
+    return;
+  }
 
   try {
     event = stripe.webhooks.constructEvent(
@@ -114,9 +122,6 @@ export const stripeWebhookHandler = async (req, res) => {
         break;
       }
 
-      // ==========================
-      // RENEWAL PAYMENT
-      // ==========================
       case "invoice.payment_succeeded": {
         const invoice = event.data.object;
 
@@ -140,9 +145,6 @@ export const stripeWebhookHandler = async (req, res) => {
         break;
       }
 
-      // ==========================
-      // SUBSCRIPTION CANCELLED
-      // ==========================
       case "customer.subscription.deleted": {
         const subscription = event.data.object;
 
@@ -163,9 +165,6 @@ export const stripeWebhookHandler = async (req, res) => {
         break;
       }
 
-      // ==========================
-      // PAYMENT FAILED
-      // ==========================
       case "invoice.payment_failed": {
         const invoice = event.data.object;
 
