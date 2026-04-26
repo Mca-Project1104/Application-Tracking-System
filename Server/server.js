@@ -61,16 +61,16 @@ app.use(
   }),
 );
 
-app.use(cookieParser());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(morgan("dev"));
-
 app.post(
   "/webhook",
   express.raw({ type: "application/json" }),
   stripeWebhookHandler,
 );
+
+app.use(cookieParser());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(morgan("dev"));
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
