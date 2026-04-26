@@ -2,7 +2,7 @@ import axios from "axios";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_BACKEND_URL,
-  withCredentials: true, // Critical: Ensures cookies are sent
+  withCredentials: true,
 });
 
 // Global variables to manage the lock
