@@ -31,7 +31,7 @@ export const createCheckoutSession = async (req, res) => {
       line_items: [{ price: priceId, quantity: 1 }],
 
       metadata: {
-        userId: req.user?.id,
+        userId: req.user?.company,
         plan,
         billingCycle,
       },

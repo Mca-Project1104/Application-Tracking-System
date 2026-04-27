@@ -15,6 +15,7 @@ import { refreshToken } from "./services/refreshToken.js";
 import applicationRoute from "./routes/applicationRoute.js";
 import companyRouter from "./routes/company/CompanyRoute.js";
 import candidateRouter from "./routes/candidate/CandidateRoute.js";
+import { authMiddleware } from "./middleware/authMiddleware.js";
 
 import Stripe from "stripe";
 import {
@@ -89,7 +90,7 @@ app.use("/api/applications", applicationRoute);
 app.use("/api/admin", adminRouter);
 
 app.post("/api/refresh", refreshToken);
-app.post("/api/payment/create-checkout-session", createCheckoutSession);
+app.post("/api/payment/create-checkout-session",authMiddleware, createCheckoutSession);
 
 const startServer = async () => {
   try {
