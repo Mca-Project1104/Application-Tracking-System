@@ -78,9 +78,7 @@ export const stripeWebhookHandler = async (req, res) => {
 
       const { metadata } = subscription;
 
-      const company = await Company.findOne({
-        userId: metadata.userId,
-      });
+      const company = await Company.findById(metadata.userId);
 
       if (!company) return res.sendStatus(200);
 
