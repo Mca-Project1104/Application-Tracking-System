@@ -73,18 +73,18 @@ export const stripeWebhookHandler = async (req, res) => {
   console.log("Stripe Event:", event.type);
 
   try {
-    if (event.type === "customer.subscription.created") {
-      const subscription = event.data.object;
+    if (event.type === "checkout.session.completed") {
+      const session = event.data.object;
 
-      const { metadata } = subscription;
+      const metadata = session.metadata;
 
       const company = await Company.findById(metadata.userId);
 
       if (!company) return res.sendStatus(200);
 
       const startDate = new Date();
-
       const endDate = new Date(startDate);
+
       if (metadata.billingCycle === "yearly") {
         endDate.setFullYear(endDate.getFullYear() + 1);
       } else {
@@ -95,14 +95,11 @@ export const stripeWebhookHandler = async (req, res) => {
         plan: metadata.plan,
         status: "ACTIVE",
         billingCycle: metadata.billingCycle,
-
         startDate,
         endDate,
-
-        stripeSubscriptionId: subscription.id,
-        stripeCustomerId: subscription.customer,
-
-        paymentId: null,
+        stripeSubscriptionId: session.subscription,
+        stripeCustomerId: session.customer,
+        paymentId: session.invoice,
       };
 
       company.limits.maxJobs =
@@ -110,7 +107,7 @@ export const stripeWebhookHandler = async (req, res) => {
 
       await company.save();
 
-      console.log("Subscription Created");
+      console.log(" DB Updated on checkout.session.completed");
     }
 
     if (event.type === "invoice.payment_succeeded") {
