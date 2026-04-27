@@ -90,11 +90,7 @@ app.use("/api/applications", applicationRoute);
 app.use("/api/admin", adminRouter);
 
 app.post("/api/refresh", refreshToken);
-app.post(
-  "/api/payment/create-checkout-session",
-  authMiddleware,
-  createCheckoutSession,
-);
+app.post("/api/payment/create-checkout-session", createCheckoutSession);
 
 const startServer = async () => {
   try {

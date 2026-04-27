@@ -6,7 +6,7 @@ const stripe = new Stripe(process.env.SECRET_KEY);
 
 export const createCheckoutSession = async (req, res) => {
   try {
-    const { plan, billingCycle } = req.body;
+    const { plan, billingCycle, id } = req.body;
 
     const priceMap = {
       BASIC: {
@@ -31,7 +31,7 @@ export const createCheckoutSession = async (req, res) => {
       line_items: [{ price: priceId, quantity: 1 }],
 
       metadata: {
-        userId: req.user?.company,
+        userId: id,
         plan,
         billingCycle,
       },

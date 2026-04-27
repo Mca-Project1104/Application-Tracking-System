@@ -22,11 +22,12 @@ const getPlanStyles = (plan, isBorder = false) => {
 };
 
 const Pricing = () => {
-  const { navigate, token } = useAppContext();
+  const { navigate, token, companydata } = useAppContext();
   const [billingCycle, setBillingCycle] = useState("monthly"); // 'monthly' or 'yearly'
   const [currentPlan, setCurrentPlan] = useState("FREE");
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(null);
+  const [compnyId, setCompanyId] = useState("");
 
   const { currency } = useAppContext();
 
@@ -37,6 +38,8 @@ const Pricing = () => {
         const res = await api.get("/api/company/subscription", {
           headers: { Authorization: `Bearer ${token}` },
         });
+
+        setCompanyId(res.data.data._id);
         setCurrentPlan(res.data.subscription.plan || "FREE");
         setLoading(false);
       } catch (error) {
@@ -103,6 +106,7 @@ const Pricing = () => {
       isPopular: false,
     },
   ];
+
   const handleSubscribe = async (planName) => {
     try {
       setProcessing(planName);
@@ -113,6 +117,7 @@ const Pricing = () => {
         {
           plan: planName,
           billingCycle,
+          id: compnyId,
         },
         {
           headers: { Authorization: `Bearer ${token}` },
