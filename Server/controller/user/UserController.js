@@ -84,7 +84,6 @@ export const verifyEmail = async (req, res) => {
   }
 };
 
-//pandinfg this work resend otp frontend side
 export const resendOTP = async (req, res) => {
   try {
     const { email } = req.body;
@@ -128,28 +127,24 @@ export const login = async (req, res) => {
       return res.status(400).json({ message: "Incorrect Password !" });
     }
 
-    //  Access Token (short)
     const accessToken = jwt.sign(
       { id: user._id, role: user.accountType },
       process.env.ACCESS_TOKEN_SECRET,
       { expiresIn: "15m" },
     );
 
-    //  Refresh Token (long)
     const refreshToken = jwt.sign(
       { id: user._id },
       process.env.REFRESH_TOKEN_SECRET,
       { expiresIn: "7d" },
     );
 
-    //  Save refresh token
     user.refreshToken = refreshToken;
     await user.save();
-    //  Send as cookie used for refresh token
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: true,
-      sameSite:  "none",
+      sameSite: "none",
       path: "/",
     });
 

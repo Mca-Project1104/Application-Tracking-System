@@ -141,60 +141,47 @@ const Pricing = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
       {/* Header Section */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <div className="px-4 sm:px-6 lg:px-8 py-12 text-center">
-          <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white sm:text-4xl">
-            Simple, Transparent Pricing
-          </h2>
-          <p className="mt-4 text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">
-            Choose the plan that fits your hiring needs. Upgrade or downgrade at
-            any time.
-          </p>
-
-          {/* Billing Toggle */}
-          <div className="mt-8 flex justify-center items-center space-x-4">
+        <div className="mt-8 flex justify-center items-center space-x-4">
+          <span
+            className={`text-sm font-medium ${
+              billingCycle === "monthly"
+                ? "text-gray-900 dark:text-white"
+                : "text-gray-500 dark:text-gray-400"
+            }`}
+          >
+            Monthly
+          </span>
+          <button
+            onClick={() =>
+              setBillingCycle(billingCycle === "monthly" ? "yearly" : "monthly")
+            }
+            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+              billingCycle === "yearly"
+                ? "bg-blue-600"
+                : "bg-gray-200 dark:bg-gray-600"
+            }`}
+          >
+            <span
+              aria-hidden="true"
+              className={`inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                billingCycle === "yearly" ? "translate-x-5" : "translate-x-0"
+              }`}
+            />
+          </button>
+          <span className="flex items-center space-x-1">
             <span
               className={`text-sm font-medium ${
-                billingCycle === "monthly"
+                billingCycle === "yearly"
                   ? "text-gray-900 dark:text-white"
                   : "text-gray-500 dark:text-gray-400"
               }`}
             >
-              Monthly
+              Yearly
             </span>
-            <button
-              onClick={() =>
-                setBillingCycle(
-                  billingCycle === "monthly" ? "yearly" : "monthly",
-                )
-              }
-              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                billingCycle === "yearly"
-                  ? "bg-blue-600"
-                  : "bg-gray-200 dark:bg-gray-600"
-              }`}
-            >
-              <span
-                aria-hidden="true"
-                className={`inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                  billingCycle === "yearly" ? "translate-x-5" : "translate-x-0"
-                }`}
-              />
-            </button>
-            <span className="flex items-center space-x-1">
-              <span
-                className={`text-sm font-medium ${
-                  billingCycle === "yearly"
-                    ? "text-gray-900 dark:text-white"
-                    : "text-gray-500 dark:text-gray-400"
-                }`}
-              >
-                Yearly
-              </span>
-              <span className="bg-green-100 text-green-800 text-xs font-bold px-2 py-0.5 rounded-full dark:bg-green-900 dark:text-green-200">
-                SAVE 20%
-              </span>
+            <span className="bg-green-100 text-green-800 text-xs font-bold px-2 py-0.5 rounded-full dark:bg-green-900 dark:text-green-200">
+              SAVE 20%
             </span>
-          </div>
+          </span>
         </div>
       </div>
 
@@ -298,163 +285,6 @@ const Pricing = () => {
               </div>
             );
           })}
-        </div>
-      </div>
-
-      {/* Feature Comparison Table */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
-        <div className="bg-white dark:bg-gray-800 shadow-sm rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700">
-          <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-              Compare Features
-            </h3>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-700/50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-1/3">
-                    Feature
-                  </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Free
-                  </th>
-                  <th className="px-6 py-3 text-center text-xs  text-blue-600 dark:text-blue-400 uppercase tracking-wider font-bold">
-                    Basic
-                  </th>
-                  <th className="px-6 py-3 text-center text-xs  text-purple-600 dark:text-purple-400 uppercase tracking-wider font-bold">
-                    Pro
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700 text-sm">
-                <tr>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-700 dark:text-gray-300">
-                    Resume Ranking (AI)
-                  </td>
-                  <td className="px-6 py-4 text-center text-gray-500">Basic</td>
-                  <td className="px-6 py-4 text-center text-blue-600 font-medium">
-                    Advanced
-                  </td>
-                  <td className="px-6 py-4 text-center text-purple-600 font-medium">
-                    Semantic NLP
-                  </td>
-                </tr>
-                <tr className="bg-gray-50 dark:bg-gray-700/20">
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-700 dark:text-gray-300">
-                    Active Job Postings
-                  </td>
-                  <td className="px-6 py-4 text-center text-gray-500">3</td>
-                  <td className="px-6 py-4 text-center text-blue-600 font-medium">
-                    15
-                  </td>
-                  <td className="px-6 py-4 text-center text-purple-600 font-medium">
-                    Unlimited
-                  </td>
-                </tr>
-                <tr>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-700 dark:text-gray-300">
-                    Team Members
-                  </td>
-                  <td className="px-6 py-4 text-center text-gray-500">1</td>
-                  <td className="px-6 py-4 text-center text-blue-600 font-medium">
-                    5
-                  </td>
-                  <td className="px-6 py-4 text-center text-purple-600 font-medium">
-                    Unlimited
-                  </td>
-                </tr>
-                <tr className="bg-gray-50 dark:bg-gray-700/20">
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-700 dark:text-gray-300">
-                    CSV/PDF Export
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    <svg
-                      className="w-5 h-5 text-red-400 mx-auto"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    <svg
-                      className="w-5 h-5 text-green-500 mx-auto"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    <svg
-                      className="w-5 h-5 text-green-500 mx-auto"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </td>
-                </tr>
-                <tr>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-700 dark:text-gray-300">
-                    API Access
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    <svg
-                      className="w-5 h-5 text-red-400 mx-auto"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    <svg
-                      className="w-5 h-5 text-red-400 mx-auto"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    <svg
-                      className="w-5 h-5 text-green-500 mx-auto"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
         </div>
       </div>
     </div>

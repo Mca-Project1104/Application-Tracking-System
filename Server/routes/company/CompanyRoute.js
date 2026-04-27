@@ -6,22 +6,21 @@ import {
 import {
   createCompanyProfile,
   companyProfile,
+  getSubscription,
 } from "../../controller/company/CompanyController.js";
 import authMiddleware from "../../middleware/authMiddleware.js";
 import { upload } from "../../services/multerServices.js";
 const companyRouter = Router();
 
-companyRouter.post(
-  "/jobs",
-  companyAuthMiddleware,
-  authorizeRecruiter,
-);
+companyRouter.post("/jobs", companyAuthMiddleware, authorizeRecruiter);
 
 companyRouter.get("/profile", authMiddleware, companyProfile);
 
+companyRouter.get("/subscription", companyAuthMiddleware, getSubscription);
+
 companyRouter.post(
   "/profile",
-  authMiddleware, 
+  authMiddleware,
   upload.single("logo"),
   createCompanyProfile,
 );

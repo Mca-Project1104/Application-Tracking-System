@@ -59,3 +59,24 @@ export const companyProfile = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
+export const getSubscription = async (req, res) => {
+  try {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const details = await Company.findById(req.user.company).select(
+      "subscription",
+    );
+
+    if (!details) {
+      return res.status(404).json({ message: "Details not found" });
+    }
+
+    res.status(200).json({ message: "find details", data: details });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
