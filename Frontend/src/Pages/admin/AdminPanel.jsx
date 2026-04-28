@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback } from "react";
-import { PLANS, NAVIGATION } from "../../assets/dummydata";
+import { PLANS, NAVIGATION, months } from "../../assets/dummydata";
 import api from "../../api/axios";
 import {
   BarChart,
@@ -19,11 +19,12 @@ import {
 import Users from "./Users";
 import { useAppContext } from "../../context/AppProvider";
 import Setting from "./Setting";
+import { toast, Toaster } from "react-hot-toast";
 import Loading from "../../Components/Loading/Loading";
 
 const AdminPanel = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
 
   // --- STATE FOR DATABASE DATA ---
@@ -131,27 +132,25 @@ const AdminPanel = () => {
       });
 
       if (response.status === 200) {
-        // If the API returns the updated user object, sync it again to be safe
         if (response.data.user) {
           setUsers((prevUsers) =>
             prevUsers.map((u) => (u._id === id ? response.data.user : u)),
           );
         }
-        console.log("Status updated successfully");
+        toast.success("Status updated successfully");
       }
     } catch (error) {
       console.log("Error updating status:", error);
-      alert("Failed to update status");
+      toast.error("Failed to update status");
     }
   };
-
   useEffect(() => {
     if (company.length > 0) {
       const normalizedCompanies = company.map((comp) => {
-        const planKey = comp.currentPlan || comp.plan || "free";
+        const planKey = comp.subscription.plan || comp.plan || "free";
 
-        const isExpired = comp.subscriptionEnd
-          ? new Date(comp.subscriptionEnd) < new Date()
+        const isExpired = comp.subscription.endDate
+          ? new Date(comp.subscription?.endDate) < new Date()
           : false;
 
         return {
@@ -159,8 +158,8 @@ const AdminPanel = () => {
           currentPlan: planKey,
           jobsUsed: comp.jobsUsed ?? 0, // Default to 0 if undefined
           jobsLimit: comp.jobsLimit ?? (planKey === "enterprise" ? -1 : 3), // Default limit if undefined
-          subscriptionStart: comp.subscriptionStart || comp.createdAt,
-          subscriptionEnd: comp.subscriptionEnd || null,
+          subscriptionStart: comp.startDate || comp.startDate,
+          subscriptionEnd: comp.endDate || null,
           isExpired: isExpired,
           companyData: comp.companyData || comp,
         };
@@ -168,9 +167,11 @@ const AdminPanel = () => {
 
       setSubsCompanies(normalizedCompanies);
 
+      console.log(subsCompanies);
+
       const stats = normalizedCompanies.reduce(
         (acc, comp) => {
-          const plan = comp.currentPlan || "free";
+          const plan = comp.subscription.plan || "free";
           acc[plan] = (acc[plan] || 0) + 1;
 
           // Sum revenue for paid plans
@@ -181,6 +182,7 @@ const AdminPanel = () => {
         },
         { free: 0, basic: 0, pro: 0, enterprise: 0, totalRevenue: 0 },
       );
+      // console.log(stats);
       setSubsStats(stats);
     } else {
       // Reset if no companies
@@ -208,6 +210,7 @@ const AdminPanel = () => {
         await api.delete(`/api/admin/user/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
+        toast.success("User delete successfully.");
         setLoading(true);
         const usersRes = await api.get("/api/admin/allusers");
         if (usersRes.status === 200) {
@@ -220,23 +223,23 @@ const AdminPanel = () => {
     }
   };
 
-  // --- DATA CHART LOGIC (Now uses subsCompanies derived from real data) ---
+  const getPrice = (sub) => {
+    if (sub.billingCycle === "monthly") {
+      if (sub.plan === "BASIC") {
+        return 299;
+      } else {
+        return 799;
+      }
+    } else {
+      if (sub.plan === "BASIC") {
+        return 240;
+      } else {
+        return 639;
+      }
+    }
+  };
 
   const applicationTrendsData = useMemo(() => {
-    const months = [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
-    ];
     const currentYear = new Date().getFullYear();
     const data = months.map((m) => ({
       month: m,
@@ -281,64 +284,37 @@ const AdminPanel = () => {
   }, [jobs]);
 
   const subscriptionTrendsData = useMemo(() => {
-    const months = [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
-    ];
     const currentYear = new Date().getFullYear();
     const data = months.map((m) => ({
       month: m,
-      free: 0,
-      basic: 0,
-      pro: 0,
-      enterprise: 0,
+      FREE: 0,
+      BASIC: 0,
+      PRO: 0,
     }));
 
     subsCompanies.forEach((comp) => {
       // Use subscriptionStart or fallback to createdAt
-      const date = new Date(comp.subscriptionStart || comp.createdAt);
+      const date = new Date(comp.subscription.startDate || comp.createdAt);
       if (date.getFullYear() === currentYear) {
         const monthIndex = date.getMonth();
-        if (data[monthIndex] && comp.currentPlan) {
-          data[monthIndex][comp.currentPlan] += 1;
+        if (data[monthIndex] && comp.subscription.plan) {
+          data[monthIndex][comp.subscription.plan] += 1;
         }
       }
+      console.log(data);
     });
     return data;
   }, [subsCompanies]);
 
   const revenueData = useMemo(() => {
-    const months = [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
-    ];
     const currentYear = new Date().getFullYear();
     const data = months.map((m) => ({ month: m, revenue: 0 }));
 
     subsCompanies.forEach((comp) => {
-      if (comp.currentPlan !== "free") {
-        const price = PLANS[comp.currentPlan]?.price || 0;
-        const date = new Date(comp.subscriptionStart || comp.createdAt);
+      console.log(comp.subscription);
+      if (comp.subscription.plan !== "FREE") {
+        const price = getPrice(comp.subscription);
+        const date = new Date(comp.subscription.startDate || comp.createdAt);
         if (date.getFullYear() === currentYear) {
           const monthIndex = date.getMonth();
           if (data[monthIndex]) {
@@ -351,20 +327,6 @@ const AdminPanel = () => {
   }, [subsCompanies]);
 
   const monthlyUsersData = useMemo(() => {
-    const months = [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
-    ];
     const currentYear = new Date().getFullYear();
     const data = months.map((m) => ({
       month: m,
@@ -462,7 +424,8 @@ const AdminPanel = () => {
   }, [subsCompanies, planFilter, searchQuery]);
 
   const getPlanBadge = useCallback((plan) => {
-    const planConfig = PLANS[plan] || PLANS.free;
+    const planConfig = PLANS[plan];
+    console.log(planConfig);
     return (
       <span
         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${planConfig.badgeColor || "bg-gray-100 text-gray-800"}`}
@@ -525,6 +488,7 @@ const AdminPanel = () => {
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors duration-200">
       {/* MOBILE BACKDROP */}
+      <Toaster position="top-center" reverseOrder={false} />
       {isMobile && sidebarOpen && (
         <div
           className="fixed inset-0 bg-gray-900/50 z-40 lg:hidden"
@@ -958,13 +922,13 @@ const AdminPanel = () => {
                     },
                     {
                       label: "Free Plan",
-                      value: subsStats.free || 0,
+                      value: subsStats.FREE || 0,
                       bg: "bg-gray-50",
                       border: "border-gray-200",
                     },
                     {
                       label: "Basic Plan",
-                      value: subsStats.basic || 0,
+                      value: subsStats.BASIC || 0,
                       bg: "bg-blue-50",
                       border: "border-blue-200",
                     },
@@ -1016,7 +980,7 @@ const AdminPanel = () => {
                               backgroundColor: "#1f2937",
                               borderRadius: "0.5rem",
                             }}
-                            formatter={(value) => [`$${value}`, "Revenue"]}
+                            formatter={(value) => [`₹${value}`, "Revenue"]}
                           />
                           <Line
                             type="monotone"
@@ -1051,27 +1015,21 @@ const AdminPanel = () => {
                           />
                           <Legend />
                           <Bar
-                            dataKey="free"
+                            dataKey="FREE"
                             fill="#9CA3AF"
                             name="Free"
                             stackId="a"
                           />
                           <Bar
-                            dataKey="basic"
+                            dataKey="BASIC"
                             fill="#3B82F6"
                             name="Basic"
                             stackId="a"
                           />
                           <Bar
-                            dataKey="pro"
+                            dataKey="PRO"
                             fill="#8B5CF6"
                             name="Pro"
-                            stackId="a"
-                          />
-                          <Bar
-                            dataKey="enterprise"
-                            fill="#F59E0B"
-                            name="Enterprise"
                             stackId="a"
                           />
                         </BarChart>
@@ -1100,10 +1058,9 @@ const AdminPanel = () => {
                         className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white w-full sm:w-auto"
                       >
                         <option value="all">All Plans</option>
-                        <option value="free">Free</option>
-                        <option value="basic">Basic</option>
-                        <option value="pro">Pro</option>
-                        <option value="enterprise">Enterprise</option>
+                        <option value="FREE">Free</option>
+                        <option value="BASIC">Basic</option>
+                        <option value="PRO">Pro</option>
                       </select>
                     </div>
                   </div>
@@ -1131,9 +1088,9 @@ const AdminPanel = () => {
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                               Status
                             </th>
-                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            {/* <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                               Actions
-                            </th>
+                            </th> */}
                           </tr>
                         </thead>
                         <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -1170,17 +1127,20 @@ const AdminPanel = () => {
                                 </div>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
-                                {getPlanBadge(comp.currentPlan)}
+                                {getPlanBadge(comp.subscription?.plan)}
                               </td>
                               <td className="px-6 py-4">
-                                {getJobUsageBar(comp.jobsUsed, comp.jobsLimit)}
+                                {getJobUsageBar(
+                                  comp.limits.activeJobs,
+                                  comp.limits.maxJobs,
+                                )}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 {comp.isExpired ? (
                                   <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
                                     Expired
                                   </span>
-                                ) : comp.jobsUsed >= comp.jobsLimit ? (
+                                ) : comp.jobsUsed >= comp.limits.maxJobs ? (
                                   <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
                                     Limit
                                   </span>
@@ -1190,7 +1150,7 @@ const AdminPanel = () => {
                                   </span>
                                 )}
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                              {/* <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <button
                                   onClick={() => {
                                     setSelectedCompany(comp);
@@ -1200,7 +1160,7 @@ const AdminPanel = () => {
                                 >
                                   Change
                                 </button>
-                              </td>
+                              </td> */}
                             </tr>
                           ))}
                         </tbody>
@@ -1362,15 +1322,15 @@ const AdminPanel = () => {
                     <span className="text-sm font-medium text-gray-500">
                       Current Plan
                     </span>
-                    {getPlanBadge(selectedCompany.currentPlan)}
+                    {getPlanBadge(selectedCompany.subscription.plan)}
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-500 mb-2">
                       Job Usage
                     </p>
                     {getJobUsageBar(
-                      selectedCompany.jobsUsed,
-                      selectedCompany.jobsLimit,
+                      selectedCompany.limits.activeJob,
+                      selectedCompany.limits.maxJobs,
                     )}
                   </div>
                 </div>

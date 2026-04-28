@@ -18,14 +18,19 @@ const Users = ({ users, handleDeleteUser, handleUserStatus }) => {
     // Apply search filter if text exists
     if (searchtext.length > 0) {
       const lowerSearch = searchtext.toLowerCase().trim();
-      candidates = candidates.filter((names) =>
-        names.firstName.toLowerCase().trim().includes(lowerSearch),
+
+      candidates = candidates.filter((candidate) =>
+        (candidate.firstName.trim() + " " + candidate.lastName.trim())
+          .toLowerCase()
+          .includes(lowerSearch),
       );
-      recruiters = recruiters.filter((names) =>
-        names.firstName.toLowerCase().trim().includes(lowerSearch),
+
+      recruiters = recruiters.filter((recruiter) =>
+        (recruiter.firstName.trim() + " " + recruiter.lastName.trim())
+          .toLowerCase()
+          .includes(lowerSearch),
       );
     }
-
     setUser(candidates);
     setCompany(recruiters);
   }, [searchtext, users]);
@@ -162,20 +167,20 @@ const Users = ({ users, handleDeleteUser, handleUserStatus }) => {
                         </select>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <td className="px-2 py-4 whitespace-nowrap text-sm font-medium">
                       {istype === "company" && (
                         <button
                           onClick={() =>
                             handleUserStatus(user._id, user.status)
                           }
-                          className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 mr-3"
+                          className="text-white dark:text-white mr-3 bg-blue-600 p-1.5 rounded active:scale-94 duration-800"
                         >
                           Update
                         </button>
                       )}
                       <button
                         onClick={() => handleDeleteUser(user._id)}
-                        className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
+                        className="text-white dark:text-white bg-red-600 p-1.5 rounded active:scale-94 duration-800"
                       >
                         Delete
                       </button>

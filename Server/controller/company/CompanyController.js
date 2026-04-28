@@ -2,13 +2,13 @@ import { Company } from "../../model/CompanyModel.js";
 import { User } from "../../model/UserModel.js";
 import { upload_image } from "../../services/multerServices.js";
 
-// Create company profile
 export const createCompanyProfile = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    // Check if user already has a company
-    const existingUser = await User.findById(userId).populate("company");
+    const existingUser = await User.findById(userId)
+      .populate("company")
+      .select("-password -refreshToken");
     if (existingUser.company) {
       return res.status(400).json({
         success: false,
@@ -46,9 +46,9 @@ export const companyProfile = async (req, res) => {
     const companyData = await User.findById(id)
       .populate({
         path: "company",
-        select: "logo name location",
+        select: "logo name location subscription",
       })
-      .select("-password");
+      .select("-password -refreshToken");
 
     if (!companyData) {
       return res.status(400).json({ message: "Company not found" });

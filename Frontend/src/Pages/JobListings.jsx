@@ -376,6 +376,8 @@ const JobListings = () => {
     return rangeWithDots;
   };
 
+  console.log(currentJobs);
+
   return (
     <div className="min-h-screen mt-3 bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
       {!loading && (
@@ -652,7 +654,7 @@ const JobListings = () => {
                                   Featured
                                 </span>
                               )}
-                              {/* ✅ Applied label with status - Using statusColors.badge */}
+                              {/*  Applied label with status - Using statusColors.badge */}
                               {isApplied && (
                                 <span
                                   className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium capitalize ${statusColors.badge}`}
@@ -732,18 +734,20 @@ const JobListings = () => {
                               ? `${currency}${job.salaryMax}k`
                               : "Salary not specified"}
                         </div>
-
-                        <div className="mt-4 sm:mt-0">
+                        <div className="flex gap-7">
+                          <p className="shrink-0 mr-2 h-4  text-gray-400 dark:text-gray-500">
+                            Openings :{job.openingJob}
+                          </p>
                           <span
                             title={job.status}
                             className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${jobTypeColors[job?.status] || jobTypeColors["Full-time"]}`}
                           >
-                            {job.status}
+                            {job.status}{" "}
                           </span>
                         </div>
                       </div>
 
-                      {/* ✅ Show match score if applied */}
+                      {/*  Show match score if applied */}
                       {isApplied && applications?.data?.data && (
                         <div className="mt-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3">
                           <div className="flex items-center justify-between">

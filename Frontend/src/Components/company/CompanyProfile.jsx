@@ -9,6 +9,7 @@ const CompanyProfile = () => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [message, setMessage] = useState({ text: "", type: "" });
   const token = localStorage.getItem("token");
+  const [subscription, setSubscription] = useState({});
 
   const [formData, setFormData] = useState({
     name: "",
@@ -22,12 +23,20 @@ const CompanyProfile = () => {
         const response = await api.get("api/company/profile", {
           headers: { Authorization: `Bearer ${token}` },
         });
+
+        const data = response.data;
         console.log(response);
-        setProfileData(response.data);
-        if (response.data.companyData) {
+        setProfileData(data);
+
+        // Safely access nested subscription data
+        if (data?.companyData?.company?.subscription) {
+          setSubscription(data.companyData.company.subscription);
+        }
+
+        if (data?.companyData?.company) {
           setFormData({
-            name: response?.data?.companyData?.company?.name || "",
-            location: response?.data?.companyData?.company?.location || "",
+            name: data.companyData.company.name || "",
+            location: data.companyData.company.location || "",
           });
         }
       } catch (error) {
@@ -81,6 +90,10 @@ const CompanyProfile = () => {
 
       if (response.status === 200) {
         setProfileData(response.data);
+        // Update subscription if returned in response
+        if (response.data?.companyData?.company?.subscription) {
+          setSubscription(response.data.companyData.company.subscription);
+        }
         setMessage({ text: "Profile updated successfully!", type: "success" });
         setIsModalOpen(false);
       }
@@ -115,6 +128,16 @@ const CompanyProfile = () => {
     setMessage({ text: "", type: "" });
   };
 
+  // Helper for safe date formatting
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
   // Loading state
   if (isLoading) {
     return (
@@ -125,11 +148,10 @@ const CompanyProfile = () => {
   }
 
   return (
-    <div className="select-none mt-2">
-      {/* Alert/Message Box */}
+    <div className="select-none">
       {message.text && (
         <div
-          className={`p-4 mt-4 ${
+          className={`p-4 mt-4 rounded ${
             message.type === "success"
               ? "bg-green-100 border border-green-400 text-green-700"
               : "bg-red-100 border border-red-400 text-red-700"
@@ -141,14 +163,14 @@ const CompanyProfile = () => {
       )}
 
       <div
-        className="bg-white rounded min-h-screen lg:h-167.5 h-195
+        className="bg-white rounded min-h-screen lg:h-[167.5] h-[195] // Fixed syntax for arbitrary values
           dark:bg-gray-800 p-4 shadow-md lg:p-6"
       >
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
             Recruiter Profile
           </h1>
-          {profileData.companyData.company == null && (
+          {!isLoading && (
             <button
               onClick={openModal}
               className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors"
@@ -245,12 +267,16 @@ const CompanyProfile = () => {
                 Status
               </p>
               <p
-                className={`text-lg  ${profileData?.companyData?.status === "accepted" ? "text-green-800 dark:text-green-600" : "text-red-400 dark:text-red-600"}  capitalize`}
+                className={`text-lg  ${
+                  profileData?.companyData?.status === "accepted"
+                    ? "text-green-800 dark:text-green-600"
+                    : "text-red-400 dark:text-red-600"
+                }  capitalize`}
               >
                 {profileData?.companyData?.status}
               </p>
               {profileData?.companyData?.status === "pending" &&
-                new Date(profileData?.companyData?.updatedAt).getMonth() < //one month delay send email admin
+                new Date(profileData?.companyData?.updatedAt).getMonth() <
                   new Date().getMonth() && (
                   <p className="space-y-2 underline cursor-pointer text-gray-500">
                     Send mail
@@ -259,11 +285,80 @@ const CompanyProfile = () => {
             </div>
           </div>
         </div>
+
+        <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+          <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-4 capitalize">
+            Subscription Information
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                Plan
+              </p>
+              <p className="text-lg text-gray-800 dark:text-white capitalize font-semibold">
+                {subscription?.plan || "N/A"}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                Status
+              </p>
+              <p
+                className={`text-lg capitalize ${
+                  subscription?.status === "ACTIVE"
+                    ? "text-green-600 dark:text-green-400"
+                    : "text-red-500 dark:text-red-400"
+                }`}
+              >
+                {subscription?.status || "N/A"}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                Billing Cycle
+              </p>
+              <p className="text-lg text-gray-800 dark:text-white capitalize">
+                {subscription?.billingCycle || "N/A"}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                Payment ID
+              </p>
+              <p
+                className="text-sm text-gray-800 dark:text-white font-mono truncate"
+                title={subscription?.paymentId}
+              >
+                {subscription?.paymentId || "N/A"}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                Start Date
+              </p>
+              <p className="text-lg text-gray-800 dark:text-white">
+                {formatDate(subscription?.startDate)}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                Next Billing Date
+              </p>
+              <p className="text-lg text-gray-800 dark:text-white">
+                {formatDate(subscription?.endDate)}
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Edit Profile Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-opacity-50 overflow-y-auto h-fu w-full z-50">
+        <div className="fixed inset-0 bg-black/50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
           <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white dark:bg-gray-800">
             <div className="mt-3">
               <div className="flex justify-between items-center mb-4">

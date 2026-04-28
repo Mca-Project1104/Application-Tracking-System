@@ -38,9 +38,8 @@ const Pricing = () => {
         const res = await api.get("/api/company/subscription", {
           headers: { Authorization: `Bearer ${token}` },
         });
-
         setCompanyId(res.data.data._id);
-        setCurrentPlan(res.data.subscription.plan || "FREE");
+        setCurrentPlan(res.data.data.subscription.plan || "FREE");
         setLoading(false);
       } catch (error) {
         console.log("Error fetching subscription:", error);
@@ -63,8 +62,6 @@ const Pricing = () => {
         "3 Active Job Postings",
         "Basic Resume Parsing",
         "Standard Ranking Algorithm",
-        "Community Support",
-        "1 Team Seat",
       ],
       limits: { maxJobs: 3 },
       cta: "Current Plan",
@@ -78,10 +75,8 @@ const Pricing = () => {
       description: "For growing teams needing smarter hiring.",
       features: [
         "15 Active Job Postings",
-        "AI-Powered Keyword Ranking",
-        "Bulk Candidate Import",
-        "Email Support (24hr response)",
-        "5 Team Seats",
+        "Basic Resume Parsing",
+        "Standard Ranking Algorithm",
       ],
       limits: { maxJobs: 15 },
       cta: "Upgrade to Basic",
@@ -92,14 +87,12 @@ const Pricing = () => {
       name: "PRO",
       price: 799,
       yearlyPrice: 639,
-      description: "Advanced AI features for high-volume hiring.",
+      description: "Advanced features for high-volume hiring.",
       features: [
         "Unlimited Job Postings",
-        "Semantic NLP Scoring",
-        "Custom AI Model Training",
-        "Priority Phone Support",
-        "Unlimited Team Seats",
-        "API Access & Webhooks",
+        "Community Support",
+        "Bulk Candidate Import",
+        "Standard Ranking Algorithm",
       ],
       limits: { maxJobs: 9999 },
       cta: "Upgrade to Pro",

@@ -258,7 +258,7 @@ export const candidateFlow = {
       step: 2,
       heading: "Get Matched",
       description:
-        "Our AI suggests jobs that are a perfect fit for your experience and goals.",
+        "Our smart system suggests jobs that are a perfect fit for your experience and goals. We ensure you discover roles that truly match your skills.",
     },
     {
       step: 3,
@@ -281,7 +281,7 @@ export const recruiterFlow = {
       step: 2,
       heading: "Source & Screen",
       description:
-        "Our AI screens and ranks applicants, so you can focus on the top talent.",
+        "Our system screens and ranks applicants, so you can focus on the top talent. Experience a streamlined hiring process that saves time and effort.",
     },
     {
       step: 3,
@@ -499,7 +499,7 @@ export const testimonials = [
     role: "Software Engineer",
     type: "candidate",
     content:
-      "Found my dream job in just 3 weeks! The AI matching was incredibly accurate.",
+      "Found my dream job in just 3 weeks! The matching technology was incredibly accurate.",
     avatar:
       "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
   },
@@ -533,8 +533,8 @@ export const testimonials = [
 ];
 
 export const PLANS = {
-  free: {
-    name: "Free",
+  FREE: {
+    name: "FREE",
     price: 0,
     jobLimit: 3,
     features: [
@@ -549,8 +549,8 @@ export const PLANS = {
     borderColor: "border-gray-300 dark:border-gray-600",
     badgeColor: "bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300",
   },
-  basic: {
-    name: "Basic",
+  BASIC: {
+    name: "BASIC",
     price: 199,
     jobLimit: 15,
     features: [
@@ -568,13 +568,13 @@ export const PLANS = {
     badgeColor:
       "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300",
   },
-  pro: {
-    name: "Pro",
+  PRO: {
+    name: "PRO",
     price: 299,
     jobLimit: 50,
     features: [
       "Up to 50 job postings",
-      "AI-powered resume screening",
+      "Advanced resume screening", // Changed from AI-powered
       "Dedicated account manager",
       "60-day job listing duration",
       "Advanced analytics",
@@ -587,27 +587,6 @@ export const PLANS = {
     borderColor: "border-purple-300 dark:border-purple-700",
     badgeColor:
       "bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300",
-  },
-  enterprise: {
-    name: "Enterprise",
-    price: 799,
-    jobLimit: -1, // unlimited
-    features: [
-      "Unlimited job postings",
-      "Full AI suite",
-      "24/7 priority support",
-      "90-day job listing duration",
-      "Custom integrations",
-      "SLA guarantee",
-      "Multi-location support",
-      "Dedicated onboarding",
-    ],
-    color: "yellow",
-    bgColor: "bg-yellow-50 dark:bg-yellow-900/20",
-    textColor: "text-yellow-700 dark:text-yellow-300",
-    borderColor: "border-yellow-300 dark:border-yellow-700",
-    badgeColor:
-      "bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300",
   },
 };
 
@@ -742,3 +721,20 @@ export const getStatusColors = (status) => {
       };
   }
 };
+
+
+
+export const months = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
