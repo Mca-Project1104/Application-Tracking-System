@@ -230,7 +230,7 @@ const CandidateProfile = () => {
     <div className="space-y-2 p-2 min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* ── Header card ── */}
       <div
-        className={`bg-white  dark:bg-gray-800 shadow-lg rounded-lg p-2 ${
+        className={`bg-white sticky top-15  dark:bg-gray-800 shadow-lg rounded-lg p-2 ${
           isEditingImage ? "opacity-10 pointer-events-none" : ""
         }`}
       >

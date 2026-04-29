@@ -38,6 +38,8 @@ const HiringPipeline = () => {
     return statusMap[status] || "applied";
   };
 
+  console.log(recentApplications)
+
   const mapColumnToStatus = (columnId) => {
     const reverseMap = {
       applied: "applied",

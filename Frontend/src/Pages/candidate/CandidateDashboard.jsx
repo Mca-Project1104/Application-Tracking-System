@@ -182,7 +182,6 @@ const CandidateDashboard = () => {
             Recent Applications
           </h3>
 
-          {/* ✅ overflow-x-auto for mobile scroll */}
           <div className="mt-5 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <thead className="bg-gray-50 dark:bg-gray-700/50">
@@ -294,7 +293,7 @@ const CandidateDashboard = () => {
                         ))}
                       </div>
                     </div>
-                    {/* ✅ On mobile: row with salary and button; on sm+: column */}
+                    {/*  On mobile: row with salary and button; on sm+: column */}
                     <div className="flex sm:flex-col items-center sm:items-end gap-3 sm:gap-2 shrink-0">
                       <span className="text-sm font-medium text-gray-900 dark:text-white whitespace-nowrap">
                         {currency}

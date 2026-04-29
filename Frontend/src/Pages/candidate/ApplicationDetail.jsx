@@ -83,8 +83,8 @@ const ApplicationDetails = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-10 transition-colors">
-      <div className=" mt-1 mx-auto px-2 sm:px-6 lg:px-6 py-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-10 mt-0 transition-colors">
+      <div className=" mt-1 mx-auto px-2 sm:px-4 lg:px-2 py-2">
         <div className=" rounded mx-auto mb-2  lg:px-6 space-y-1  h-16 flex items-center justify-between bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-16 z-30">
           <div className="flex items-center space-x-4">
             <button
