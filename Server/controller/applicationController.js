@@ -43,6 +43,12 @@ export const applyJob = async (req, res) => {
       score: score.match_score,
     });
 
+    if (score.match_score < 500) {
+      application.status = "rejected";
+    }else{
+      application.status = "applied";
+    }
+
     await application.save();
 
     // update application count
@@ -92,6 +98,7 @@ export const getCompanyDashboard = async (req, res) => {
     }
 
     const jobs = await Job.find({ company: company._id }).sort("-createdAt");
+    
     const jobIds = jobs.map((job) => job._id);
 
     const applications = await Application.find({
@@ -142,12 +149,15 @@ export const getCompanyDashboard = async (req, res) => {
         status: app.status,
       }));
 
+      
+
     const jobPostings = jobs.map((job) => ({
       id: job._id,
       position: job.title,
       department: job.department,
       applicants: applications.filter((a) => a.jobId.equals(job._id)).length,
       status: job.status,
+      opening: job.openingJob,
       posted: job.createdAt,
     }));
 

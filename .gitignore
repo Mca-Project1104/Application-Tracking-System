@@ -18,6 +18,8 @@ env
 Schema_Design.txt
 *.pem
 
+uploads
+
 PROJECT_ARCHITECTURE.md
 
 # Editor directories and files

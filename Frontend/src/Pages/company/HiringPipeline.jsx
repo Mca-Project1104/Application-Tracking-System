@@ -25,6 +25,8 @@ const HiringPipeline = () => {
 
   const { token } = useAppContext();
 
+  console.log(jobpostings);
+
   const mapStatusToColumn = (status) => {
     const statusMap = {
       applied: "applied",
@@ -37,8 +39,6 @@ const HiringPipeline = () => {
     };
     return statusMap[status] || "applied";
   };
-
-  console.log(recentApplications)
 
   const mapColumnToStatus = (columnId) => {
     const reverseMap = {
@@ -64,6 +64,7 @@ const HiringPipeline = () => {
           setStats(data.stats || {});
           setRecentApplications(data.recentApplications || []);
           setPipelineStages(data.pipeline || []);
+          console.log(data);
           setJobPostings(data.jobs || []);
 
           const transformedCandidates = (data.recentApplications || []).map(
@@ -387,11 +388,10 @@ const HiringPipeline = () => {
             )}
           </div>
 
-          {/* ✅ Job pills — scrollable on mobile instead of wrapping */}
           <div className="mt-3 flex gap-2 overflow-x-auto pb-1 scrollbar-thin -mx-1 px-1">
             <button
               onClick={() => setSelectedJobId("all")}
-              className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 whitespace-nowrap shrink-0 ${
+              className={`inline-flex  items-center gap-1.5 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 whitespace-nowrap shrink-0 ${
                 selectedJobId === "all"
                   ? "bg-blue-600 text-white shadow-md shadow-blue-200 dark:shadow-blue-900/30"
                   : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
@@ -412,7 +412,7 @@ const HiringPipeline = () => {
               </svg>
               All Jobs
               <span
-                className={`inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-xs font-bold ${
+                className={`inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full text-xs font-bold ${
                   selectedJobId === "all"
                     ? "bg-white/20 text-white"
                     : "bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300"
@@ -434,7 +434,7 @@ const HiringPipeline = () => {
               >
                 {job.position}
                 <span
-                  className={`inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-xs font-bold ${
+                  className={`inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full text-xs font-bold ${
                     selectedJobId === job.id
                       ? "bg-white/20 text-white"
                       : "bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300"
@@ -675,7 +675,10 @@ const HiringPipeline = () => {
           </div>
           <div className="overflow-x-auto p-2 -mx-4 sm:mx-0">
             <table className="w-full text-left min-w-125">
-              <thead>
+              <thead
+                onClick={() => setSelectedJobId("all")}
+                className="cursor-pointer"
+              >
                 <tr className="border-b border-gray-200 dark:border-gray-700">
                   <th className="pb-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Position
@@ -685,6 +688,9 @@ const HiringPipeline = () => {
                   </th>
                   <th className="pb-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider text-center">
                     Applicants
+                  </th>
+                  <th className="pb-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider text-center">
+                    Opening
                   </th>
                   <th className="pb-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right">
                     Status
@@ -742,6 +748,11 @@ const HiringPipeline = () => {
                           {job.applicants}
                         </span>
                       </td>
+                      <td className="py-3 sm:py-4 text-center">
+                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300">
+                          {job.opening}
+                        </span>
+                      </td>
                       <td className="py-3 sm:py-4 text-right">
                         <span
                           className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
@@ -787,7 +798,6 @@ const HiringPipeline = () => {
               const config = getStatusConfig(stat.id);
               return (
                 <div key={stat.id} className="text-center">
-                  {/* ✅ hover:scale-[0.98] instead of invalid hover:scale-98 */}
                   <div
                     className={`relative inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-full ${config.bg} mb-2 sm:mb-3 transition-transform duration-200 hover:scale-[0.98]`}
                   >
@@ -825,9 +835,8 @@ const HiringPipeline = () => {
               </span>
             </div>
             <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 sm:h-3 overflow-hidden">
-              {/* ✅ bg-gradient-to-r instead of bg-linear-to-r */}
               <div
-                className="h-full bg-gradient-to-r from-blue-500 to-green-500 rounded-full transition-all duration-500 ease-out"
+                className="h-full bg-linear-to-r from-blue-500 to-green-500 rounded-full transition-all duration-500 ease-out"
                 style={{
                   width: `${
                     filteredCandidates.length > 0
