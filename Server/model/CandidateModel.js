@@ -38,12 +38,6 @@ const CandidateSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
-
-    summary: {
-      type: String,
-      default: null,
-    },
-
     education: {
       type: [String],
       default: [],
@@ -69,6 +63,11 @@ const CandidateSchema = new mongoose.Schema(
       default: [],
     },
 
+    personal: {
+      type: String,
+      default: "",
+    },
+
     resumeUrl: {
       type: String,
       default: null,
@@ -76,7 +75,7 @@ const CandidateSchema = new mongoose.Schema(
     resumeText: {
       type: String,
       default: null,
-      select: true, // Don't return raw text in normal queries (perf)
+      select: true,
     },
 
     ats_score: {

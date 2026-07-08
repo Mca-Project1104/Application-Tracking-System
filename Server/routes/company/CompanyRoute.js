@@ -10,14 +10,12 @@ import {
 } from "../../controller/company/CompanyController.js";
 import authMiddleware from "../../middleware/authMiddleware.js";
 import { upload } from "../../services/multerServices.js";
+
 const companyRouter = Router();
 
 companyRouter.post("/jobs", companyAuthMiddleware, authorizeRecruiter);
-
 companyRouter.get("/profile", authMiddleware, companyProfile);
-
-companyRouter.get("/subscription", companyAuthMiddleware, getSubscription);
-
+companyRouter.get("/subscriptions", companyAuthMiddleware, getSubscription);
 companyRouter.post(
   "/profile",
   authMiddleware,

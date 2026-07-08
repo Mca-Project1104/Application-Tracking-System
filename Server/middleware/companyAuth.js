@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
-import { User } from "../model/UserModel.js";
+import User from "../model/UserModel.js";
+import JobModel from "../model/JobModel.js";
 
-// Company-specific authentication middleware
 const companyAuthMiddleware = async (req, res, next) => {
   try {
     const token = req.header("Authorization")?.replace("Bearer ", "");
@@ -17,7 +17,7 @@ const companyAuthMiddleware = async (req, res, next) => {
       })
       .select("-password");
 
-    if (!user) return res.status(404).json({ msg: "User not found" });
+    if (!user) return res.status(401).json({ message: "Account deleted" });
 
     if (user.accountType !== "company")
       return res.status(403).json({ msg: "Only recruiters allowed" });

@@ -4,8 +4,21 @@ import { Company } from "../model/CompanyModel.js";
 const checkJobLimit = async (req, res, next) => {
   const company = await Company.findById(req.user.company);
 
-  if (company.subscription.status !== "ACTIVE") {
-    return res.status(403).json({ message: "Subscription expired" });
+  // if (company.subscription.status !== "ACTIVE") {
+  //   return res.status(403).json({ message: "Subscription expired" });
+  // }
+
+  if (company.subscription.endDate < new Date().toISOString()) {
+  }
+
+  if (
+    new Date(company.subscription.endDate).toLocaleDateString() <
+    new Date().toLocaleDateString()
+  ) {
+    await Company.findByIdAndUpdate(req.user.company, {
+      $set: { subscription: null },
+    });
+    return res.status(403).json({ message: "Your plan expire!" });
   }
 
   if (

@@ -5,7 +5,6 @@ import { useAppContext } from "../context/AppProvider";
 const Navbar = ({
   userRole,
   setShowSidebar,
-  titleName,
   showSidebar,
   setIsAuthenticated,
   setUserRole,
@@ -27,13 +26,12 @@ const Navbar = ({
   return (
     <nav className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700 h-16 fixed top-0 left-0 right-0 z-50 flex items-center px-3 sm:px-4">
       <div className="flex items-center justify-between w-full">
-        {/* Left: hamburger + logo */}
         <div className="flex items-center gap-2">
           {userRole !== "admin" && (
             <button
               type="button"
               onClick={() => setShowSidebar(!showSidebar)}
-              className="p-2 rounded-md text-gray-600 dark:text-gray-300 dark:hover:bg-gray-800 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+              className="p-2 rounded-md block md:hidden text-gray-600 dark:text-gray-300 dark:hover:bg-gray-800 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
               aria-label="Toggle sidebar"
             >
               <svg
@@ -55,7 +53,7 @@ const Navbar = ({
             to={`/${userRole}`}
             className="text-lg sm:text-xl font-bold text-blue-600 dark:text-blue-400 whitespace-nowrap"
           >
-            {titleName}
+            Hire Flow
           </Link>
         </div>
 
@@ -127,8 +125,7 @@ const Navbar = ({
             onClick={() => setShowMobileMenu(false)}
           />
 
-          <div className="fixed top-16  w-full left-1 max-w-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl rounded-tl-none rounded-tr-none shadow-lg z-50 p-4 md:hidden">
-            {/* Profile */}
+          <div className="fixed top-16  w-full left-1  bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl rounded-tl-none rounded-tr-none shadow-lg z-50 p-4 md:hidden">
             <div
               onClick={() => {
                 navigate(`/${userRole}/profile`);
@@ -149,10 +146,9 @@ const Navbar = ({
 
             <hr className="border-gray-200 dark:border-gray-700 mb-3" />
 
-            {/* Logout */}
             <button
               onClick={Logout}
-              className="w-full px-4 py-2 text-sm text-left rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300"
+              className="w-full px-4 py-2 text-sm  rounded-lg hover:bg-gray-200 text-center dark:hover:bg-gray-800 text-gray-700 dark:text-white dark:bg-gray-800 font-medium bg-gray-100 active:scale-95"
             >
               Logout
             </button>

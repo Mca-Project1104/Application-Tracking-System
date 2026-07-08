@@ -7,26 +7,18 @@ import {
   deleteUser,
   updateApplicationStatus,
   updateUserStatus,
+  getUsreDetail
 } from "../../controller/admin/adminController.js";
 
 const adminRouter = Router();
 
-// Check route
-adminRouter.get("/", (_, res) => {
-  res.status(200).json({ message: "Admin Router Running Successfully .." });
-});
-
-// --- USER MANAGEMENT ---
-adminRouter.get("/allusers", getUsers);
+adminRouter.get("/users", getUsers);
+adminRouter.post("/user/detail", getUsreDetail);
+adminRouter.get("/jobs", getAllJobs);
+adminRouter.get("/companys", getAllCompanies);
 adminRouter.delete("/user/:id", deleteUser);
-
-// --- COMPANY/JOBS MANAGEMENT ---
-adminRouter.get("/allcompany", getAllCompanies);
-adminRouter.get("/alljobs", getAllJobs);
-
-// --- APPLICATIONS MANAGEMENT ---
-adminRouter.get("/allapplications", getAllApplications);
+adminRouter.get("/applications", getAllApplications);
 adminRouter.put("/application/:id", updateApplicationStatus);
-
 adminRouter.put("/user/status/:id", updateUserStatus);
+
 export default adminRouter;

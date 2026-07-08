@@ -2,18 +2,21 @@ import React, { useState, useEffect } from "react";
 import { useAppContext } from "../../context/AppProvider";
 import api from "../../api/axios";
 import Loading from "../../Components/Loading/Loading";
-// Helper to determine styling based on Plan Name
+
 const getPlanStyles = (plan, isBorder = false) => {
   switch (plan) {
     case "PRO":
       return isBorder
         ? "border-purple-500 dark:border-purple-400"
         : "bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300";
+
     case "BASIC":
       return isBorder
         ? "border-blue-500 dark:border-blue-400"
         : "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300";
+
     case "FREE":
+
     default:
       return isBorder
         ? "border-gray-300 dark:border-gray-600"
@@ -23,7 +26,7 @@ const getPlanStyles = (plan, isBorder = false) => {
 
 const Pricing = () => {
   const { navigate, token, companydata } = useAppContext();
-  const [billingCycle, setBillingCycle] = useState("monthly"); // 'monthly' or 'yearly'
+  const [billingCycle, setBillingCycle] = useState("monthly");
   const [currentPlan, setCurrentPlan] = useState("FREE");
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(null);
@@ -31,11 +34,10 @@ const Pricing = () => {
 
   const { currency } = useAppContext();
 
-  // Fetch user's current subscription to highlight their active plan
   useEffect(() => {
     const fetchCurrentPlan = async () => {
       try {
-        const res = await api.get("/api/company/subscription", {
+        const res = await api.get("/api/v1/company/subscriptions", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setCompanyId(res.data.data._id);
@@ -50,7 +52,6 @@ const Pricing = () => {
     if (token) fetchCurrentPlan();
   }, [token]);
 
-  // Pricing Data
   const plans = [
     {
       id: "free",
@@ -106,7 +107,7 @@ const Pricing = () => {
       setLoading(true);
 
       const res = await api.post(
-        "/api/payment/create-checkout-session",
+        "/api/v1/payment/create-checkout-session",
         {
           plan: planName,
           billingCycle,
@@ -137,8 +138,7 @@ const Pricing = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-      {/* Header Section */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <div className="bg-white dark:bg-gray-900  dark:border-gray-700">
         <div className="mt-8 flex justify-center items-center space-x-4">
           <span
             className={`text-sm font-medium ${
@@ -183,7 +183,6 @@ const Pricing = () => {
         </div>
       </div>
 
-      {/* Pricing Cards */}
       <div className="px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-7xl mx-auto">
           {plans.map((plan) => {
@@ -202,7 +201,6 @@ const Pricing = () => {
                     : getPlanStyles(plan.name, true)
                 } flex flex-col`}
               >
-                {/* Popular Badge */}
                 {plan.isPopular && (
                   <div className="absolute top-0 right-0 -mr-1 -mt-1 w-32 h-32 overflow-hidden rounded-full">
                     <div className="absolute top-0 right-0 bg-blue-600 text-white text-xs font-bold px-10 py-1 transform rotate-45 translate-x-6 translate-y-4 shadow-md">
@@ -228,7 +226,6 @@ const Pricing = () => {
                     </span>
                   </div>
 
-                  {/* Active Plan Indicator */}
                   {isActive && (
                     <div className="mt-4 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
                       <span className="w-2 h-2 mr-1.5 bg-green-500 rounded-full animate-pulse"></span>

@@ -10,7 +10,7 @@ export const createCheckoutSession = async (req, res) => {
 
     const priceMap = {
       BASIC: {
-        monthly: "price_1TQJgORampXar8B3d9mjMuUc",
+        monthly: "price_1Tqb9fRampXar8B3IEkySc5o",
         yearly: "price_1TQJngRampXar8B34mgcbyHD",
       },
       PRO: {
@@ -55,7 +55,6 @@ export const stripeWebhookHandler = async (req, res) => {
   let event;
 
   if (!process.env.STRIPE_WEBHOOK_SECRET) {
-    console.log("Missing STRIPE_WEBHOOK_SECRET");
     return res.sendStatus(500);
   }
 
@@ -66,11 +65,8 @@ export const stripeWebhookHandler = async (req, res) => {
       process.env.STRIPE_WEBHOOK_SECRET,
     );
   } catch (err) {
-    console.log("Webhook signature error:", err.message);
     return res.sendStatus(400);
   }
-
-  console.log("Stripe Event:", event.type);
 
   try {
     if (event.type === "checkout.session.completed") {
@@ -106,8 +102,6 @@ export const stripeWebhookHandler = async (req, res) => {
         metadata.plan === "PRO" ? 9999 : metadata.plan === "BASIC" ? 15 : 3;
 
       await company.save();
-
-      console.log(" DB Updated on checkout.session.completed");
     }
 
     if (event.type === "invoice.payment_succeeded") {
@@ -137,8 +131,6 @@ export const stripeWebhookHandler = async (req, res) => {
       company.subscription.status = "ACTIVE";
 
       await company.save();
-
-      console.log("Subscription Renewed");
     }
 
     if (event.type === "customer.subscription.deleted") {
@@ -157,8 +149,6 @@ export const stripeWebhookHandler = async (req, res) => {
       company.limits.maxJobs = 3;
 
       await company.save();
-
-      console.log("Subscription Cancelled");
     }
 
     if (event.type === "invoice.payment_failed") {
@@ -173,8 +163,6 @@ export const stripeWebhookHandler = async (req, res) => {
       company.subscription.status = "PAST_DUE";
 
       await company.save();
-
-      console.log("Payment Failed");
     }
 
     return res.json({ received: true });

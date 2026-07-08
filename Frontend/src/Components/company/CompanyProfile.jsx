@@ -1,57 +1,31 @@
 import React, { useState, useEffect } from "react";
+import { useAppContext } from "../../context/AppProvider.jsx";
 import api from "../../api/axios";
+import Loading from "../Loading/Loading.jsx";
+import { IoMdClose } from "react-icons/io";
 
 const CompanyProfile = () => {
+  const {
+    token,
+    companydata,
+    refetchDashboard: fetchCompanyDashbord,
+    refetchProfile: fetchProfile,
+  } = useAppContext();
+
   const [file, setFile] = useState(null);
-  const [profileData, setProfileData] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [profileData, setProfileData] = useState(companydata);
+  const [isLoading, setIsLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [message, setMessage] = useState({ text: "", type: "" });
-  const token = localStorage.getItem("token");
-  const [subscription, setSubscription] = useState({});
+  const [subscription, setSubscription] = useState(
+    companydata?.company?.subscription,
+  );
 
   const [formData, setFormData] = useState({
-    name: "",
-    location: "",
+    name: companydata?.company?.name,
+    location: companydata?.company?.location,
   });
-
-  // Fetch profile data on component mount
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const response = await api.get("api/company/profile", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        const data = response.data;
-        console.log(response);
-        setProfileData(data);
-
-        // Safely access nested subscription data
-        if (data?.companyData?.company?.subscription) {
-          setSubscription(data.companyData.company.subscription);
-        }
-
-        if (data?.companyData?.company) {
-          setFormData({
-            name: data.companyData.company.name || "",
-            location: data.companyData.company.location || "",
-          });
-        }
-      } catch (error) {
-        console.error("Error fetching profile:", error);
-        setMessage({
-          text: "Failed to load profile data. Please refresh the page.",
-          type: "error",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchProfile();
-  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -67,13 +41,38 @@ const CompanyProfile = () => {
     }
   };
 
+  if (!companydata == null) {
+    setIsLoading(true);
+    setProfileData(companydata);
+  }
+
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLoading(true);
+
+      try {
+        await Promise.all([fetchProfile(), fetchCompanyDashbord()]);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  console.log(companydata);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     setIsUpdating(true);
     setMessage({ text: "", type: "" });
 
     try {
       const dataToSend = new FormData();
+
       dataToSend.append("name", formData.name);
       dataToSend.append("location", formData.location);
 
@@ -81,37 +80,43 @@ const CompanyProfile = () => {
         dataToSend.append("logo", file);
       }
 
-      const response = await api.post("/api/company/profile", dataToSend, {
+      const response = await api.post("/api/v1/company/profile", dataToSend, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data",
         },
       });
 
-      if (response.status === 200) {
-        setProfileData(response.data);
-        // Update subscription if returned in response
-        if (response.data?.companyData?.company?.subscription) {
-          setSubscription(response.data.companyData.company.subscription);
-        }
-        setMessage({ text: "Profile updated successfully!", type: "success" });
+      if (response.status === 200 || response.status === 201) {
+        await fetchProfile();
+        await fetchCompanyDashbord();
+
+        setProfileData(response.data?.companyData || response.data);
+
+        setSubscription(
+          response.data?.companyData?.company?.subscription || null,
+        );
+
+        setMessage({
+          text: "Profile updated successfully!",
+          type: "success",
+        });
+
+        setFile(null);
         setIsModalOpen(false);
       }
-
-      setFile(null);
     } catch (error) {
-      console.error("Error updating profile:", error);
       setMessage({
-        text: "Failed to update profile. Please try again.",
+        text:
+          error?.response?.data?.message ||
+          "Failed to update profile. Please try again.",
         type: "error",
       });
     } finally {
       setIsUpdating(false);
     }
   };
-
   const openModal = () => {
-    // Reset form data with current profile values
     if (profileData && profileData.companyData) {
       setFormData({
         name: profileData?.companyData?.company?.name || "",
@@ -128,7 +133,6 @@ const CompanyProfile = () => {
     setMessage({ text: "", type: "" });
   };
 
-  // Helper for safe date formatting
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     return new Date(dateString).toLocaleDateString(undefined, {
@@ -138,13 +142,8 @@ const CompanyProfile = () => {
     });
   };
 
-  // Loading state
   if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
+    return <Loading />;
   }
 
   return (
@@ -170,7 +169,7 @@ const CompanyProfile = () => {
           <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
             Recruiter Profile
           </h1>
-          {!isLoading && (
+          {!isLoading && !companydata?.company?.name && (
             <button
               onClick={openModal}
               className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors"
@@ -180,7 +179,7 @@ const CompanyProfile = () => {
           )}
         </div>
 
-        {profileData && profileData.companyData ? (
+        {companydata ? (
           <div className="grid grid-cols-2 md:grid-cols-2 gap-6">
             <div>
               <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-4">
@@ -192,7 +191,7 @@ const CompanyProfile = () => {
                     Company Name
                   </p>
                   <p className="text-lg text-gray-800 dark:text-white">
-                    {profileData?.companyData?.company?.name || "Not specified"}
+                    {companydata?.company?.name || "Not specified"}
                   </p>
                 </div>
                 <div>
@@ -200,8 +199,7 @@ const CompanyProfile = () => {
                     Location
                   </p>
                   <p className="text-lg text-gray-800 dark:text-white">
-                    {profileData?.companyData?.company?.location ||
-                      "Not specified"}
+                    {companydata?.company?.location || "Not specified"}
                   </p>
                 </div>
               </div>
@@ -212,9 +210,9 @@ const CompanyProfile = () => {
                 Company Logo
               </h2>
               <div className="flex h-22 justify-center-safe  rounded overflow-hidden ">
-                {profileData?.companyData?.company?.logo ? (
+                {companydata?.company?.logo ? (
                   <img
-                    src={profileData?.companyData?.company?.logo}
+                    src={companydata?.company?.logo}
                     alt="Company Logo"
                     className="max-h-full rounded-2xl  max-w-full object-contain"
                   />
@@ -242,8 +240,7 @@ const CompanyProfile = () => {
                 Owner
               </p>
               <p className="text-lg text-gray-800 dark:text-white">
-                {profileData?.companyData?.firstName}{" "}
-                {profileData?.companyData?.lastName}
+                {companydata?.firstName} {companydata?.lastName}
               </p>
             </div>
             <div>
@@ -251,7 +248,7 @@ const CompanyProfile = () => {
                 Email
               </p>
               <p className="text-lg text-gray-800 dark:text-white">
-                {profileData?.companyData?.email}
+                {companydata?.email}
               </p>
             </div>
             <div>
@@ -259,7 +256,7 @@ const CompanyProfile = () => {
                 Account Type
               </p>
               <p className="text-lg text-gray-800 dark:text-white capitalize">
-                {profileData?.companyData?.accountType}
+                {companydata?.accountType}
               </p>
             </div>
             <div>
@@ -268,15 +265,15 @@ const CompanyProfile = () => {
               </p>
               <p
                 className={`text-lg  ${
-                  profileData?.companyData?.status === "accepted"
+                  companydata?.status === "accepted"
                     ? "text-green-800 dark:text-green-600"
                     : "text-red-400 dark:text-red-600"
                 }  capitalize`}
               >
-                {profileData?.companyData?.status}
+                {companydata?.status}
               </p>
-              {profileData?.companyData?.status === "pending" &&
-                new Date(profileData?.companyData?.updatedAt).getMonth() <
+              {companydata?.status === "pending" &&
+                new Date(companydata?.updatedAt).getMonth() <
                   new Date().getMonth() && (
                   <p className="space-y-2 underline cursor-pointer text-gray-500">
                     Send mail
@@ -296,7 +293,7 @@ const CompanyProfile = () => {
                 Plan
               </p>
               <p className="text-lg text-gray-800 dark:text-white capitalize font-semibold">
-                {subscription?.plan || "N/A"}
+                {companydata?.company?.subscription?.plan || "N/A"}
               </p>
             </div>
 
@@ -306,12 +303,12 @@ const CompanyProfile = () => {
               </p>
               <p
                 className={`text-lg capitalize ${
-                  subscription?.status === "ACTIVE"
+                  companydata?.company?.subscription?.status === "ACTIVE"
                     ? "text-green-600 dark:text-green-400"
                     : "text-red-500 dark:text-red-400"
                 }`}
               >
-                {subscription?.status || "N/A"}
+                {companydata?.company?.subscription?.status || "N/A"}
               </p>
             </div>
 
@@ -320,7 +317,7 @@ const CompanyProfile = () => {
                 Billing Cycle
               </p>
               <p className="text-lg text-gray-800 dark:text-white capitalize">
-                {subscription?.billingCycle || "N/A"}
+                {companydata?.company?.subscription?.billingCycle || "N/A"}
               </p>
             </div>
 
@@ -332,7 +329,7 @@ const CompanyProfile = () => {
                 className="text-sm text-gray-800 dark:text-white font-mono truncate"
                 title={subscription?.paymentId}
               >
-                {subscription?.paymentId || "N/A"}
+                {companydata?.company?.subscription?.paymentId || "N/A"}
               </p>
             </div>
 
@@ -341,7 +338,7 @@ const CompanyProfile = () => {
                 Start Date
               </p>
               <p className="text-lg text-gray-800 dark:text-white">
-                {formatDate(subscription?.startDate)}
+                {formatDate(companydata?.company?.subscription?.startDate)}
               </p>
             </div>
 
@@ -350,7 +347,7 @@ const CompanyProfile = () => {
                 Next Billing Date
               </p>
               <p className="text-lg text-gray-800 dark:text-white">
-                {formatDate(subscription?.endDate)}
+                {formatDate(companydata?.company?.subscription?.endDate)}
               </p>
             </div>
           </div>
@@ -359,7 +356,7 @@ const CompanyProfile = () => {
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white dark:bg-gray-800">
+          <div className="relative mx-auto p-5 border w-96 shadow-lg rounded-md bg-white dark:bg-gray-800">
             <div className="mt-3">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">
@@ -369,19 +366,7 @@ const CompanyProfile = () => {
                   onClick={closeModal}
                   className="text-gray-400 hover:text-gray-500 focus:outline-none"
                 >
-                  <svg
-                    className="h-6 w-6"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
+                  <IoMdClose className="h-6 w-6" />
                 </button>
               </div>
               <form onSubmit={handleSubmit}>

@@ -16,7 +16,6 @@ candidateRouter.put(
   upload.single("profile_image"),
   updateCandidate,
 );
-
 candidateRouter.get("/", authMiddleware, getCandidate);
 candidateRouter.get("/resume/:id", downloadResume);
 

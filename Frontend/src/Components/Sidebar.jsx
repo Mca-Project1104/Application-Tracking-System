@@ -1,19 +1,19 @@
 import React from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-
+import { useLocation } from "react-router-dom";
 import {
   candidateLinks,
   companyLinks,
   adminLinks,
 } from "../assets/dummydata.js";
+import { useAppContext } from "../context/AppProvider.jsx";
 
 const Sidebar = ({ userRole, showSidebar, setShowSidebar }) => {
-  const navigate = useNavigate();
   const location = useLocation();
 
+  const { navigate } = useAppContext();
   const handleLinks = (link) => {
     navigate(link);
-    setShowSidebar(false); // close on mobile after navigation
+    setShowSidebar(false);
   };
 
   const links =
@@ -25,7 +25,6 @@ const Sidebar = ({ userRole, showSidebar, setShowSidebar }) => {
 
   return (
     <>
-      {/* ✅ Overlay — only on mobile (< md), z-30 (below sidebar z-40) */}
       {showSidebar && (
         <div
           className="fixed inset-0 top-16 bg-black/50 z-30 md:hidden"
@@ -33,7 +32,6 @@ const Sidebar = ({ userRole, showSidebar, setShowSidebar }) => {
         />
       )}
 
-      {/* ✅ Sidebar: always fixed, top-16 matches navbar height, z-40 below navbar z-50 */}
       <aside
         className={`fixed left-0 top-16 z-40 h-[calc(100vh-4rem)] w-72 sm:w-64
           bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700

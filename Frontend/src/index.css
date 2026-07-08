@@ -6,3 +6,43 @@
     background-color 0.3s ease,
     color 0.3s ease;
 }
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #eff6ff;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #3b82f6, #4f46e5);
+  border-radius: 9999px;
+  border: 2px solid #eff6ff;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, #133379, #282086);
+}
+
+html.dark::-webkit-scrollbar-track {
+  background: #030712;
+}
+
+html.dark::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #1d4ed8, #3730a3);
+  border: 2px solid #030712;
+}
+
+html.dark::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, #133784, #322897);
+}
+
+html {
+  scrollbar-width: thin;
+  scrollbar-color: #3b82f6 #eff6ff;
+}
+
+html.dark {
+  scrollbar-color: #143389 #030712;
+}

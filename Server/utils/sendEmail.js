@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import "dotenv/config";
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -218,9 +219,8 @@ export const InterviewEmail = async (email, data) => {
     console.error("\nError sending Application (Network Error.):", error);
   }
 };
-export const HiredEmial = async ({ email, data }) => {
+export const hiredEmail = async ({ email, data }) => {
   try {
-    console.log(email, data);
     await transporter.sendMail({
       from: process.env.EMAIL,
       to: email,

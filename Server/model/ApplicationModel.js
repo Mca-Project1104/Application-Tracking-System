@@ -48,6 +48,13 @@ const applicationSchema = new mongoose.Schema(
       ],
       default: "applied",
     },
+    feedbackForm: {
+      type: Object,
+    },
+
+    scheduleForm: {
+      type: Object,
+    },
 
     details: { type: Object },
 

@@ -6,7 +6,7 @@ const jobSchema = new mongoose.Schema(
 
     company: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Company", //  FIXED (was "User")
+      ref: "Company",
       required: true,
     },
     companyName: { type: String },
@@ -18,6 +18,7 @@ const jobSchema = new mongoose.Schema(
       type: String,
       enum: ["Full-time", "Part-time", "Internship", "Contract", "Temporary"],
     },
+    postedBy: { type: String },
 
     experienceLevel: {
       type: String,

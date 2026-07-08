@@ -1,7 +1,6 @@
-// routes/analyzerRouter.js
 import { Router } from "express";
 import upload from "../services/MulterDiskstorage.js";
-import { analyzeResume } from "../controller/ResumeController.js";
+import analyzeResume from "../controller/ResumeController.js";
 import authMiddleware from "../middleware/auth.js";
 
 const analyzerRouter = Router();
@@ -9,7 +8,7 @@ const analyzerRouter = Router();
 analyzerRouter.post(
   "/analyze",
   authMiddleware,
-  upload.single("resume"), //lmulter services stored in localdisk
+  upload.single("resume"),
   analyzeResume,
 );
 

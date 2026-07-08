@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import api from "../../api/axios";
+import { useAppContext } from "../../context/AppProvider";
 
-const VerifyEmail = () => {
+import { ImSpinner2 } from "react-icons/im";
+
+const VerifyEmail = ({ setIsAuthenticated, setUserRole }) => {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -10,11 +13,12 @@ const VerifyEmail = () => {
   const [canResend, setCanResend] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
+  const { navigate } = useAppContext();
+
   const location = useLocation();
-  const navigate = useNavigate();
   const inputRefs = useRef([]);
 
-  const email = location.state?.email;
+  const { email, user, accessToken } = location.state;
 
   useEffect(() => {
     if (resendTimer > 0) {
@@ -26,24 +30,20 @@ const VerifyEmail = () => {
   }, [resendTimer]);
 
   const handleChange = (index, value) => {
-    // Only allow numbers
-    if (!/^\d*$/.test(value)) return; // regular expression \d= digit only used // start/end
+    if (!/^\d*$/.test(value)) return;
 
     const newOtp = [...otp];
     newOtp[index] = value;
     setOtp(newOtp);
 
-    // Auto-focus to next input
     if (value && index < 5) {
       inputRefs.current[index + 1].focus();
     }
 
-    // Clear error when user starts typing
     if (error) setError("");
   };
 
   const handleKeyDown = (index, e) => {
-    // Handle backspace
     if (e.key === "Backspace" && !otp[index] && index > 0) {
       inputRefs.current[index - 1].focus();
     }
@@ -53,7 +53,6 @@ const VerifyEmail = () => {
     e.preventDefault();
     const pastedData = e.clipboardData.getData("text").trim();
 
-    // Only allow numbers and max 6 digits
     if (!/^\d{1,6}$/.test(pastedData)) return;
 
     const newOtp = [...otp];
@@ -62,7 +61,6 @@ const VerifyEmail = () => {
     }
     setOtp(newOtp);
 
-    // Focus on the next empty input or the last one
     const nextEmptyIndex = newOtp.findIndex((val) => val === "");
     const focusIndex = nextEmptyIndex === -1 ? 5 : nextEmptyIndex;
     inputRefs.current[focusIndex].focus();
@@ -73,6 +71,7 @@ const VerifyEmail = () => {
     setError("");
 
     const otpCode = otp.join("");
+
     if (otpCode.length !== 6) {
       setError("Please enter all 6 digits");
       return;
@@ -81,22 +80,31 @@ const VerifyEmail = () => {
     try {
       setLoading(true);
 
-      const res = await api.post("/api/user/verify-email", {
+      const res = await api.post("/api/v1/users/verify-email", {
         email,
         code: otpCode,
       });
 
       if (res.status === 200) {
         setIsSuccess(true);
+
         setTimeout(() => {
-          navigate("/login");
+          if (email == import.meta.env.VITE_ADMIN_EMAIL) {
+            setIsAuthenticated(true);
+            setUserRole(user.accountType);
+            localStorage.setItem("userRole", user.accountType);
+            localStorage.setItem("admin_token", accessToken);
+            navigate("/admin");
+          } else {
+            navigate("/login");
+          }
         }, 2000);
       }
     } catch (err) {
       setError(err.response?.data?.message || "Invalid verification code");
-      // Clear OTP on error
+
       setOtp(["", "", "", "", "", ""]);
-      inputRefs.current[0].focus();
+      inputRefs.current?.[0]?.focus();
     } finally {
       setLoading(false);
     }
@@ -105,11 +113,10 @@ const VerifyEmail = () => {
   const handleResend = async () => {
     try {
       setLoading(true);
-      await api.post("/api/user/resend", { email });
+      await api.post("/api/v1/user/resend", { email });
       setResendTimer(60);
       setCanResend(false);
       setError("");
-      // Show success message briefly
       const successMsg = document.createElement("div");
       successMsg.className =
         "fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-pulse";
@@ -123,7 +130,6 @@ const VerifyEmail = () => {
     }
   };
 
-  // Success animation component
   if (isSuccess) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-black">
@@ -146,9 +152,6 @@ const VerifyEmail = () => {
           <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">
             Email Verified!
           </h2>
-          <p className="text-gray-600 dark:text-gray-400">
-            Redirecting to login...
-          </p>
         </div>
       </div>
     );
@@ -157,7 +160,6 @@ const VerifyEmail = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-indigo-50 via-white to-purple-50 dark:from-black dark:via-gray-900 dark:to-black">
       <div className="w-full max-w-md px-4">
-        {/* Logo/Header */}
         <div className="text-center mb-8">
           <div className="mx-auto h-12 w-12 bg-linear-to-r from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center mb-4 shadow-lg">
             <svg
@@ -185,9 +187,7 @@ const VerifyEmail = () => {
           </p>
         </div>
 
-        {/* Main Card */}
         <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8">
-          {/* OTP Input Fields */}
           <form onSubmit={handleVerify} className="space-y-6">
             <div className="flex justify-center space-x-2">
               {otp.map((digit, index) => (
@@ -214,7 +214,6 @@ const VerifyEmail = () => {
               ))}
             </div>
 
-            {/* Error Message */}
             {error && (
               <div className="flex items-center justify-center text-red-500 text-sm animate-fade-in">
                 <svg
@@ -232,7 +231,6 @@ const VerifyEmail = () => {
               </div>
             )}
 
-            {/* Verify Button */}
             <button
               type="submit"
               disabled={loading || otp.join("").length !== 6}
@@ -273,7 +271,6 @@ const VerifyEmail = () => {
             </button>
           </form>
 
-          {/* Resend Section */}
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Didn't receive the code?
@@ -296,7 +293,6 @@ const VerifyEmail = () => {
             </button>
           </div>
 
-          {/* Back to Login */}
           <div className="mt-6 text-center">
             <button
               onClick={() => navigate("/login")}
@@ -307,7 +303,6 @@ const VerifyEmail = () => {
           </div>
         </div>
 
-        {/* Help Text */}
         <p className="mt-6 text-center text-xs text-gray-500 dark:text-gray-500">
           Check your spam folder if you don't see the email in your inbox.
         </p>

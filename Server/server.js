@@ -4,19 +4,16 @@ import path from "path";
 import cors from "cors";
 import morgan from "morgan";
 import { fileURLToPath } from "url";
-import cookieParser from "cookie-parser";
 
 import jobRouter from "./routes/job/JobRoute.js";
 import connectDB from "./database/Connection.js";
 import userRouter from "./routes/user/UserRouter.js";
 import adminRouter from "./routes/admin/adminRoute.js";
-import analyzerRouter from "./routes/ResumeAnalyzer.js";
-import { refreshToken } from "./services/refreshToken.js";
+import analyzerRouter from "./routes/ResumeRoute.js";
 import applicationRoute from "./routes/applicationRoute.js";
 import companyRouter from "./routes/company/CompanyRoute.js";
 import candidateRouter from "./routes/candidate/CandidateRoute.js";
 import authMiddleware from "./middleware/authMiddleware.js";
-
 import Stripe from "stripe";
 import {
   createCheckoutSession,
@@ -27,10 +24,9 @@ const stripe = new Stripe(process.env.SECRET_KEY);
 
 const app = express();
 
+const PORT = process.env.PORT || 8000;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-const PORT = process.env.PORT || 8000;
 
 let cached = global.mongoose || { conn: null, promise: null };
 
@@ -68,11 +64,9 @@ app.post(
   stripeWebhookHandler,
 );
 
-app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev"));
-
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.get("/", (_, res) => {
@@ -80,24 +74,20 @@ app.get("/", (_, res) => {
     message: "Server Running :- Resume Ranking System",
   });
 });
-
-app.use("/api/user", userRouter);
-app.use("/api/resume", analyzerRouter);
-app.use("/api/candidates", candidateRouter);
-app.use("/api/company", companyRouter);
-app.use("/api/jobs", jobRouter);
-app.use("/api/applications", applicationRoute);
-app.use("/api/admin", adminRouter);
-
-app.post("/api/refresh", refreshToken);
-app.post("/api/payment/create-checkout-session", createCheckoutSession);
+app.use("/api/v1/users", userRouter);
+app.use("/api/v1/resume", analyzerRouter);
+app.use("/api/v1/candidates", candidateRouter);
+app.use("/api/v1/company", companyRouter);
+app.use("/api/v1/jobs", jobRouter);
+app.use("/api/v1/applications", applicationRoute);
+app.use("/api/v1/admin", adminRouter);
+app.post("/api/v1/payment/create-checkout-session", createCheckoutSession);
 
 const startServer = async () => {
   try {
     await connect();
-
     app.listen(PORT, "0.0.0.0", () => {
-      console.log(`Server running on port ${PORT}`);
+      console.log(`Server running on port http://localhost:${PORT}`);
     });
   } catch (err) {
     console.error("DB connection failed:", err);

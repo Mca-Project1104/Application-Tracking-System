@@ -1,5 +1,5 @@
 import Job from "../../model/JobModel.js";
-import { User } from "../../model/UserModel.js";
+import  User  from "../../model/UserModel.js";
 import { Company } from "../../model/CompanyModel.js";
 import ApplicationModel from "../../model/ApplicationModel.js";
 
@@ -15,17 +15,14 @@ export const createJob = async (req, res) => {
       });
     }
 
-    // 🔥 Get full company (NOT just name)
     const company = await Company.findById(user.company);
 
-    // 🚨 Subscription check
     if (company.subscription.status !== "ACTIVE") {
       return res.status(403).json({
         message: "Subscription expired. Please upgrade your plan.",
       });
     }
 
-    // 🚨 Job limit check
     if (
       company.limits.maxJobs !== -1 &&
       company.limits.activeJobs >= company.limits.maxJobs
@@ -35,14 +32,12 @@ export const createJob = async (req, res) => {
       });
     }
 
-    // ✅ Create job
     const job = await Job.create({
       ...req.body,
       company: company._id,
       companyName: company.name,
     });
 
-    // 🔥 Increment active jobs count
     await Company.findByIdAndUpdate(company._id, {
       $inc: { "limits.activeJobs": 1 },
     });
@@ -56,6 +51,7 @@ export const createJob = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
 export const getJobs = async (req, res) => {
   try {
     const id = req.user.company;
@@ -89,7 +85,6 @@ export const getJobs = async (req, res) => {
       pages: Math.ceil(total / limit),
     });
   } catch (error) {
-    console.error("Error fetching jobs:", error);
     res
       .status(500)
       .json({ message: "Error fetching jobs", error: error.message });
@@ -113,6 +108,14 @@ export const getAllJobs = async (req, res) => {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
+    const totalApplication = await ApplicationModel.aggregate([
+      {
+        $group: {
+          _id: "$jobId",
+          totalApplication: { $sum: 1 },
+        },
+      },
+    ]);
 
     const total = await Job.countDocuments(query);
 
@@ -126,6 +129,7 @@ export const getAllJobs = async (req, res) => {
       message: "ok",
       data: response,
       total,
+      totalApplication,
       page,
       limit,
       pages: Math.ceil(total / limit),
@@ -137,26 +141,6 @@ export const getAllJobs = async (req, res) => {
       .json({ message: "Error fetching jobs", error: error.message });
   }
 };
-
-// export const deleteJob = async (req, res) => {
-//   try {
-//     const job = await Job.findById(req.params.id);
-
-//     if (!job) {
-//       return res.status(404).json({ message: "Job not found" });
-//     }
-
-//     await Job.findByIdAndDelete(req.params.id);
-
-//     //delete all the application this related
-//     await ApplicationModel.deleteOne({ jobId: req.params.id });
-
-//     res.status(200).json({ message: "Job deleted successfully" });
-//   } catch (error) {
-//     console.error("Error deleting job:", error);
-//     res.status(500).json({ message: "Server Error" });
-//   }
-// };
 
 export const deleteJob = async (req, res) => {
   try {
@@ -178,5 +162,36 @@ export const deleteJob = async (req, res) => {
   } catch (error) {
     console.error("Error deleting job:", error);
     res.status(500).json({ message: "Server Error" });
+  }
+};
+
+export const updateJob = async (req, res) => {
+  try {
+    const { updatedData } = req.body;
+    const data = await Job.findByIdAndUpdate(
+      req.params.jobId,
+      {
+        $set: updatedData,
+      },
+      { new: true },
+    );
+
+    res.status(200).json({ message: "Updated successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const getJob = async (req, res) => {
+  try {
+    const job = await Job.findById(req.params.jobId);
+
+    if (!job) {
+      return res.status(404).json({ message: "Job not found !" });
+    }
+
+    res.status(200).json({ message: "Job found successfully", data: job });
+  } catch (error) {
+    res.status(500).json({ message: "server error" });
   }
 };

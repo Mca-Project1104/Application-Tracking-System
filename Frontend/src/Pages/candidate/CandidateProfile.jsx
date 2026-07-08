@@ -1,7 +1,8 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import api from "../../api/axios";
 import { useAppContext } from "../../context/AppProvider";
 import Loading from "../../Components/Loading/Loading";
+import { toast } from "react-hot-toast";
 
 const CandidateProfile = () => {
   const [loading, setLoading] = useState(false);
@@ -11,15 +12,28 @@ const CandidateProfile = () => {
   const [imagePreview, setImagePreview] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const { setCandidate, candidate, candidateLoading } = useAppContext();
+  const {
+    setCandidate,
+    candidate,
+    candidateLoading,
+    refetchCandidate: fetchCandidateData,
+  } = useAppContext();
+
   const fileInputRef = useRef(null);
 
-  const BASE_URL = "http://localhost:8000"; // single source of truth for API base
+  useEffect(() => {
+    fetchCandidateData();
+  }, []);
+  const [personalbio, setPersonalBio] = useState(candidate?.personal);
 
   const handleDownload = () => {
-    if (confirm("Download Resume.")) {
-      window.open(`${BASE_URL}/${candidate.resumeUrl}`, "_blank");
+    if (!candidate.resumeUrl) {
+      return toast.error("Please Upload your resume");
     }
+    window.open(
+      `${import.meta.env.VITE_BACKEND_URL}/${candidate.resumeUrl}`,
+      "_blank",
+    );
   };
 
   const handleImageChange = (e) => {
@@ -33,6 +47,7 @@ const CandidateProfile = () => {
     }
 
     if (file.size > 10 * 1024 * 1024) {
+      // <10 mb allowed
       alert("File size must be less than 10MB");
       return;
     }
@@ -42,64 +57,20 @@ const CandidateProfile = () => {
     reader.readAsDataURL(file);
   };
 
-  // const handleSaveImage = async () => {
-  //   if (!imagePreview) {
-  //     alert("Please select an image first");
-  //     return;
-  //   }
-
-  //   const file = fileInputRef.current?.files[0];
-  //   if (!file) return;
-
-  //   const formData = new FormData();
-  //   formData.append("profile_image", file);
-  //   formData.append("status", candidate.status);
-
-  //   try {
-  //     setIsUploading(true);
-  //     setUploadProgress(0);
-
-  //     const response = await api.put(
-  //       `/api/candidates/update/${candidate._id}`,
-  //       formData,
-  //       {
-  //         onUploadProgress: (progressEvent) => {
-  //           const percentCompleted = Math.round(
-  //             (progressEvent.loaded * 100) / progressEvent.total,
-  //           );
-  //           setUploadProgress(percentCompleted);
-  //         },
-  //       },
-  //     );
-
-  //     setCandidate(response.data.candidate);
-  //     closeImageModal();
-  //   } catch (error) {
-  //     console.error("Error saving image:", error);
-  //     alert("Save failed. Please try again.");
-  //   } finally {
-  //     setIsUploading(false);
-  //   }
-  // };
-  const handleSaveImage = async () => {
-    if (!imagePreview) {
-      alert("Please select an image first");
-      return;
-    }
-
+  const handleUpdate = async () => {
     const formData = new FormData();
     const file = fileInputRef.current?.files[0];
     if (file) {
       formData.append("profile_image", file);
     }
-    formData.append("status", candidate.status);
+    formData.append("personal", personalbio);
 
     try {
       setIsUploading(true);
       setUploadProgress(0);
 
       const response = await api.put(
-        `/api/candidates/update/${candidate._id}`, // Use dynamic ID
+        `/api/v1/candidates/update/${candidate._id}`,
         formData,
         {
           onUploadProgress: (progressEvent) => {
@@ -111,36 +82,14 @@ const CandidateProfile = () => {
         },
       );
 
-      console.log(response);
-
-      // Update candidate state with response data
       setCandidate(response.data.candidate);
       closeImageModal();
+      fetchCandidateData();
     } catch (error) {
       console.error("Error saving image:", error);
       alert("Save failed. Please try again.");
     } finally {
       setIsUploading(false);
-    }
-  };
-  const handleRemoveImage = async () => {
-    try {
-      const formData = new FormData();
-      formData.append("profile_image", "");
-      formData.append("status", candidate.status);
-
-      const response = await api.put(
-        `/api/candidates/update/${candidate._id}`,
-        formData,
-      );
-
-      console.log(response);
-
-      setCandidate(response.data.candidate);
-      closeImageModal();
-    } catch (error) {
-      console.error("Error removing image:", error);
-      alert("Failed to remove image. Please try again.");
     }
   };
 
@@ -152,8 +101,6 @@ const CandidateProfile = () => {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  // ── colour helpers ────────────────────────────────────────────────────────
-
   const getLevelColor = (level) => {
     switch (level) {
       case "Expert":
@@ -162,7 +109,7 @@ const CandidateProfile = () => {
         return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
       case "Intermediate":
         return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
-      case "Beginner": // Fixed typo: was "Beginne r"
+      case "Beginner":
         return "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200";
       default:
         return "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200";
@@ -185,9 +132,7 @@ const CandidateProfile = () => {
     });
   };
 
-  // ── early returns ─────────────────────────────────────────────────────────
-
-  if (loading || candidateLoading) {
+  if (loading) {
     return <Loading detail={"loading .."} />;
   }
 
@@ -211,10 +156,8 @@ const CandidateProfile = () => {
   }
 
   if (!candidate) {
-    return <Loading detail={"No candidate data found"} />;
+    return <Loading detail={"Error : 404"} />;
   }
-
-  // ── derived data (safe defaults so .map never blows up) ───────────────────
 
   const skills = candidate.skills ?? [];
   const experience = candidate.experience ?? [];
@@ -227,25 +170,23 @@ const CandidateProfile = () => {
     : null;
 
   return (
-    <div className="space-y-2 p-2 min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* ── Header card ── */}
+    <div className="space-y-2 p-1 min-h-screen bg-gray-50 dark:bg-gray-900">
       <div
         className={`bg-white sticky top-15  dark:bg-gray-800 shadow-lg rounded-lg p-2 ${
           isEditingImage ? "opacity-10 pointer-events-none" : ""
         }`}
       >
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
-          {/* Avatar + name */}
           <div className="flex items-center">
             <div className="relative group">
               {profileImageSrc ? (
                 <img
-                  className="h-20 w-20 rounded-full object-cover"
+                  className="h-10 w-10 rounded-full object-cover lg:w-20 lg:h-20 md:w-15 md:h-15"
                   src={candidate.profile_image}
                   alt={candidate.user_id?.firstName}
                 />
               ) : (
-                <div className="h-20 w-20 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
+                <div className="h-10 w-10 lg:w-20 lg:h-20 md:w-15 md:h-15 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
                   <svg
                     className="h-10 w-10 text-gray-400 dark:text-gray-500"
                     fill="currentColor"
@@ -255,14 +196,50 @@ const CandidateProfile = () => {
                   </svg>
                 </div>
               )}
+            </div>
 
-              {/* Edit overlay */}
+            <div className="ml-6">
+              <h1 className="text-xl lg:text-2xl  capitalize font-bold text-gray-900 dark:text-white">
+                {candidate.user_id?.firstName} {candidate.user_id?.lastName}
+              </h1>
+              <p className="text-lg text-gray-600 dark:text-gray-300">
+                {candidate.position}
+              </p>
+              <div className=" flex flex-wrap items-center gap-2 sm:gap-4">
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  {formatDate(candidate.createdAt)}
+                </span>
+                <div className="flex items-center text-gray-500 dark:text-gray-400">
+                  <span className="text-sm font-medium text-gray-500 dark:text-gray-400 mr-1">
+                    Score:
+                  </span>
+                  <span
+                    className={`text-sm font-bold ${getScoreColor(candidate.ats_score)}`}
+                  >
+                    {candidate.ats_score}
+                  </span>
+                  /100
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="capitalize grid grid-cols-2 gap-3 w-full lg:w-auto md:w-auto sm:w-auto mt-4 sm:mt-0 ">
+            <div className="">
               <button
                 onClick={() => setIsEditingImage(true)}
-                className="absolute inset-0 h-20 w-20 rounded-full bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                className=" capitalize  items-center w-full px-4 py-2 active:scale-95 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                edit
+              </button>
+            </div>
+            <div>
+              <button
+                onClick={handleDownload}
+                className="inline-flex items-center w-full px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
                 <svg
-                  className="h-8 w-8 text-white"
+                  className="mr-2 -ml-1 h-5 w-5 text-gray-500 dark:text-gray-400"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -270,111 +247,39 @@ const CandidateProfile = () => {
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                    strokeWidth="2"
+                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                   />
                 </svg>
+                Resume
               </button>
             </div>
-
-            <div className="ml-6">
-              <h1 className="text-2xl capitalize font-bold text-gray-900 dark:text-white">
-                {candidate.user_id?.firstName} {candidate.user_id?.lastName}
-              </h1>
-              <p className="text-lg text-gray-600 dark:text-gray-300">
-                {candidate.position}
-              </p>
-              <div className="mt-2 flex flex-wrap items-center gap-2 sm:gap-4">
-                <span className="text-sm text-gray-500 dark:text-gray-400">
-                  Applied on {formatDate(candidate.createdAt)}
-                </span>
-                <div className="flex items-center">
-                  <span className="text-sm font-medium text-gray-500 dark:text-gray-400 mr-1">
-                    Score:
-                  </span>
-                  <span
-                    className={`text-lg font-bold ${getScoreColor(candidate.ats_score)}`}
-                  >
-                    {candidate.ats_score}/100
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Action buttons */}
-          <div className="flex flex-wrap gap-2 mt-4 sm:mt-0">
-            <button className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-              <svg
-                className="mr-2 -ml-1 h-5 w-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                />
-              </svg>
-              Schedule Interview
-            </button>
-            <button
-              onClick={handleDownload}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              <svg
-                className="mr-2 -ml-1 h-5 w-5 text-gray-500 dark:text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
-              Download Resume
-            </button>
           </div>
         </div>
 
-        {/* Personal bio */}
-        <div className="mt-4 flex items-start gap-2">
+        <div className="mt-2 hidden items-start gap-2  lg:flex">
           <p className="text-sm text-gray-600 dark:text-gray-300">
             {candidate.personal}
           </p>
-          <span className="cursor-pointer shrink-0" title="Edit">
-            🖋️
-          </span>
         </div>
       </div>
 
-      {/* ── Image edit modal ── */}
       {isEditingImage && (
-        <div className="fixed inset-0  flex items-center justify-center z-20 p-10  bg-opacity-40">
-          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6 shadow-xl">
+        <div className="fixed inset-0  flex items-center justify-center z-20 p-1  bg-opacity-40">
+          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-lvh w-full p-6 shadow-xl ">
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-              Edit Profile Picture
+              Edit Profile
             </h3>
 
-            {/* Preview */}
             <div className="flex justify-center mb-4">
               {imagePreview || profileImageSrc ? (
-                <img
-                  className="h-32 w-32 rounded-full object-cover"
-                  src={imagePreview ?? profileImageSrc}
-                  alt="Profile preview"
-                />
+                <div className="relative">
+                  <img
+                    className=" h-32 w-32 rounded-full object-cover "
+                    src={imagePreview ?? profileImageSrc}
+                    alt="Profile preview"
+                  />
+                </div>
               ) : (
                 <div className="h-32 w-32 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
                   <svg
@@ -388,7 +293,6 @@ const CandidateProfile = () => {
               )}
             </div>
 
-            {/* Upload progress */}
             {isUploading && (
               <div className="mb-4">
                 <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-1">
@@ -404,8 +308,7 @@ const CandidateProfile = () => {
               </div>
             )}
 
-            {/* Buttons */}
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-3 p-1">
               <input
                 ref={fileInputRef}
                 type="file"
@@ -413,6 +316,19 @@ const CandidateProfile = () => {
                 onChange={handleImageChange}
                 className="hidden"
               />
+              <div>
+                <div className="flxe space-x-4">
+                  <textarea
+                    type="text"
+                    placeholder="Enter Bio"
+                    rows={3}
+                    value={personalbio}
+                    onChange={(e) => setPersonalBio(e.target.value)}
+                    className="border rounded w-full font-light p-1 text-sm lg:text-md"
+                    required
+                  ></textarea>
+                </div>
+              </div>
 
               <button
                 onClick={() => fileInputRef.current?.click()}
@@ -437,19 +353,13 @@ const CandidateProfile = () => {
 
               <div className="flex gap-2">
                 <button
-                  onClick={handleSaveImage}
-                  disabled={!imagePreview || isUploading}
+                  onClick={handleUpdate}
+                  disabled={isUploading}
                   className="flex-1 inline-flex justify-center items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Save
                 </button>
-                <button
-                  onClick={handleRemoveImage}
-                  disabled={isUploading}
-                  className="flex-1 inline-flex justify-center items-center px-4 py-2 border border-red-300 dark:border-red-600 shadow-sm text-sm font-medium rounded-md text-red-700 dark:text-red-300 bg-white dark:bg-gray-700 hover:bg-red-50 dark:hover:bg-red-900 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Remove
-                </button>
+
                 <button
                   onClick={closeImageModal}
                   disabled={isUploading}
@@ -469,13 +379,11 @@ const CandidateProfile = () => {
         </div>
       )}
 
-      {/* ── Tab panel ── */}
       <div
         className={`bg-white dark:bg-gray-800 shadow-lg rounded-lg ${
           isEditingImage ? "opacity-10 pointer-events-none" : ""
         }`}
       >
-        {/* Tab bar */}
         <div className="border-b border-gray-200 dark:border-gray-700">
           <nav
             className="-mb-px flex space-x-8 px-6 overflow-x-auto"
@@ -505,7 +413,6 @@ const CandidateProfile = () => {
         </div>
 
         <div className="p-6">
-          {/* ── Resume tab ── */}
           {activeTab === "resume" && (
             <div className="space-y-6">
               <div>
@@ -566,7 +473,6 @@ const CandidateProfile = () => {
             </div>
           )}
 
-          {/* ── Skills tab ── */}
           {activeTab === "skills" && (
             <div>
               <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
@@ -577,9 +483,8 @@ const CandidateProfile = () => {
                   No skills listed.
                 </p>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-4 md:grid-cols-4 gap-4">
                   {skills.map((skill, index) => {
-                    // skill can be a string or { name, level } object
                     const skillName =
                       typeof skill === "object" ? skill.name : skill;
                     const skillLevel =
@@ -587,15 +492,10 @@ const CandidateProfile = () => {
                     return (
                       <div
                         key={index}
-                        className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-600 rounded-lg"
+                        className="flex items-center p-3 border border-gray-200 dark:border-gray-600 rounded-lg"
                       >
                         <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                           {skillName}
-                        </span>
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getLevelColor(skillLevel)}`}
-                        >
-                          {skillLevel}
                         </span>
                       </div>
                     );
@@ -605,8 +505,7 @@ const CandidateProfile = () => {
             </div>
           )}
 
-          {/* ── Experience tab ── */}
-          {activeTab === "experience" && (
+          {experience.length > 1 && activeTab === "experience" && (
             <div className="space-y-2">
               <h3 className="text-lg font-medium text-gray-900 dark:text-white">
                 Work Experience
@@ -632,10 +531,9 @@ const CandidateProfile = () => {
             </div>
           )}
 
-          {/* ── Education tab ── */}
           {activeTab === "education" && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+            <div className="">
+              <h3 className="text-lg pb-5 font-medium text-gray-900 dark:text-white">
                 Education
               </h3>
               {education.length === 0 ? (
@@ -644,17 +542,14 @@ const CandidateProfile = () => {
                 </p>
               ) : (
                 education.map((edu, index) => (
-                  <div
-                    key={index}
-                    className="border-l-4 border-purple-500 dark:border-purple-400 pl-4"
-                  >
+                  <div key={index} className="">
                     {typeof edu === "object" ? (
                       <>
                         <div className="flex flex-col sm:flex-row sm:justify-between">
                           <h4 className="text-base font-medium text-gray-900 dark:text-white">
                             {edu.degree}
                           </h4>
-                          <span className="text-sm text-gray-500 dark:text-gray-400 mt-1 sm:mt-0">
+                          <span className="text-sm text-gray-500 dark:text-gray-400 sm:mt-0">
                             {formatDate(edu.startDate)} –{" "}
                             {edu.endDate === "Present"
                               ? "Present"
@@ -671,7 +566,6 @@ const CandidateProfile = () => {
                         )}
                       </>
                     ) : (
-                      // Fallback: edu is a plain string
                       <p className="text-sm text-gray-900 dark:text-white">
                         {edu}
                       </p>
@@ -682,10 +576,9 @@ const CandidateProfile = () => {
             </div>
           )}
 
-          {/* ── Projects tab ── */}
           {activeTab === "projects" && (
-            <div className="space-y-6">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+            <div className="">
+              <h3 className="text-lg pb-5 font-medium text-gray-900 dark:text-white">
                 Projects
               </h3>
               {projects.length === 0 ? (
@@ -694,12 +587,9 @@ const CandidateProfile = () => {
                 </p>
               ) : (
                 projects.map((project, index) => (
-                  <div
-                    key={index}
-                    className="border border-gray-200 dark:border-gray-600 rounded-lg p-4"
-                  >
+                  <div key={index} className="">
                     <div className="flex flex-col sm:flex-row sm:justify-between">
-                      <h4 className="text-base font-medium text-gray-900 dark:text-white">
+                      <h4 className=" text-sm text-gray-900 dark:text-white">
                         {project}
                       </h4>
                     </div>
@@ -722,10 +612,9 @@ const CandidateProfile = () => {
             </div>
           )}
 
-          {/* ── Certifications tab ── */}
           {activeTab === "certifications" && (
-            <div className="space-y-6">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+            <div>
+              <h3 className="text-lg pb-5 font-medium text-gray-900 dark:text-white">
                 Certifications
               </h3>
               {certifications.length === 0 ? (
@@ -734,12 +623,9 @@ const CandidateProfile = () => {
                 </p>
               ) : (
                 certifications.map((cert, index) => (
-                  <div
-                    key={index}
-                    className="border border-gray-200 dark:border-gray-600 rounded-lg p-4"
-                  >
+                  <div key={index} className="">
                     <div className="flex flex-col sm:flex-row sm:justify-between">
-                      <h4 className="text-base font-medium text-gray-900 dark:text-white">
+                      <h4 className="text-sm text-gray-900 dark:text-white">
                         {cert}
                       </h4>
                     </div>

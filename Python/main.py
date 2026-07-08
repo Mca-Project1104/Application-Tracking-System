@@ -7,21 +7,17 @@ from datetime import  datetime
 from dotenv import load_dotenv # type: ignore
 from grock_model_api import ats_router
 
-load_dotenv()           #config env file
-
+load_dotenv()       
 app = FastAPI()
-
-
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8000"],   # Allow only backed server
+    allow_origins=["http://localhost:8000"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-#default routes
 @app.get("/")
 async def read_root():
     date=datetime.now()

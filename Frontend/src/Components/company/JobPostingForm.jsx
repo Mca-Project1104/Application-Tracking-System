@@ -1,16 +1,26 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useAppContext } from "../../context/AppProvider";
 import api from "../../api/axios";
+import Loading from "../Loading/Loading";
+import { useParams } from "react-router-dom";
+import toast from "react-hot-toast";
 
 const JobPostingForm = () => {
-  const { companydata, navigate, currency } = useAppContext();
+  const {
+    companydata,
+    navigate,
+    currency,
+    token,
+    userRole,
+    refetchDashboard: fetchCompanyDashbord,
+  } = useAppContext();
   const [isloading, setIsloading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [newSkill, setNewSkill] = useState("");
   const [newBenefit, setNewBenefit] = useState("");
-  const token = localStorage.getItem("token");
-  const userRole = localStorage.getItem("userRole");
+  const [jobdata, setJobData] = useState([]);
+  const { jobId } = useParams();
 
   const initializeFormData = useCallback(() => {
     return {
@@ -37,6 +47,7 @@ const JobPostingForm = () => {
     };
   }, [companydata]);
 
+  const isEditMode = Boolean(jobId);
   const [formData, setFormData] = useState(initializeFormData);
   const [errors, setErrors] = useState({});
 
@@ -48,11 +59,68 @@ const JobPostingForm = () => {
         companyName: companydata?.company.name || "",
         location: companydata?.company.location || "",
         contactEmail: companydata?.email || "",
-        postedBy: companydata?.name || "",
         department: companydata?.department || "",
       }));
     }
   }, [companydata]);
+
+  useEffect(() => {
+    const findJob = async () => {
+      try {
+        if (!jobId) return;
+
+        const res = await api.get(`/api/v1/jobs/${jobId}`);
+        console.log(res);
+        setJobData(res.data.data);
+        setFormData(res.data.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    if (jobId) {
+      findJob();
+    }
+  }, [jobId]);
+
+  const handleModify = async () => {
+    try {
+      if (!jobId) return;
+
+      const response = await api.patch(`/api/v1/jobs/update/${jobId}`, {
+        updatedData: {
+          title: formData.title,
+          companyName: formData.companyName,
+          location: formData.location,
+          type: formData.type,
+          experience: formData.experience,
+          salaryMin: formData.salaryMin,
+          salaryMax: formData.salaryMax,
+          description: formData.description,
+          skills: formData.skillsRequired,
+          featured: formData.featured,
+          postedBy: formData.postedBy,
+          status: formData.status,
+          department: formData.department,
+          remoteOption: formData.remoteOption,
+          benefits: formData.benefits,
+          requirements: formData.requirements,
+          responsibilities: formData.responsibilities,
+          openingJob: formData.openingJob,
+          applicationDeadline: formData.applicationDeadline,
+          contactEmail: formData.contactEmail,
+        },
+      });
+
+      if (response.status === 200) {
+        fetchCompanyDashbord();
+        toast.success("Updated Successfully");
+        navigate("/company/jobs");
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const jobTypes = [
     "Full-time",
@@ -61,6 +129,7 @@ const JobPostingForm = () => {
     "Internship",
     "Temporary",
   ];
+
   const experienceLevels = [
     "Entry-level",
     "Mid-level",
@@ -144,7 +213,7 @@ const JobPostingForm = () => {
         newErrors.requirements = "Requirements are required";
       if (!formData.responsibilities.trim())
         newErrors.responsibilities = "Responsibilities are required";
-      if (formData.skills.length === 0)
+      if (formData.skills === 0)
         newErrors.skills = "At least one skill is required";
     } else if (step === 3) {
       if (!formData.postedBy.trim())
@@ -219,14 +288,16 @@ const JobPostingForm = () => {
         postedBy: formData.postedBy,
       };
 
-      const res = await api.post("/api/jobs/create", jobData, {
-        headers: { Authorization: `Bearer ${token}` },
+      const res = await api.post("/api/v1/jobs/add", jobData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
+      fetchCompanyDashbord();
 
       navigate(`/${userRole}/jobs`);
     } catch (error) {
-      console.error("Server Error:", error.response.data.message);
-      alert(error.response.data.message);
+      toast.error(error.response.data.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -245,92 +316,80 @@ const JobPostingForm = () => {
     }
   };
 
+  const skills = formData.skills || formData.skillsRequired || [];
   if (isloading || !companydata?.company) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-        <p className="ml-3 text-gray-600 dark:text-gray-300">
-          Loading company data...
-        </p>
-      </div>
-    );
+    return <Loading detail={" Loading company data..."} />;
   }
 
   return (
-    <div className=" relative top-8 w-full dark:bg-gray-900 bg-gray-50">
+    <div className=" relative top-0 w-full dark:bg-gray-900 bg-gray-50">
       <div className="dark:bg-gray-900 bg-gray-50">
         <div className="py-5 px-2 dark:bg-gray-900 bg-gray-50 mx-auto w-ful">
-          {/* Step Indicators */}
           <div className="mb-8">
             <div className="flex items-center justify-between">
-              {[1, 2, 3].map(
-                (
-                  step, //check dynamically select indicator
-                ) => (
-                  <React.Fragment key={step}>
-                    <div className="flex items-center">
-                      <div
-                        className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-300 ${
-                          currentStep === step
-                            ? "bg-blue-600 text-white"
-                            : currentStep > step
-                              ? "bg-green-600 text-white"
-                              : "bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400"
-                        }`}
-                      >
-                        {currentStep > step ? (
-                          <svg
-                            className="w-5 h-5"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                        ) : (
-                          step
-                        )}
-                      </div>
-                      <span
-                        className={`ml-2 text-sm font-medium ${
-                          currentStep === step
-                            ? "dark:text-white text-gray-900"
-                            : currentStep > step
-                              ? "dark:text-green-400 text-green-600"
-                              : "dark:text-gray-500 text-gray-400"
-                        }`}
-                      >
-                        {step === 1
-                          ? "Basic Info"
-                          : step === 2
-                            ? "Job Details"
-                            : "Review"}
-                      </span>
+              {[1, 2, 3].map((step) => (
+                <React.Fragment key={step}>
+                  <div className="flex items-center">
+                    <div
+                      className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-300 ${
+                        currentStep === step
+                          ? "bg-blue-600 text-white"
+                          : currentStep > step
+                            ? "bg-green-600 text-white"
+                            : "bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400"
+                      }`}
+                    >
+                      {currentStep > step ? (
+                        <svg
+                          className="w-5 h-5"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      ) : (
+                        step
+                      )}
                     </div>
-                    {step < 3 && (
-                      <div
-                        className={`flex-1 h-1 mx-4 transition-all duration-300 ${
-                          currentStep > step
-                            ? "bg-green-600"
-                            : "bg-gray-300 dark:bg-gray-600"
-                        }`}
-                      ></div>
-                    )}
-                  </React.Fragment>
-                ),
-              )}
+                    <span
+                      className={`ml-2 text-sm font-medium ${
+                        currentStep === step
+                          ? "dark:text-white text-gray-900"
+                          : currentStep > step
+                            ? "dark:text-green-400 text-green-600"
+                            : "dark:text-gray-500 text-gray-400"
+                      }`}
+                    >
+                      {step === 1
+                        ? "Basic Info"
+                        : step === 2
+                          ? "Job Details"
+                          : "Review"}
+                    </span>
+                  </div>
+                  {step < 3 && (
+                    <div
+                      className={`flex-1 h-1 mx-4 transition-all duration-300 ${
+                        currentStep > step
+                          ? "bg-green-600"
+                          : "bg-gray-300 dark:bg-gray-600"
+                      }`}
+                    ></div>
+                  )}
+                </React.Fragment>
+              ))}
             </div>
           </div>
 
-          {/* Form Container */}
-          <div className="w-full p-2 dark:bg-gray-900 bg-white shadow-xl rounded-xl overflow-hidden transition-all duration-300">
-            <div className=" sm:p-8 lg:p-10">
+          <div className="w-full p-1 dark:bg-gray-900 bg-white shadow-xl rounded-xl overflow-hidden transition-all duration-300">
+            <div className=" sm:p-6 lg:p-8">
               {currentStep === 1 && (
-                <div className="space-y-6">
-                  <h2 className="text-xl sm:text-2xl font-semibold dark:text-white text-gray-900 mb-6">
+                <div className="space-y-5">
+                  <h2 className="text-xl sm:text-2xl font-semibold dark:text-white text-gray-900 mb-5">
                     Basic Information
                   </h2>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -512,7 +571,6 @@ const JobPostingForm = () => {
                 </div>
               )}
 
-              {/* Step 2: Job Details */}
               {currentStep === 2 && (
                 <div className="space-y-6">
                   <h2 className="text-xl sm:text-2xl font-semibold dark:text-white text-gray-900 mb-6">
@@ -616,15 +674,17 @@ const JobPostingForm = () => {
                         <input
                           type="text"
                           value={newSkill}
+                          disabled={isEditMode}
                           onChange={(e) => setNewSkill(e.target.value)}
                           onKeyPress={(e) => handleKeyPress(e, handleAddSkill)}
                           className="flex-1 px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 border dark:border-gray-600 dark:bg-gray-700 dark:text-white border-gray-300 bg-white text-gray-900"
-                          placeholder="Add a skill (e.g. JavaScript)"
+                          placeholder={`${isEditMode ? "Skill not changes " : "Add a skill (e.g. JavaScript)"}`}
                         />
                         <button
                           type="button"
+                          disabled={isEditMode}
                           onClick={handleAddSkill}
-                          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 font-medium transform hover:scale-105"
+                          className={`px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 font-medium transform hover:scale-105 ${isEditMode ? "cursor-no-drop" : ""}`}
                         >
                           Add Skill
                         </button>
@@ -646,22 +706,25 @@ const JobPostingForm = () => {
                         </p>
                       )}
                       <div className="flex flex-wrap gap-2">
-                        {formData.skills.map((skill, index) => (
-                          <span
-                            key={index}
-                            className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 dark:bg-blue-900 dark:text-blue-200 dark:hover:bg-blue-800 bg-blue-100 text-blue-800 hover:bg-blue-200"
-                          >
-                            {skill}
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveSkill(skill)}
-                              className="ml-2 hover:text-blue-800 dark:hover:text-blue-100 transition-colors dark:text-blue-300 text-blue-600"
+                        {(formData.skills || formData.skillsRequired).map(
+                          (skill, index) => (
+                            <span
+                              key={index}
+                              className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 dark:bg-blue-900 dark:text-blue-200 dark:hover:bg-blue-800 bg-blue-100 text-blue-800 hover:bg-blue-200"
                             >
-                              ×
-                            </button>
-                          </span>
-                        ))}
-                        {formData.skills.length === 0 && (
+                              {skill}
+                              <button
+                                type="button"
+                                disabled={isEditMode}
+                                onClick={() => handleRemoveSkill(skill)}
+                                className="ml-2 hover:text-blue-800 dark:hover:text-blue-100 transition-colors dark:text-blue-300 text-blue-600"
+                              >
+                                ×
+                              </button>
+                            </span>
+                          ),
+                        )}
+                        {(formData.skills && formData.skillsRequired) === 0 && (
                           <p className="text-sm dark:text-gray-500 text-gray-400 italic">
                             No skills added yet. Add at least one skill to
                             continue.
@@ -682,7 +745,7 @@ const JobPostingForm = () => {
                           onKeyPress={(e) =>
                             handleKeyPress(e, handleAddBenefit)
                           }
-                          className="flex-1 px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition-all duration-200 border dark:border-gray-600 dark:bg-gray-700 dark:text-white border-gray-300 bg-white text-gray-900"
+                          className="capitalize flex-1 px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition-all duration-200 border dark:border-gray-600 dark:bg-gray-700 dark:text-white border-gray-300 bg-white text-gray-900"
                           placeholder="Add a benefit (e.g. Health Insurance)"
                         />
                         <button
@@ -734,14 +797,12 @@ const JobPostingForm = () => {
                 </div>
               )}
 
-              {/* Step 3: Review & Submit */}
               {currentStep === 3 && (
                 <div className="space-y-6">
                   <h2 className="text-xl sm:text-2xl font-semibold dark:text-white text-gray-900 mb-6">
                     Review & Submit
                   </h2>
 
-                  {/* Review Section */}
                   <div className="dark:bg-gray-800 bg-gray-50 rounded-lg p-6 space-y-4">
                     <h3 className="text-lg font-semibold dark:text-white text-gray-900 mb-4">
                       Job Information Preview
@@ -793,7 +854,7 @@ const JobPostingForm = () => {
                           Experience Level:
                         </span>
                         <p className="dark:text-white text-gray-900">
-                          {formData.experience}
+                          {formData?.experience}
                         </p>
                       </div>
                       <div>
@@ -852,15 +913,18 @@ const JobPostingForm = () => {
                         Skills Required:
                       </span>
                       <div className="flex flex-wrap gap-2 mt-1">
-                        {formData.skills.length > 0 ? (
-                          formData.skills.map((skill, index) => (
-                            <span
-                              key={index}
-                              className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium dark:bg-blue-900 dark:text-blue-200 bg-blue-100 text-blue-800"
-                            >
-                              {skill}
-                            </span>
-                          ))
+                        {(formData.skills || formData.skillsRequired).length >
+                        0 ? (
+                          (formData.skills || formData.skillsRequired).map(
+                            (skill, index) => (
+                              <span
+                                key={index}
+                                className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium dark:bg-blue-900 dark:text-blue-200 bg-blue-100 text-blue-800"
+                              >
+                                {skill}
+                              </span>
+                            ),
+                          )
                         ) : (
                           <p className="dark:text-gray-400 text-gray-500 italic">
                             No skills specified
@@ -888,7 +952,6 @@ const JobPostingForm = () => {
                     )}
                   </div>
 
-                  {/* Additional Information */}
                   <div className="space-y-4">
                     <h3 className="text-lg font-semibold dark:text-white text-gray-900">
                       Additional Information
@@ -947,7 +1010,13 @@ const JobPostingForm = () => {
                         <input
                           type="date"
                           name="applicationDeadline"
-                          value={formData.applicationDeadline}
+                          value={
+                            formData.applicationDeadline
+                              ? new Date(formData.applicationDeadline)
+                                  .toISOString()
+                                  .split("T")[0]
+                              : formData.applicationDeadline
+                          }
                           onChange={handleInputChange}
                           min={new Date().toISOString().split("T")[0]}
                           className={`w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${
@@ -1003,7 +1072,6 @@ const JobPostingForm = () => {
                 </div>
               )}
 
-              {/* Navigation Buttons */}
               <div className="flex  sm:flex-row justify-between space-y-3 sm:space-y-0 sm:space-x-4 pt-8 border-t dark:border-gray-700 border-gray-200 mt-8">
                 <div className="flex space-x-3">
                   {currentStep > 1 && (
@@ -1037,77 +1105,33 @@ const JobPostingForm = () => {
                     <>
                       <button
                         type="button"
-                        onClick={() => handleSubmit(false)}
-                        disabled={isSubmitting}
                         className={`px-6 py-3 rounded-lg font-medium text-white transition-all duration-200 transform hover:scale-105 ${
                           isSubmitting
                             ? "bg-gray-400 cursor-not-allowed"
                             : "bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
                         }`}
                       >
-                        {isSubmitting ? (
-                          <span className="flex items-center">
-                            <svg
-                              className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                            >
-                              <circle
-                                className="opacity-25"
-                                cx="12"
-                                cy="12"
-                                r="10"
-                                stroke="currentColor"
-                                strokeWidth="4"
-                              ></circle>
-                              <path
-                                className="opacity-75"
-                                fill="currentColor"
-                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                              ></path>
-                            </svg>
-                            Saving...
-                          </span>
-                        ) : (
-                          "Save as Draft"
-                        )}
+                        {isEditMode ? "Update Draft" : "Save as Draft"}
                       </button>
                       <button
                         type="button"
-                        onClick={() => handleSubmit(true)}
+                        onClick={
+                          isEditMode ? handleModify : () => handleSubmit(true)
+                        }
                         disabled={isSubmitting}
-                        className={`px-6 py-3 rounded-lg font-medium text-white transition-all duration-200 transform hover:scale-105 ${
+                        className={`px-6 py-3 rounded-lg font-medium text-white ${
                           isSubmitting
                             ? "bg-blue-400 cursor-not-allowed"
-                            : "bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            : "bg-blue-600 hover:bg-blue-700"
                         }`}
                       >
-                        {isSubmitting ? (
-                          <span className="flex items-center">
-                            <svg
-                              className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                            >
-                              <circle
-                                className="opacity-25"
-                                cx="12"
-                                cy="12"
-                                r="10"
-                                stroke="currentColor"
-                                strokeWidth="4"
-                              ></circle>
-                              <path
-                                className="opacity-75"
-                                fill="currentColor"
-                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                              ></path>
-                            </svg>
-                            Publishing...
-                          </span>
-                        ) : (
-                          "Publish Job"
-                        )}
+                        {isSubmitting
+                          ? isEditMode
+                            ? "Updating..."
+                            : "Publishing..."
+                          : isEditMode
+                            ? "Update Job"
+                            : "Publish Job"}
                       </button>
                     </>
                   )}

@@ -1,12 +1,11 @@
 import Application from "../model/ApplicationModel.js";
 import Job from "../model/JobModel.js";
 import { Company } from "../model/CompanyModel.js";
-import Candidate from "../model/Candidate.js";
+import Candidate from "../model/CandidateModel.js";
 import axios from "axios";
 import { application } from "express";
-import { InterviewEmail, HiredEmial } from "../utils/sendEmail.js";
+import { InterviewEmail, hiredEmail } from "../utils/sendEmail.js";
 
-// APPLY JOB
 export const applyJob = async (req, res) => {
   try {
     const { jobId, candidateId } = req.body;
@@ -21,37 +20,31 @@ export const applyJob = async (req, res) => {
     }
     const resume = U_candidate.resumeText;
 
+    if (!resume) {
+      return res.status(404).json({ message: "Please upload resume" });
+    }
+
     const payload = {
       resume: resume,
       JD: job?.requirements || job?.responsibilities,
     };
 
-    // groq endpoint calling
-    const response = await axios.post(
-      "http://localhost:8080/api/ats/score",
-      payload,
-    );
+    const response = await axios.post(process.env.PYTHON_SERVER, payload);
 
-    const score = response.data;
+    const score = response?.data;
     const application = new Application({
       jobId,
       candidateId: candidateId,
       candidateSnapshot: U_candidate,
-      resumeText: JSON.stringify(resume), // convert to string
-      resumeUrl: U_candidate.resumeUrl, //statically add iresume path
+      resumeText: JSON.stringify(resume),
+      resumeUrl: U_candidate.resumeUrl,
       resume_Analyse: score,
       score: score.match_score,
     });
 
-    if (score.match_score < 500) {
-      application.status = "rejected";
-    }else{
-      application.status = "applied";
-    }
-
+    application.status = "applied";
     await application.save();
 
-    // update application count
     job.applicationsCount += 1;
     await job.save();
 
@@ -76,9 +69,11 @@ export const getapplications = async (req, res) => {
       })
       .populate({
         path: "candidateId",
-      });
+      })
+      .sort({ createdAt: -1 }) //arrange descending order
+      .select("-candidateSnapshot -resumeText");
 
-    if (application.length <= 0) {
+    if (application.length === 0) {
       return res.status(303).json({ message: "application not found" });
     }
 
@@ -98,7 +93,7 @@ export const getCompanyDashboard = async (req, res) => {
     }
 
     const jobs = await Job.find({ company: company._id }).sort("-createdAt");
-    
+
     const jobIds = jobs.map((job) => job._id);
 
     const applications = await Application.find({
@@ -149,8 +144,6 @@ export const getCompanyDashboard = async (req, res) => {
         status: app.status,
       }));
 
-      
-
     const jobPostings = jobs.map((job) => ({
       id: job._id,
       position: job.title,
@@ -174,33 +167,42 @@ export const getCompanyDashboard = async (req, res) => {
   }
 };
 
-//update status application
-export const manageStatus = async (req, res) => {
+export const updateApplication = async (req, res) => {
   try {
     const { id } = req.params;
-    const { newStatus, details = "" } = req.body;
+    const { newStatus, details, scheduleForm } = req.body;
     const { email } = req.user;
 
-    if (!id || !details) {
-      return res.stats(422).json({ message: "id and details not found " });
+    if (!id) {
+      return res.status(422).json({ message: "id and details not found " });
     }
 
     const response = await Application.findByIdAndUpdate(
       { _id: id, status: { $ne: "hired" } },
       {
-        $set: { status: newStatus, details: details },
+        $set: {
+          status: newStatus,
+          details: details,
+          scheduleForm,
+        },
       },
       {
         new: true,
         runValidators: true,
       },
     )
-      .select("-resumeText")
       .populate({
         path: "jobId",
-        select: "companyName location",
+        select: "companyName location title",
       })
-      .populate("candidateId", "email");
+      .populate({
+        path: "candidateId",
+        populate: {
+          path: "user_id",
+          select: "email firstName lastName",
+        },
+      })
+      .select("-resumeText");
 
     const candidateEmail = response.candidateId.email;
 
@@ -209,14 +211,14 @@ export const manageStatus = async (req, res) => {
     }
 
     if (newStatus === "interview" && response.status === "interview") {
-      if (!response.details) {
+      if (response.scheduleForm == null) {
         return res
           .status(400)
           .json({ message: "Details not fount please set interview detail ." });
       }
-      //manage this response not complete
+
       const data = {
-        userName: response?.details[0].candidateName,
+        username: response?.candidateId?.user_id?.firstName,
         status: response?.status,
         resumeScore: response.score,
         skills: response?.resume_Analyse?.matched_skills,
@@ -226,29 +228,48 @@ export const manageStatus = async (req, res) => {
         interviewLocation: response.details[0].location,
       };
 
-      await InterviewEmail({ email: response.candidateId.email, data: data });
+      await InterviewEmail({
+        email: response.candidateId.user_id?.email,
+        data: data,
+      });
     }
 
-    //send mail successfully hired candidate
     if (newStatus === "hired" && response.status === "hired") {
       if (!response.details) {
-        return res
-          .status(400)
-          .json({ message: "Details not fount please set interview detail ." });
+        return res.status(400).json({
+          message: "Hiring details not found.",
+        });
       }
 
       const data = {
-        username: response?.details[0]?.candidateName,
-        companyName: response.jobId.companyName,
-        joiningDate: response?.details[0]?.date,
-        jobLocation: response.jobId.location,
+        username: response?.candidateId?.user_id?.firstName,
+        companyName: response?.jobId?.companyName,
+        jobPosition: response?.jobId?.title || "N/A",
+        joiningDate: response?.details?.date,
+        jobLocation: response?.jobId?.location,
       };
 
-      await HiredEmial({ email: response.candidateId.email, data: data });
+      await hiredEmail({
+        email: response?.candidateId?.user_id?.email,
+        data,
+      });
     }
 
     res.status(200).json({ message: "Update Successfully .", data: response });
   } catch (error) {
     res.status(500).json({ message: "server error " });
+  }
+};
+
+export const allInterviews = async (req, res) => {
+  try {
+    const data = await Application.find(
+      { _id: req.params.id },
+      { scheduleForm: 1 },
+    );
+
+    res.status(200).json(data);
+  } catch (error) {
+    return res.status(500).json({ message: "server error" });
   }
 };

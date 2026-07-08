@@ -1,8 +1,9 @@
-import Candidate from "../../model/Candidate.js";
-import { User } from "../../model/UserModel.js";
+import Candidate from "../../model/CandidateModel.js";
+import User from "../../model/UserModel.js";
 import { sendVerificationEmail } from "../../utils/sendEmail.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 
 export const registration = async (req, res) => {
   try {
@@ -34,7 +35,6 @@ export const registration = async (req, res) => {
       password: hashedPassword,
       accountType,
       status: accountType === "company" ? "pending" : "accepted",
-
       verificationCode: code,
       verificationCodeExpires: Date.now() + 10 * 60 * 1000, // 10 min
     });
@@ -109,6 +109,9 @@ export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    if ([email, password].some((field) => field.trim() === "")) {
+      return res.status(422).json({ message: "email and password required" });
+    }
     const user = await User.findOne({ email: email });
 
     if (!user) {
@@ -128,25 +131,10 @@ export const login = async (req, res) => {
     }
 
     const accessToken = jwt.sign(
-      { id: user._id, role: user.accountType },
-      process.env.ACCESS_TOKEN_SECRET,
-      { expiresIn: "15m" },
+      { id: user._id, role: user.accountType }, //payload
+      process.env.ACCESS_TOKEN_SECRET, //secret key
+      { expiresIn: "1d" }, //expire time
     );
-
-    const refreshToken = jwt.sign(
-      { id: user._id },
-      process.env.REFRESH_TOKEN_SECRET,
-      { expiresIn: "7d" },
-    );
-
-    user.refreshToken = refreshToken;
-    await user.save();
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
-      path: "/",
-    });
 
     if (user.accountType === "candidate") {
       const candidateExists = await Candidate.findOne({ user_id: user._id });
@@ -154,9 +142,23 @@ export const login = async (req, res) => {
         const candidate = new Candidate({
           user_id: user._id,
         });
+
         await candidate.save();
+        await User.findByIdAndUpdate(user._id, {
+          $set: { candidate: exists._id },
+        });
       }
     }
+
+    if (user.accountType == "admin") {
+      const code = crypto.randomInt(100000, 1000000).toString();
+
+      user.verificationCode = code;
+      user.verificationCodeExpires = Date.now() + 10 * 60 * 1000; // 10 min
+      await user.save();
+      await sendVerificationEmail(user.email, code);
+    }
+
     res.status(200).json({
       message: "Login successful",
       accessToken,
@@ -168,7 +170,7 @@ export const login = async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
@@ -183,7 +185,6 @@ export const forgotPassword = async (req, res) => {
       return res.status(404).json({ message: "Not found user" });
     }
 
-    console.log(password, newpassword);
     const isVerified = await bcrypt.compare(password, user.password);
 
     if (!isVerified) {

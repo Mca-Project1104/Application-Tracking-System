@@ -1,13 +1,26 @@
 import React, { useState, useMemo, useEffect } from "react";
+import Header from "../Components/Header";
 import api from "../api/axios";
+import Loading from "../Components/Loading/Loading";
 import { useAppContext } from "../context/AppProvider";
 import { useLocation } from "react-router-dom";
-import Header from "../Components/Header";
 import { MdDelete } from "react-icons/md";
-import Loading from "../Components/Loading/Loading";
-import { getStatusColors } from "../assets/dummydata.js";
+import { toast } from "react-hot-toast";
+import { getStatusColors, jobTypeColors } from "../assets/dummydata.js";
 
 const JobListings = () => {
+  const {
+    currency,
+    candidate,
+    applications,
+    searchRef,
+    refetchJobs: fetchJobs,
+    refetchDashboard: fetchCompanyDashbord,
+    refetchApplications: fetchApplications,
+    token,
+    userRole,
+    jobs,
+  } = useAppContext();
   const [searchTerm, setSearchTerm] = useState("");
   const [locationFilter, setLocationFilter] = useState("");
   const [experienceFilter, setExperienceFilter] = useState("");
@@ -16,18 +29,18 @@ const JobListings = () => {
   const [moredetail, setMoredetail] = useState(null);
   const [savedJobs, setSavedJobs] = useState(new Set());
   const [appliedJobs, setAppliedJobs] = useState(new Set());
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(jobs ? false : true);
   const [applyingJobId, setApplyingJobId] = useState(null);
-  const [jobs, setJobs] = useState([]);
   const [companies, setCompanies] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
-  const [jobsPerPage] = useState(8);
-
-  const { currency, candidate, applications, searchRef, token, userRole } =
-    useAppContext();
+  const [jobsPerPage] = useState(3);
 
   const id = useLocation();
   const paramsId = String(id.pathname.split("/")[3]);
+
+  useEffect(() => {
+    fetchJobs();
+  }, []);
 
   useEffect(() => {
     if (applications) {
@@ -43,37 +56,9 @@ const JobListings = () => {
         })
         .filter(Boolean);
 
-      console.log("Applied Job IDs:", jobIds);
       setAppliedJobs(new Set(jobIds));
     }
   }, [applications]);
-
-  const fetchJobs = async () => {
-    // const url = userRole === "company" ? "company" : "candidate";
-    try {
-      setLoading(true);
-      const res = await api.get(`/api/jobs/${userRole}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (res.status === 200) {
-        setJobs(res.data.data);
-        setLoading(false);
-      }
-
-      console.log(res);
-    } catch (error) {
-      console.log(error);
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (token) {
-      fetchJobs();
-    }
-  }, []);
 
   const handleApply = async (jobId) => {
     if (!jobId || appliedJobs.has(jobId)) return;
@@ -81,12 +66,22 @@ const JobListings = () => {
     const job = jobs.find((j) => j._id === jobId);
     if (job?.status === "Closed") return;
 
+    if (
+      !confirm(
+        "Are you sure you want to use your uploaded resume to apply for this job?",
+      )
+    ) {
+      return;
+    }
     try {
       setApplyingJobId(jobId);
 
       const response = await api.post(
-        "/api/applications/apply",
-        { jobId: jobId, candidateId: candidate._id },
+        "/api/v1/applications/apply",
+        {
+          jobId: jobId,
+          candidateId: candidate._id,
+        },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -94,15 +89,14 @@ const JobListings = () => {
         },
       );
 
+      fetchApplications(candidate._id);
       if (response.status === 201) {
-        alert(response.data.msg);
-        //  Add to applied jobs set immediately
         setAppliedJobs((prev) => new Set([...prev, jobId]));
+        toast.success("Apply Successfully .");
       }
     } catch (error) {
-      console.log("error:", error);
-      if (error.response?.data?.msg) {
-        alert(error.response.data.msg);
+      if (error.response.data.message) {
+        toast.error(error.response.data.message);
       }
     } finally {
       setApplyingJobId(null);
@@ -113,14 +107,11 @@ const JobListings = () => {
     try {
       if (!confirm("Are you sure delete this job ?")) return;
       setLoading(true);
-      const response = await api.delete(`/api/jobs/delete/job/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await api.delete(`/api/v1/jobs/delete/${id}`);
 
-      console.log(response);
       fetchJobs();
+      fetchCompanyDashbord();
+
       setLoading(false);
     } catch (error) {
       console.log(error?.response?.message);
@@ -166,16 +157,12 @@ const JobListings = () => {
     companies,
   ]);
 
-  console.log(Math.ceil(9.9));
-
-  // Pagination calculations
   const totalJobs = filteredJobs.length;
   const totalPages = Math.ceil(totalJobs / jobsPerPage);
   const indexOfLastJob = currentPage * jobsPerPage;
   const indexOfFirstJob = indexOfLastJob - jobsPerPage;
   const currentJobs = filteredJobs.slice(indexOfFirstJob, indexOfLastJob);
 
-  // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [
@@ -223,21 +210,6 @@ const JobListings = () => {
     }
   };
 
-  const jobTypeColors = {
-    "Full-time":
-      "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
-    "On-site":
-      "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
-    Contract:
-      "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400",
-    Internship:
-      "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
-    Remote:
-      "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400",
-    Closed: "bg-red-300 text-red-800 dark:bg-red-900/30 dark:text-red-400",
-  };
-
-  //  Get application status styling
   const getApplicationStatusStyle = (job) => {
     const isApplied = appliedJobs.has(job._id);
     const isClosed = job.status === "Closed";
@@ -329,7 +301,6 @@ const JobListings = () => {
     };
   };
 
-  //Get application status from context data
   const getApplicationStatus = (jobId) => {
     if (!applications) return null;
     const app = applications.find(
@@ -338,13 +309,11 @@ const JobListings = () => {
     return app?.status || null;
   };
 
-  // Format date for display
   const formatDate = (dateString) => {
     const options = { year: "numeric", month: "short", day: "numeric" };
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
-  // Generate page numbers for pagination
   const getPageNumbers = () => {
     const delta = 2;
     const range = [];
@@ -376,21 +345,20 @@ const JobListings = () => {
     return rangeWithDots;
   };
 
-  console.log(currentJobs);
-
   return (
     <div className="min-h-screen mt-3 bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
       {!loading && (
         <div className="py-2 p-2">
-          {/* Header */}
-          {userRole !== "company" && (
+          <div className="hidden md:block">
+              {userRole !== "company" && (
             <Header
               title={"Job Listings"}
               description={`Find your next opportunity from ${jobs.length} available positions`}
             />
           )}
+          </div>
+        
 
-          {/* Applied jobs count indicator */}
           {userRole === "candidate" && appliedJobs.size > 0 && (
             <div className="mb-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3 flex items-center">
               <svg
@@ -407,8 +375,8 @@ const JobListings = () => {
                 />
               </svg>
               <span className="text-sm text-green-700 dark:text-green-300">
-                You have applied to <strong>{appliedJobs.size}</strong> job
-                {appliedJobs.size > 1 ? "s" : ""}
+                You have applied to <strong>{appliedJobs?.size}</strong> job
+                {appliedJobs?.size > 1 ? "s" : ""}
               </span>
             </div>
           )}
@@ -565,7 +533,6 @@ const JobListings = () => {
             </div>
           </div>
 
-          {/* Job Listings */}
           <div className="space-y-4">
             {currentJobs.length === 0 ? (
               <div className="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-12 text-center transition-all duration-200">
@@ -596,7 +563,7 @@ const JobListings = () => {
                 const isDisabled = isApplied || isClosed;
                 const buttonStyle = getApplicationStatusStyle(job);
                 const appStatus = getApplicationStatus(job._id);
-                const statusColors = getStatusColors(appStatus); // Use new function
+                const statusColors = getStatusColors(appStatus);
 
                 return (
                   <div
@@ -613,7 +580,6 @@ const JobListings = () => {
                       <div className="bg-linear-to-r from-blue-500 to-purple-600 h-1"></div>
                     )}
 
-                    {/*  Applied badge bar - Using statusColors.bar */}
                     {isApplied ? (
                       <div className={`${statusColors.bar} h-1`}></div>
                     ) : (
@@ -649,17 +615,16 @@ const JobListings = () => {
                               <h3 className="text-lg font-semibold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer transition-colors duration-200">
                                 {job.title}
                               </h3>
-                              {job.isFeatured && (
+                              {/* {job.isFeatured && (
                                 <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-linear-to-r from-blue-500 to-purple-600 text-white">
                                   Featured
                                 </span>
-                              )}
-                              {/*  Applied label with status - Using statusColors.badge */}
+                              )} */}
                               {isApplied && (
                                 <span
                                   className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium capitalize ${statusColors.badge}`}
                                 >
-                                  {statusColors.icon} {appStatus || "Applied"}
+                                  {appStatus || "Applied"}
                                 </span>
                               )}
                             </div>
@@ -747,7 +712,6 @@ const JobListings = () => {
                         </div>
                       </div>
 
-                      {/*  Show match score if applied */}
                       {isApplied && applications?.data?.data && (
                         <div className="mt-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3">
                           <div className="flex items-center justify-between">
@@ -829,7 +793,6 @@ const JobListings = () => {
                         </div>
                         {userRole !== "company" && (
                           <>
-                            {/* <p>{formatDate(applications[index].updatedAt)}</p> */}
                             <div className="flex space-x-3">
                               <button
                                 onClick={() => toggleSaveJob(job._id)}
@@ -859,7 +822,6 @@ const JobListings = () => {
                                 {savedJobs.has(job._id) ? "Saved" : "Save Job"}
                               </button>
 
-                              {/*  Apply Button */}
                               <button
                                 onClick={() =>
                                   !isDisabled && handleApply(job._id)
@@ -888,7 +850,6 @@ const JobListings = () => {
             )}
           </div>
 
-          {/* Pagination */}
           {totalPages > 1 && (
             <div className="bg-white dark:bg-gray-800 shadow-sm rounded-xl px-6 py-4 p-3 mt-6 transition-all duration-200 hover:shadow-md">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">

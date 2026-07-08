@@ -1,5 +1,6 @@
 import multer from "multer";
 
+//generally used diskStorage store file locally on pc
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "uploads");
@@ -10,5 +11,4 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage });
-
 export default upload;

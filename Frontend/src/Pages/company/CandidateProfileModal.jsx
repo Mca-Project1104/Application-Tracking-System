@@ -12,9 +12,9 @@ const CandidateProfileModal = ({
   const [loading, setLoading] = useState(false);
   const [downloadingResume, setDownloadingResume] = useState(false);
   const [updateapplication, setUpdateApplication] = useState({});
-  const { token } = useAppContext();
 
-  // Schedule state
+  const { token, refetchDashboard: fetchCompanyDashbord } = useAppContext();
+
   const [scheduleForm, setScheduleForm] = useState({
     date: "",
     time: "",
@@ -25,18 +25,6 @@ const CandidateProfileModal = ({
   });
   const [interviews, setInterviews] = useState([]);
   const [showScheduleForm, setShowScheduleForm] = useState(false);
-
-  // Feedback state
-  const [feedbackList, setFeedbackList] = useState([]);
-  const [feedbackForm, setFeedbackForm] = useState({
-    rating: 0,
-    round: "screening",
-    comment: "",
-    recommendation: "",
-  });
-  const [showFeedbackForm, setShowFeedbackForm] = useState(false);
-
-  // Process state
   const [processStages, setProcessStages] = useState([]);
 
   const stages = [
@@ -65,11 +53,7 @@ const CandidateProfileModal = ({
       label: "Interviews",
       icon: "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z",
     },
-    {
-      id: "feedback",
-      label: "Feedback",
-      icon: "M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z",
-    },
+
     {
       id: "resume",
       label: "Resume",
@@ -81,7 +65,6 @@ const CandidateProfileModal = ({
     if (isOpen && candidate) {
       setActiveTab("overview");
       setShowScheduleForm(false);
-      setShowFeedbackForm(false);
       setScheduleForm({
         date: "",
         time: "",
@@ -90,37 +73,25 @@ const CandidateProfileModal = ({
         notes: "",
         location: "",
       });
-      setFeedbackForm({
-        rating: 0,
-        round: "screening",
-        comment: "",
-        recommendation: "",
-      });
+
       setInterviews([]);
-      setFeedbackList([]);
       fetchInterviews();
-      fetchFeedback();
     }
   }, [isOpen, candidate]);
 
   const fetchInterviews = async () => {
-    // Placeholder - replace with actual API call
-    // try {
-    //   const res = await api.get(`/api/interviews?candidateId=${candidate.candidateId}`, { headers: { Authorization: `Bearer ${token}` } });
-    //   setInterviews(res.data);
-    // } catch (err) {
-    //   console.log(err);
-    // }
-  };
+    try {
+      const res = await api.get(
+        `/api/v1/applications/interviews/${candidate.id}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
 
-  const fetchFeedback = async () => {
-    // Placeholder - replace with actual API call
-    // try {
-    //   const res = await api.get(`/api/feedback?candidateId=${candidate.candidateId}`, { headers: { Authorization: `Bearer ${token}` } });
-    //   setFeedbackList(res.data);
-    // } catch (err) {
-    //   console.log(err);
-    // }
+      setInterviews(res.data);
+    } catch (err) {
+      console.log(err);
+    }
   };
 
   const handleDownloadResume = async () => {
@@ -128,7 +99,7 @@ const CandidateProfileModal = ({
     setDownloadingResume(true);
     try {
       const response = await api.get(
-        `/api/applications/resume/${candidate.id}`,
+        `/api/v1/applications/resume/${candidate.id}`,
         {
           headers: { Authorization: `Bearer ${token}` },
           responseType: "blob",
@@ -146,7 +117,6 @@ const CandidateProfileModal = ({
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      // Fallback: open in new tab if blob download fails
       const baseUrl = api.defaults.baseURL || "";
       window.open(`${baseUrl}/${candidate.resumeUrl}`, "_blank");
     } finally {
@@ -158,17 +128,18 @@ const CandidateProfileModal = ({
     e.preventDefault();
     setLoading(true);
     try {
-      // Replace with actual API call
-      // await api.post("/api/interviews/schedule", { ...scheduleForm, candidateId: candidate.candidateId, jobId: candidate.jobId }, { headers: { Authorization: `Bearer ${token}` } });
+      const response = await api.patch(
+        `/api/v1/applications/${candidate.id}/status`,
+        {
+          newStatus: candidate?.originalStatus || "",
+          scheduleForm,
+          details: scheduleForm,
+        },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
 
-      const newInterview = {
-        id: Date.now().toString(),
-        ...scheduleForm,
-        status: "scheduled",
-        candidateName: candidate.name,
-        createdAt: new Date().toISOString(),
-      };
-      setInterviews([newInterview, ...interviews]);
+      setInterviews([response.data.data.scheduleForm, ...interviews]);
+      fetchCompanyDashbord();
       setShowScheduleForm(false);
       setScheduleForm({
         date: "",
@@ -185,51 +156,16 @@ const CandidateProfileModal = ({
     }
   };
 
-  const handleFeedbackSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      // Replace with actual API call
-      // await api.post("/api/feedback", { ...feedbackForm, candidateId: candidate.candidateId, applicationId: candidate.id }, { headers: { Authorization: `Bearer ${token}` } });
-
-      const newFeedback = {
-        id: Date.now().toString(),
-        ...feedbackForm,
-        reviewer: "Current User",
-        createdAt: new Date().toISOString(),
-      };
-      setFeedbackList([newFeedback, ...feedbackList]);
-      setShowFeedbackForm(false);
-      setFeedbackForm({
-        rating: 0,
-        round: "screening",
-        comment: "",
-        recommendation: "",
-      });
-    } catch (error) {
-      console.log(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleStatusUpdate = async (newStatus) => {
     setLoading(true);
     try {
-      if (newStatus === "hired") {
-        alert("Add Interview Details ");
-        return;
-      }
-
-      // Replace with actual API call
       const res = await api.patch(
-        `/api/applications/applications/${candidate.id}/status`,
+        `/api/v1/applications/${candidate.id}/status`,
         { newStatus: newStatus, details: interviews },
         { headers: { Authorization: `Bearer ${token}` } },
       );
 
       console.log(res);
-      // setUpdateApplication(res.data);
 
       if (onStatusChange) {
         onStatusChange(candidate.id, newStatus);
@@ -282,20 +218,16 @@ const CandidateProfileModal = ({
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
-      {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       ></div>
 
-      {/* Modal */}
-      <div className="absolute inset-0 flex items-start justify-center overflow-y-auto py-4 sm:py-8 px-2 sm:px-4">
-        <div className="relative w-full max-w-4xl bg-white dark:bg-gray-800 rounded-2xl shadow-2xl transition-all duration-300 my-auto">
-          {/* ─── HEADER ─── */}
+      <div className="absolute   inset-0 flex items-start justify-center overflow-y-auto py-4 sm:py-8 px-2 sm:px-4">
+        <div className="absolute w-full max-w-4xl bg-white dark:bg-gray-800 rounded-2xl shadow-2xl transition-all duration-300 my-auto">
           <div className="sticky top-0 z-10 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 rounded-t-2xl">
-            <div className="flex items-start justify-between p-4 sm:p-6">
+            <div className=" flex items-start justify-between p-4 sm:p-6">
               <div className="flex items-center gap-3 sm:gap-4">
-                {/* Avatar */}
                 <div className="relative">
                   {candidate.profile_image ? (
                     <img
@@ -380,7 +312,6 @@ const CandidateProfileModal = ({
                 </div>
               </div>
 
-              {/* Header Actions */}
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleDownloadResume}
@@ -445,7 +376,6 @@ const CandidateProfileModal = ({
               </div>
             </div>
 
-            {/* Tabs */}
             <div className="px-4 sm:px-6 flex gap-1 overflow-x-auto pb-0">
               {tabs.map((tab) => (
                 <button
@@ -471,27 +401,14 @@ const CandidateProfileModal = ({
                     />
                   </svg>
                   {tab.label}
-                  {tab.id === "interviews" && interviews.length > 0 && (
-                    <span className="inline-flex items-center justify-center min-w-4.5 h-4.5 px-1 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-bold">
-                      {interviews.length}
-                    </span>
-                  )}
-                  {tab.id === "feedback" && feedbackList.length > 0 && (
-                    <span className="inline-flex items-center justify-center min-w-4.5 h-4.5 px-1 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-bold">
-                      {feedbackList.length}
-                    </span>
-                  )}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* ─── TAB CONTENT ─── */}
-          <div className="p-4 sm:p-6">
-            {/* ═══ OVERVIEW TAB ═══ */}
+          <div className="relative   p-4 sm:p-6">
             {activeTab === "overview" && (
-              <div className="space-y-6">
-                {/* Skills */}
+              <div className="space-y-6 ">
                 <div>
                   <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
                     Skills
@@ -515,7 +432,6 @@ const CandidateProfileModal = ({
                   </div>
                 </div>
 
-                {/* Info Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <InfoCard
                     label="Applied For"
@@ -524,7 +440,7 @@ const CandidateProfileModal = ({
                   />
                   <InfoCard
                     label="Application ID"
-                    value={candidate.id?.slice(-8)}
+                    value={candidate.id}
                     icon="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"
                   />
                   <InfoCard
@@ -539,12 +455,11 @@ const CandidateProfileModal = ({
                   />
                 </div>
 
-                {/* Quick Actions */}
                 <div>
                   <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
                     Quick Actions
                   </h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     <button
                       onClick={() => setActiveTab("process")}
                       className="flex flex-col items-center gap-2 p-3 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all group"
@@ -591,29 +506,7 @@ const CandidateProfileModal = ({
                         Schedule
                       </span>
                     </button>
-                    <button
-                      onClick={() => setActiveTab("feedback")}
-                      className="flex flex-col items-center gap-2 p-3 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all group"
-                    >
-                      <div className="w-10 h-10 rounded-lg bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <svg
-                          className="w-5 h-5 text-amber-600 dark:text-amber-400"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
-                          />
-                        </svg>
-                      </div>
-                      <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                        Feedback
-                      </span>
-                    </button>
+
                     <button
                       onClick={handleDownloadResume}
                       disabled={downloadingResume || !candidate.resumeUrl}
@@ -642,19 +535,17 @@ const CandidateProfileModal = ({
                 </div>
               </div>
             )}
-            <div className="relative">
+            <div className="  ">
               {activeTab === "process" && (
                 <div className="space-y-6">
-                  {/* Stage Timeline */}
-                  <div>
+                  <div className="relative">
                     <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
                       Recruitment Pipeline
                     </h3>
                     <div className="relative">
-                      {/* Progress line */}
-                      <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700"></div>
+                      <div className="absolute left-8  top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700"></div>
                       <div
-                        className="absolute left-5 top-0 w-0.5 bg-blue-500 transition-all duration-500"
+                        className="absolute left-8 top-0 w-0.5 bg-blue-500 transition-all duration-500"
                         style={{
                           height: `${(getCurrentStageIndex() / (stages.length - 1)) * 100}%`,
                         }}
@@ -676,7 +567,6 @@ const CandidateProfileModal = ({
                               key={stage.id}
                               className="relative flex items-center gap-4 py-3 px-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group"
                             >
-                              {/* Stage dot */}
                               <div
                                 className={`relative  w-10 h-10 rounded-full flex items-center justify-center text-lg transition-all shrink-0 ${
                                   isCurrent
@@ -707,7 +597,6 @@ const CandidateProfileModal = ({
                                 )}
                               </div>
 
-                              {/* Stage info */}
                               <div className="flex-1 flex items-center justify-between min-w-0">
                                 <div>
                                   <p
@@ -722,7 +611,6 @@ const CandidateProfileModal = ({
                                   )}
                                 </div>
 
-                                {/* Action buttons */}
                                 {stage.id !== "rejected" &&
                                   stage.id !== candidate.originalStatus &&
                                   index === getCurrentStageIndex() + 1 && (
@@ -858,9 +746,7 @@ const CandidateProfileModal = ({
                 </div>
               )}
             </div>
-            {/* ═══ PROCESS TAB ═══ */}
 
-            {/* ═══ INTERVIEWS TAB ═══ */}
             {activeTab === "interviews" && (
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
@@ -888,7 +774,6 @@ const CandidateProfileModal = ({
                   </button>
                 </div>
 
-                {/* Schedule Form */}
                 {showScheduleForm && (
                   <form
                     onSubmit={handleScheduleSubmit}
@@ -1024,8 +909,7 @@ const CandidateProfileModal = ({
                   </form>
                 )}
 
-                {/* Interviews List */}
-                {interviews.length === 0 ? (
+                {interviews?.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 text-gray-400 dark:text-gray-500">
                     <svg
                       className="w-16 h-16 mb-3"
@@ -1047,366 +931,98 @@ const CandidateProfileModal = ({
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {interviews.map((interview) => (
-                      <div
-                        key={interview.id}
-                        className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl p-4"
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center shrink-0">
-                              <svg
-                                className="w-5 h-5 text-purple-600 dark:text-purple-400"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="2"
-                                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                                />
-                              </svg>
-                            </div>
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <p className="text-sm font-medium text-gray-900 dark:text-white capitalize">
-                                  {interview.type} Round
-                                </p>
-                                <span
-                                  className={`px-2 py-0.5 rounded-full text-xs font-medium ${getInterviewTypeColor(interview.type)}`}
+                    {interviews[0]._id == candidate.id &&
+                      interviews[0].scheduleForm &&
+                      interviews.map((interview) => (
+                        <div
+                          key={interview._id}
+                          className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl p-4"
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center shrink-0">
+                                <svg
+                                  className="w-5 h-5 text-purple-600 dark:text-purple-400"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
                                 >
-                                  {interview.status}
-                                </span>
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                  />
+                                </svg>
                               </div>
-                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                {new Date(interview.date).toLocaleDateString(
-                                  "en-US",
-                                  {
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <p className="text-sm font-medium text-gray-900 dark:text-white capitalize">
+                                    {interview?.scheduleForm?.type} Round
+                                  </p>
+                                  <span
+                                    className={`px-2 py-0.5 rounded-full text-xs font-medium ${getInterviewTypeColor(interview.type)}`}
+                                  >
+                                    {interview?.scheduleForm?.status}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                  {new Date(
+                                    interview?.scheduleForm?.date,
+                                  ).toLocaleDateString("en-US", {
                                     weekday: "short",
                                     month: "short",
                                     day: "numeric",
-                                  },
-                                )}{" "}
-                                at {interview.time}
-                              </p>
-                              {interview.interviewer && (
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                  with {interview.interviewer}
+                                  })}{" "}
+                                  at {interview?.scheduleForm?.time}
                                 </p>
-                              )}
-                              {interview.location && (
-                                <p className="text-xs text-blue-600 dark:text-blue-400 mt-0.5 flex items-center gap-1">
-                                  <svg
-                                    className="w-3 h-3"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth="2"
-                                      d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-                                    />
-                                  </svg>
-                                  {interview.location}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <button
-                              className="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                              title="Edit"
-                            >
-                              <svg
-                                className="w-4 h-4 text-gray-500"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="2"
-                                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                />
-                              </svg>
-                            </button>
-                            <button
-                              className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                              title="Cancel"
-                            >
-                              <svg
-                                className="w-4 h-4 text-red-500"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="2"
-                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                />
-                              </svg>
-                            </button>
-                          </div>
-                        </div>
-                        {interview.notes && (
-                          <p className="mt-2 text-xs text-gray-500 dark:text-gray-400 pl-13 border-t border-gray-200 dark:border-gray-700 pt-2">
-                            {interview.notes}
-                          </p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* ═══ FEEDBACK TAB ═══ */}
-            {activeTab === "feedback" && (
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                    Candidate Feedback
-                  </h3>
-                  <button
-                    onClick={() => setShowFeedbackForm(!showFeedbackForm)}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-blue-600 text-white hover:bg-blue-700 transition-all"
-                  >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                      />
-                    </svg>
-                    Add Feedback
-                  </button>
-                </div>
-
-                {/* Feedback Form */}
-                {showFeedbackForm && (
-                  <form
-                    onSubmit={handleFeedbackSubmit}
-                    className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl p-4 space-y-4"
-                  >
-                    <h4 className="text-sm font-medium text-gray-900 dark:text-white">
-                      Submit Feedback
-                    </h4>
-
-                    {/* Star Rating */}
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
-                        Rating
-                      </label>
-                      <div className="flex gap-1">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <button
-                            key={star}
-                            type="button"
-                            onClick={() =>
-                              setFeedbackForm({ ...feedbackForm, rating: star })
-                            }
-                            className="text-2xl transition-transform hover:scale-125"
-                          >
-                            {star <= feedbackForm.rating ? (
-                              <span className="text-amber-400">★</span>
-                            ) : (
-                              <span className="text-gray-300 dark:text-gray-600">
-                                ☆
-                              </span>
-                            )}
-                          </button>
-                        ))}
-                        {feedbackForm.rating > 0 && (
-                          <span className="text-xs text-gray-500 dark:text-gray-400 self-center ml-2">
-                            {feedbackForm.rating}/5
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                          Round
-                        </label>
-                        <select
-                          value={feedbackForm.round}
-                          onChange={(e) =>
-                            setFeedbackForm({
-                              ...feedbackForm,
-                              round: e.target.value,
-                            })
-                          }
-                          className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        >
-                          <option value="screening">Screening</option>
-                          <option value="technical">Technical</option>
-                          <option value="hr">HR Round</option>
-                          <option value="managerial">Managerial</option>
-                          <option value="final">Final Round</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                          Recommendation
-                        </label>
-                        <select
-                          value={feedbackForm.recommendation}
-                          onChange={(e) =>
-                            setFeedbackForm({
-                              ...feedbackForm,
-                              recommendation: e.target.value,
-                            })
-                          }
-                          className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        >
-                          <option value="">Select...</option>
-                          <option value="strong_yes">Strong Yes</option>
-                          <option value="yes">Yes</option>
-                          <option value="maybe">Maybe</option>
-                          <option value="no">No</option>
-                          <option value="strong_no">Strong No</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                        Comments
-                      </label>
-                      <textarea
-                        rows={3}
-                        required
-                        placeholder="Share your feedback about the candidate..."
-                        value={feedbackForm.comment}
-                        onChange={(e) =>
-                          setFeedbackForm({
-                            ...feedbackForm,
-                            comment: e.target.value,
-                          })
-                        }
-                        className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                      ></textarea>
-                    </div>
-
-                    <div className="flex justify-end gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setShowFeedbackForm(false)}
-                        className="px-4 py-2 rounded-lg text-xs font-medium text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        disabled={loading}
-                        className="px-4 py-2 rounded-lg text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 transition-all"
-                      >
-                        {loading ? "Submitting..." : "Submit Feedback"}
-                      </button>
-                    </div>
-                  </form>
-                )}
-
-                {/* Feedback List */}
-                {feedbackList.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-12 text-gray-400 dark:text-gray-500">
-                    <svg
-                      className="w-16 h-16 mb-3"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="1.5"
-                        d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
-                      />
-                    </svg>
-                    <p className="text-sm">No feedback submitted yet</p>
-                    <p className="text-xs mt-1">
-                      Click "Add Feedback" to start
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {feedbackList.map((fb) => (
-                      <div
-                        key={fb.id}
-                        className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl p-4"
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/20 flex items-center justify-center shrink-0">
-                              <span className="text-amber-500 text-sm font-bold">
-                                {fb.rating}/5
-                              </span>
-                            </div>
-                            <div>
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <p className="text-sm font-medium text-gray-900 dark:text-white capitalize">
-                                  {fb.round} Round
-                                </p>
-                                <span className="text-amber-400 text-sm">
-                                  {getRatingStars(fb.rating)}
-                                </span>
-                              </div>
-                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                by {fb.reviewer} ·{" "}
-                                {new Date(fb.createdAt).toLocaleDateString(
-                                  "en-US",
-                                  {
-                                    month: "short",
-                                    day: "numeric",
-                                    year: "numeric",
-                                  },
+                                {interview.interviewer && (
+                                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                    with {interview?.scheduleForm?.interviewer}
+                                  </p>
                                 )}
-                              </p>
+                                {interview?.scheduleForm?.location && (
+                                  <p className="text-xs text-blue-600 dark:text-blue-400 mt-0.5 flex items-center gap-1">
+                                    <svg
+                                      className="w-3 h-3"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                                      />
+                                    </svg>
+                                    {interview?.scheduleForm?.location}
+                                  </p>
+                                )}
+                              </div>
                             </div>
                           </div>
-                          {fb.recommendation && (
-                            <span
-                              className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${getRecommendationColor(fb.recommendation)}`}
-                            >
-                              {fb.recommendation.replace("_", " ")}
-                            </span>
+                          {interview?.scheduleForm?.notes && (
+                            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400 pl-13 border-t border-gray-200 dark:border-gray-700 pt-2">
+                              {interview?.scheduleForm?.notes}
+                            </p>
                           )}
                         </div>
-                        <p className="mt-3 text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                          {fb.comment}
-                        </p>
-                      </div>
-                    ))}
+                      ))}
                   </div>
                 )}
               </div>
             )}
 
-            {/* ═══ RESUME TAB ═══ */}
             {activeTab === "resume" && (
               <div className="space-y-6">
-                {/* Header / Actions Toolbar */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
                     <h3 className="text-lg font-bold text-gray-900 dark:text-white">
                       Resume Preview
                     </h3>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {candidate.name}
+                      {candidate?.name}
                     </p>
                   </div>
 
@@ -1453,36 +1069,10 @@ const CandidateProfileModal = ({
                       )}
                       Download
                     </button>
-                    <button
-                      onClick={() => {
-                        const baseUrl = api.defaults.baseURL || "";
-                        window.open(
-                          `${baseUrl}/${candidate.resumeUrl}`,
-                          "_blank",
-                        );
-                      }}
-                      className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
-                    >
-                      <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                        />
-                      </svg>
-                      Open New Tab
-                    </button>
                   </div>
                 </div>
 
                 <div className="relative h-100  bg-gray-100 dark:bg-gray-900/80 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-inner">
-                  {/* used for  view pdf  */}
                   {candidate.resumeUrl ? (
                     <embed
                       className="w-full h-full"
@@ -1509,7 +1099,6 @@ const CandidateProfileModal = ({
                   )}
                 </div>
 
-                {/* Resume Details / Stats */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-center">
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -1545,7 +1134,6 @@ const CandidateProfileModal = ({
   );
 };
 
-// ─── INFO CARD COMPONENT ─────────────────────────────────────
 const InfoCard = ({ label, value, icon }) => (
   <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-800">
     <div className="w-9 h-9 rounded-lg bg-white dark:bg-gray-800 flex items-center justify-center shrink-0 shadow-sm">

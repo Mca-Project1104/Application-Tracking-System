@@ -21,7 +21,7 @@ export const upload_image = async (file) => {
 
     return result.secure_url;
   } catch (error) {
-    console.log("Cloudinary upload error:", error.message);
+    console.log("Cloudinary error:", error.message);
     throw error;
   }
 };

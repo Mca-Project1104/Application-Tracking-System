@@ -1,6 +1,7 @@
 import React from "react";
 
 const Company = () => {
+  const theme = localStorage.getItem("theme");
   const companyLogos = [
     "slack",
     "framer",
@@ -10,6 +11,8 @@ const Company = () => {
     "instagram",
     "facebook",
   ];
+
+  console.log(theme);
 
   return (
     <>
@@ -33,7 +36,7 @@ const Company = () => {
         <div className="absolute left-0 top-0 h-full w-20 z-10 pointer-events-none " />
         <div
           className="marquee-inner h-auto flex will-change-transform w-full"
-          style={{ animationDuration: "7s" }}
+          style={{ animationDuration: "8s" }}
         >
           <div className="flex">
             {[...companyLogos, ...companyLogos].map((company, index) => (
@@ -41,7 +44,7 @@ const Company = () => {
                 key={index}
                 src={`https://raw.githubusercontent.com/prebuiltui/prebuiltui/main/assets/companyLogo/${company}.svg`}
                 alt={company}
-                className="w-full h-full object-cover dark:opacity-80 mx-8"
+                className=" w-full h-full object-cover dark:opacity-80 mx-8"
                 draggable={false}
               />
             ))}

@@ -4,6 +4,8 @@ import {
   getJobs,
   getAllJobs,
   deleteJob,
+  updateJob,
+  getJob,
 } from "../../controller/job/JobController.js";
 import { companyAuthMiddleware } from "../../middleware/companyAuth.js";
 import authMiddleware from "../../middleware/authMiddleware.js";
@@ -12,12 +14,11 @@ import checkJobLimit from "../../middleware/checkJobLimit.js";
 
 const jobRouter = Router();
 
-jobRouter.post("/create", companyAuthMiddleware, checkJobLimit, createJob);
-
-jobRouter.get("/company", authMiddleware, getJobs); //company middleware
-
-jobRouter.get("/candidate", userAuth, getAllJobs); //candidate middleware
-
-jobRouter.delete("/delete/job/:id", companyAuthMiddleware, deleteJob); //company
+jobRouter.post("/add", companyAuthMiddleware, checkJobLimit, createJob);
+jobRouter.get("/company", authMiddleware, getJobs);
+jobRouter.get("/candidate", userAuth, getAllJobs);
+jobRouter.delete("/delete/:id", companyAuthMiddleware, deleteJob);
+jobRouter.get("/:jobId", getJob);
+jobRouter.patch("/update/:jobId", updateJob);
 
 export default jobRouter;

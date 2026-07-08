@@ -6,6 +6,7 @@ import { FaUsersViewfinder } from "react-icons/fa6";
 import { LiaClipboardListSolid } from "react-icons/lia";
 import { MdPostAdd } from "react-icons/md";
 import { BsJournalBookmarkFill } from "react-icons/bs";
+import { MdWorkHistory } from "react-icons/md";
 
 export const NAVIGATION = [
   {
@@ -204,9 +205,14 @@ export const candidateLinks = [
     icon: LiaClipboardListSolid,
   },
   {
-    name: "Resume Analyzer",
+    name: "Upload Resume",
     path: "/candidate/resume_analyzer",
     icon: MdOutlineDocumentScanner,
+  },
+  {
+    name: "Applied Jobs",
+    path: "/candidate/history",
+    icon: MdWorkHistory,
   },
   {
     name: "Profile",
@@ -222,6 +228,11 @@ export const companyLinks = [
     icon: FaHome,
   },
   {
+    name: "Post a Job",
+    path: "/company/post_job",
+    icon: MdPostAdd,
+  },
+  {
     name: "Job Postings",
     path: "/company/jobs",
     icon: BsJournalBookmarkFill,
@@ -230,11 +241,6 @@ export const companyLinks = [
     name: "Hiring Pipeline",
     path: "/company/hiring-pipeline",
     icon: FaUsersViewfinder,
-  },
-  {
-    name: "Post a Job",
-    path: "/company/post_job",
-    icon: MdPostAdd,
   },
 ];
 
@@ -610,7 +616,7 @@ export const pricingPlans = [
       "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-600",
   },
   {
-    name: "Pro",
+    name: "Basic",
     subtitle: "For growing companies",
     price: { monthly: 299, yearly: 240 },
     icon: "⚡",
@@ -619,9 +625,9 @@ export const pricingPlans = [
     badge: "Most Popular",
     popular: true,
     features: [
-      { text: "Up to 25 job postings", included: true },
+      { text: "Up to 15 job postings", included: true },
       { text: "Full pipeline management", included: true },
-      { text: "Email & in-app notifications", included: true },
+      { text: "Email notifications", included: true },
       { text: "Priority email support", included: true },
     ],
     cta: "Start Pro Trial",
@@ -629,7 +635,7 @@ export const pricingPlans = [
       "bg-linear-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 shadow-lg shadow-blue-200 dark:shadow-blue-900/30",
   },
   {
-    name: "Enterprise",
+    name: "Prime",
     subtitle: "For large organizations",
     price: { monthly: 799, yearly: 639 },
     icon: "🏢",
@@ -637,7 +643,6 @@ export const pricingPlans = [
     borderColor: "border-amber-200 dark:border-amber-800",
     badge: "Best Value",
     features: [
-      { text: "Unlimited job postings", included: true },
       { text: "Full pipeline management", included: true },
       { text: "Advanced hiring analytics", included: true },
       { text: "Complete candidate profiles", included: true },
@@ -667,7 +672,6 @@ export const getpipelineColor = (name) => {
     return "bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400 hover:border-2 border-red-400";
 };
 
-// Helper function to determine colors based on application status
 export const getStatusColors = (status) => {
   if (!status)
     return {
@@ -722,19 +726,115 @@ export const getStatusColors = (status) => {
   }
 };
 
-
+export const getStatusConfig = (status) => {
+  const configs = {
+    applied: {
+      bg: "bg-blue-500",
+      lightBg: "bg-blue-50 dark:bg-blue-900/20",
+      text: "text-blue-600 dark:text-blue-400",
+      border: "border-blue-200 dark:border-blue-800",
+      headerBg: "bg-gradient-to-r from-blue-500 to-blue-600",
+    },
+    shortlisted: {
+      bg: "bg-amber-500",
+      lightBg: "bg-amber-50 dark:bg-amber-900/20",
+      text: "text-amber-600 dark:text-amber-400",
+      border: "border-amber-200 dark:border-amber-800",
+      headerBg: "bg-gradient-to-r from-amber-500 to-amber-600",
+    },
+    interview: {
+      bg: "bg-purple-400",
+      lightBg: "bg-purple-50 dark:bg-purple-200/20",
+      text: "text-purple-600 dark:text-purple-400",
+      border: "border-purple-200 dark:border-purple-600",
+      headerBg: "bg-gradient-to-r from-purple-500 to-purple-600",
+    },
+    selected: {
+      bg: "bg-green-500",
+      lightBg: "bg-green-50 dark:bg-green-900/20",
+      text: "text-green-600 dark:text-green-400",
+      border: "border-green-200 dark:border-green-800",
+      headerBg: "bg-gradient-to-r from-green-500 to-green-600",
+    },
+    rejected: {
+      bg: "bg-red-500",
+      lightBg: "bg-red-50 dark:bg-red-900/20",
+      text: "text-red-600 dark:text-red-400",
+      border: "border-red-200 dark:border-red-800",
+      headerBg: "bg-gradient-to-r from-red-500 to-red-600",
+    },
+  };
+  return configs[status] || configs.applied;
+};
 
 export const months = [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
-    ];
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+
+export const getSvgIcons = (state) => {
+  if (state === "totalApplicants")
+    return "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z";
+  else if (state === "activeJobs")
+    return "M9 6V4h6v2m-9 0h12a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2z";
+  else if (state === "shortlisted")
+    return "M9 12l2 2 4-4m5 2a9 9 0 11-18 0 9 9 0 0118 0z";
+  else if (state === "interviewsToday")
+    return "M8 7V3m8 4V3m-9 8h10m-11 9h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v11a2 2 0 002 2z";
+  else {
+    return "";
+  }
+};
+
+export const getPlanStyles = (plan) => {
+  switch (plan) {
+    case "PRO":
+      return "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 border-purple-200 dark:border-purple-800";
+    case "BASIC":
+      return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-800";
+    case "FREE":
+      return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-800";
+    default:
+      return "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600";
+  }
+};
+
+export const getStatusBadge = (status) => {
+  switch (status?.toLowerCase()) {
+    case "hired":
+      return "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800";
+    case "rejected":
+      return "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800";
+    case "interview":
+      return "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800";
+    case "shortlisted":
+      return "bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-800";
+    default:
+      return "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-900/30 dark:text-gray-400 dark:border-gray-800";
+  }
+};
+
+export const jobTypeColors = {
+  "Full-time":
+    "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+  "On-site": "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
+  Contract:
+    "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400",
+  Hybrid:
+    "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400",
+  Internship:
+    "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
+  Remote:
+    "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400",
+  Closed: "bg-red-300 text-red-800 dark:bg-red-900/30 dark:text-red-400",
+};

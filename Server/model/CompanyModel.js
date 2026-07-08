@@ -24,7 +24,7 @@ const companySchema = new mongoose.Schema(
       status: {
         type: String,
         enum: ["ACTIVE", "EXPIRED", "CANCELLED", "INACTIVE"],
-        default: "INACTIVE",
+        default: "ACTIVE",
       },
 
       billingCycle: {

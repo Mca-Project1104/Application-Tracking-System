@@ -1,5 +1,3 @@
-// services/atsScorer.js
-
 export const calculateATSScore = (resume, jobDescription) => {
   const jd = (jobDescription || "").toLowerCase();
 

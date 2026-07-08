@@ -7,82 +7,87 @@ import React, {
   useCallback,
 } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../api/axios";
 import HIREFLOWLOGO from "../assets/HIRE_FLOW.png";
+import api from "../api/axios";
+import { AppWindow } from "lucide-react";
 
-// Create context
 export const AppContext = createContext();
 
-// Provider Component
 export const AppProvider = ({ children }) => {
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
+  const adminToken = localStorage.getItem("admin_token");
   const userRole = localStorage.getItem("userRole");
   const currency = import.meta.env.VITE_CURRENCY || "₹";
 
-  //  Separate loading states for each operation
   const [jobsLoading, setJobsLoading] = useState(false);
   const [candidateLoading, setCandidateLoading] = useState(false);
   const [profileLoading, setProfileLoading] = useState(false);
   const [appsLoading, setAppsLoading] = useState(false);
+  const searchRef = useRef(null);
 
-  //  Jobs initialized as empty array (NOT undefined)
   const [jobs, setJobs] = useState([]);
-
   const [user, setUser] = useState({});
-  const [candidate, setCandidate] = useState(null); // ✅ null instead of {}
+  const [candidate, setCandidate] = useState(null);
   const [applications, setApplications] = useState([]);
   const [companydata, setCompanyData] = useState(null);
   const [error, setError] = useState(null);
   const [message, setMessage] = useState(null);
   const [theme, setTheme] = useState(localStorage.getItem("theme"));
-  const searchRef = useRef(null);
 
-  //  Combined loading state for convenience
+  const [stats, setStats] = useState({});
+  const [recentapplications, setRecentApplications] = useState([]);
+  const [pipelinestages, setPipelineStages] = useState([]);
+  const [jobpostings, setJobPostings] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const [subscription, setSubscription] = useState({
+    plan: "FREE",
+    status: "ACTIVE",
+    endDate: null,
+    limits: { maxJobs: 3, activeJobs: 0 },
+  });
+
   const isInitialLoading = jobsLoading && !jobs.length;
 
-  // Load user from localStorage (sync)
-  const adminToken = localStorage.getItem("admin_token");
   useEffect(() => {
     const userdata = JSON.parse(localStorage.getItem("user"));
     setUser(userdata);
   }, [token, adminToken]);
 
-  //  Fetch Jobs - FIXED dependency array
   const fetchJobs = useCallback(async () => {
     if (!token || !userRole) return;
-
     const url = userRole === "company" ? "company" : "candidate";
 
     try {
       setJobsLoading(true);
-      const res = await api.get(`/api/jobs/${url}`, {
+      const res = await api.get(`/api/v1/jobs/${url}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
+
       if (res.status === 200) {
-        setJobs(res.data.data || []); //  Fallback to empty array
+        setJobs(res.data.data || []);
       }
     } catch (error) {
       console.error("Error fetching jobs:", error);
-      setJobs([]); //  Reset to empty on error
+      setJobs([]);
     } finally {
-      setJobsLoading(false); // ALWAYS reset loading
+      setJobsLoading(false);
     }
-  }, [token, userRole]); //  FIXED: Proper array dependency
+  }, [token, userRole]);
 
   useEffect(() => {
     fetchJobs();
-  }, [fetchJobs]); //  Runs when token OR userRole changes
+  }, [fetchJobs]);
 
-  // Fetch Candidate Data
   const fetchCandidateData = useCallback(async () => {
     if (!token) return;
 
     try {
       setCandidateLoading(true);
-      const response = await api.get(`/api/candidates`, {
+      const response = await api.get(`/api/v1/candidates`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -104,7 +109,6 @@ export const AppProvider = ({ children }) => {
     }
   }, [userRole, token, fetchCandidateData]);
 
-  //  Fetch Applications - Only runs AFTER candidate has _id
   const fetchApplications = useCallback(
     async (candidateId) => {
       if (!candidateId || !token) return;
@@ -112,15 +116,18 @@ export const AppProvider = ({ children }) => {
       try {
         setAppsLoading(true);
         const response = await api.post(
-          "/api/applications/find/application",
-          { candidateId },
+          "/api/v1/applications/find/application",
           {
-            headers: { Authorization: `Bearer ${token}` },
+            candidateId,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token ? token : {}}`,
+            },
           },
         );
         setApplications(response.data.data || []);
       } catch (error) {
-        console.error("Error fetching applications:", error);
         setApplications([]);
       } finally {
         setAppsLoading(false);
@@ -149,15 +156,14 @@ export const AppProvider = ({ children }) => {
     if (userRole === "candidate" && candidate?._id) {
       fetchApplications(candidate._id);
     }
-  }, [userRole, candidate?._id, fetchApplications]); //  Depends on _id specifically
+  }, [userRole, candidate?._id, fetchApplications]);
 
-  //  Fetch Company Profile
   const fetchProfile = useCallback(async () => {
     if (!token) return;
 
     try {
       setProfileLoading(true);
-      const response = await api.get("api/company/profile", {
+      const response = await api.get("/api/v1/company/profile", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setCompanyData(response.data?.companyData);
@@ -168,7 +174,7 @@ export const AppProvider = ({ children }) => {
         );
       }
     } catch (error) {
-      console.error("Error fetching profile:", error);
+      console.error(error);
       setMessage({
         text: "Failed to load profile data.",
         type: "error",
@@ -178,13 +184,6 @@ export const AppProvider = ({ children }) => {
     }
   }, [token]);
 
-  useEffect(() => {
-    if (userRole === "company" && token) {
-      fetchProfile();
-    }
-  }, [userRole, token, fetchProfile]);
-
-  // Theme handling
   useEffect(() => {
     const root = document.documentElement;
     if (theme === "true") {
@@ -196,14 +195,50 @@ export const AppProvider = ({ children }) => {
   }, [theme]);
 
   const handleClose = () => {
-    // If the page was opened as a popup/modal
     if (window.opener) {
       window.close();
     } else {
-      // Otherwise navigate back or to home
       navigate("/");
     }
   };
+
+  const fetchCompanyDashbord = useCallback(async () => {
+    setLoading(true);
+    const token = localStorage.getItem("token");
+    try {
+      const response = await api.get("/api/v1/applications", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      setStats(response?.data?.stats);
+      setRecentApplications(response?.data?.recentApplications);
+      setPipelineStages(response?.data?.pipeline);
+      setJobPostings(response?.data?.jobs);
+
+      if (response?.data?.company) {
+        setSubscription(response.data.company.subscription);
+        setSubscription((prev) => ({
+          ...prev,
+          limits: response.data.company.limits,
+        }));
+      } else if (response?.data?.subscription) {
+        setSubscription(response.data.subscription);
+      }
+
+      setLoading(false);
+    } catch (error) {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (userRole === "company" && token) {
+      fetchCompanyDashbord();
+      fetchProfile();
+    }
+  }, [userRole, token]);
 
   const value = {
     navigate,
@@ -212,16 +247,15 @@ export const AppProvider = ({ children }) => {
     candidate,
     setCandidate,
 
-    // Separate loading states
     jobsLoading,
     candidateLoading,
     profileLoading,
     appsLoading,
     isInitialLoading,
 
-    // Refetch functions exposed
     refetchJobs: fetchJobs,
     refetchCandidate: fetchCandidateData,
+    refetchDashboard: fetchCompanyDashbord,
     refetchApplications: () =>
       candidate?._id && fetchApplications(candidate._id),
     refetchProfile: fetchProfile,
@@ -241,12 +275,22 @@ export const AppProvider = ({ children }) => {
     companydata,
     token,
     userRole,
+    stats,
+    setStats,
+    recentapplications,
+    setRecentApplications,
+    pipelinestages,
+    setPipelineStages,
+    jobpostings,
+    setJobPostings,
+    loading,
+    subscription,
+    setSubscription,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };
 
-// Custom Hook
 export const useAppContext = () => {
   const context = useContext(AppContext);
   if (!context) {

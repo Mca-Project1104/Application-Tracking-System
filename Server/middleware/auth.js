@@ -1,10 +1,9 @@
 import jwt from "jsonwebtoken";
-import { User } from "../model/UserModel.js";
+import User from "../model/UserModel.js";
 
 const authMiddleware = async (req, res, next) => {
   try {
     const authHeader = req.header("Authorization");
-    // console.log(authHeader);
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({ message: "No token provided" });
@@ -17,14 +16,15 @@ const authMiddleware = async (req, res, next) => {
     const user = await User.findById(decoded.id).select("-password");
 
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(401).json({ message: "Account deleted" });
     }
     req.user = user;
 
     next();
+
   } catch (error) {
-    console.error("Auth middleware error:", error.message);
-    res.status(401).json({ message: "Unauthorized" });
+
+    res.status(401).json({ message: "401 Unauthorized, authentication is required " });
   }
 };
 

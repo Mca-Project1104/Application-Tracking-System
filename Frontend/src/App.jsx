@@ -1,44 +1,67 @@
-import React, { useEffect, useState, useCallback } from "react";
-import { Routes, Route, Navigate, useLocation } from "react-router-dom";
-
-import Navbar from "./Components/Navbar.jsx";
-import Sidebar from "./Components/Sidebar.jsx";
+import React, { useEffect, useState, useCallback, lazy, Suspense } from "react";
+import { Routes, Route, Navigate, useLocation, Outlet } from "react-router-dom";
+import { useAppContext } from "./context/AppProvider.jsx";
+import { Toaster } from "react-hot-toast";
+import "aos/dist/aos.css";
+import AOS from "aos";
 
 import Login from "./Pages/Login.jsx";
 import Register from "./Pages/Register.jsx";
-import CandidateDashboard from "./Pages/candidate/CandidateDashboard.jsx";
-import CompanyDashboard from "./Pages/company/ComponyDashboard.jsx";
-import JobListings from "./Pages/JobListings.jsx";
-import ResumeAnalyzer from "./Pages/candidate/ResumeAnalyzer.jsx";
-import HiringPipeline from "./Pages/company/HiringPipeline.jsx";
-import CandidateProfile from "./Pages/candidate/CandidateProfile.jsx";
-import AdminPanel from "./Pages/admin/AdminPanel.jsx";
+import Navbar from "./Components/Navbar.jsx";
+import Sidebar from "./Components/Sidebar.jsx";
 import LandinPage from "./Pages/LandinPage.jsx";
-import JobPostingForm from "./Components/company/JobPostingForm.jsx";
-import VerifyEmail from "./Components/emailComponent/VerifyEmail.jsx";
-import NotFound from "./Components/NotFound.jsx";
-import AdminProtected from "./Protected/AdminProtected.jsx";
-import CompanyProfile from "./Components/company/CompanyProfile.jsx";
+import Loading from "./Components/Loading/Loading.jsx";
 
-import AOS from "aos";
-import "aos/dist/aos.css";
-import { useAppContext } from "./context/AppProvider.jsx";
-import ApplicationDetails from "./Pages/candidate/ApplicationDetail.jsx";
-import Pricing from "./Pages/company/Pricing.jsx";
-import BillingSuccess from "./Components/Strip/BillingSuccess.jsx";
-import BillingCancel from "./Components/Strip/BillingCancle.jsx";
+import NotFound from "./Components/NotFound.jsx";
+const JobListings = lazy(() => import("./Pages/JobListings.jsx"));
+const Pricing = lazy(() => import("./Pages/company/Pricing.jsx"));
+const AdminPanel = lazy(() => import("./Pages/admin/AdminPanel.jsx"));
+const AdminProtected = lazy(() => import("./Protected/AdminProtected.jsx"));
+const HiringPipeline = lazy(() => import("./Pages/company/HiringPipeline.jsx"));
+
+const CandidateDashboard = lazy(
+  () => import("./Pages/candidate/CandidateDashboard.jsx"),
+);
+const CompanyDashboard = lazy(
+  () => import("./Pages/company/ComponyDashboard.jsx"),
+);
+const ResumeAnalyzer = lazy(
+  () => import("./Pages/candidate/ResumeAnalyzer.jsx"),
+);
+const CandidateProfile = lazy(
+  () => import("./Pages/candidate/CandidateProfile.jsx"),
+);
+const JobPostingForm = lazy(
+  () => import("./Components/company/JobPostingForm.jsx"),
+);
+const VerifyEmail = lazy(
+  () => import("./Components/emailComponent/VerifyEmail.jsx"),
+);
+const CompanyProfile = lazy(
+  () => import("./Components/company/CompanyProfile.jsx"),
+);
+const ApplicationDetails = lazy(
+  () => import("./Pages/candidate/ApplicationDetail.jsx"),
+);
+const BillingSuccess = lazy(
+  () => import("./Components/Strip/BillingSuccess.jsx"),
+);
+const BillingCancel = lazy(
+  () => import("./Components/Strip/BillingCancle.jsx"),
+);
+import HistoryApplication from "./Pages/candidate/HistoryApplication.jsx";
+import UserDetailPage from "./Pages/admin/UserDetailPage.jsx";
 
 const PrivateRoute = ({ isAuthenticated, children }) => {
-  return isAuthenticated ? children : <Navigate to="/login" />;
+  return isAuthenticated ? children : <Navigate to="/login" replace />;
 };
 
 const RoleRoute = ({ userRole, role, children }) => {
-  return userRole === role ? children : <Navigate to="/" />;
+  return userRole === role ? children : <Navigate to="/" replace />;
 };
 
 const Layout = React.memo(
   ({
-    children,
     userRole,
     showSidebar,
     setShowSidebar,
@@ -52,7 +75,6 @@ const Layout = React.memo(
         showSidebar={showSidebar}
         setIsAuthenticated={setIsAuthenticated}
         setUserRole={setUserRole}
-        titleName="Hire Flow"
       />
       <div className="flex pt-16 min-h-screen">
         {userRole !== "admin" && (
@@ -65,7 +87,7 @@ const Layout = React.memo(
         <main
           className={`flex-1 min-w-0 ${userRole !== "admin" ? "md:ml-64" : ""}`}
         >
-          {children}
+          <Outlet />
         </main>
       </div>
     </>
@@ -76,7 +98,7 @@ const ThemeToggle = React.memo(({ theme, setTheme }) => (
   <button
     type="button"
     onClick={() => setTheme(theme === "true" ? "false" : "true")}
-    className="fixed bottom-4 right-4 p-3 z-50 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 shadow-lg hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all duration-200"
+    className="fixed bottom-4 hidden md:block  left-4 p-3 z-50 rounded-full active:scale-95  bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 shadow-lg hover:bg-gray-300 dark:hover:bg-gray-600  transition-all duration-200"
   >
     {theme === "false" ? (
       <svg
@@ -112,7 +134,7 @@ const ThemeToggle = React.memo(({ theme, setTheme }) => (
 
 function App() {
   const location = useLocation();
-  const { theme, setTheme, navigate } = useAppContext();
+  const { theme, setTheme, navigate, token } = useAppContext();
 
   const [isAuthenticated, setIsAuthenticated] = useState(
     !!localStorage.getItem("token") || !!localStorage.getItem("admin_token"),
@@ -136,18 +158,10 @@ function App() {
     localStorage.setItem("theme", theme);
   }, [theme]);
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    const publicPaths = ["/", "/login", "/register", "/verify-email"];
-  }, []);
-
-  useEffect(() => {
-    AOS.init({
-      duration: 1200,
-      delay: 100,
-      once: false,
-    });
-  }, []);
+  AOS.init({
+    duration: 1200,
+    delay: 100,
+  });
 
   const handleSetIsAuthenticated = useCallback((val) => {
     setIsAuthenticated(val);
@@ -161,306 +175,152 @@ function App() {
     setShowSidebar(val);
   }, []);
 
+  //dynamically page scroll depending upon location path
   useEffect(() => {
-    const handleScrill = () => {
-      window.scroll({ behavior: "smooth", top: 0 });
-    };
-  }, [location]);
+    window.scrollTo({ behavior: "smooth", top: 0 });
+  }, [location.pathname]);
 
   return (
     <div className="relative w-full bg-white dark:bg-gray-900 dark:text-white text-black">
-      {location.pathname !== "/" && (
-        <ThemeToggle theme={theme} setTheme={setTheme} />
-      )}
+      <Suspense
+        fallback={
+          <div className="h-screen flex items-center justify-center">
+            <Loading />
+          </div>
+        }
+      >
+        {isAuthenticated && <ThemeToggle theme={theme} setTheme={setTheme} />}
+        <Toaster position="top-center" reverseOrder={false} />
 
-      <Routes>
-        {/* Public Routes */}
-        {!isAuthenticated && (
-          <>
-            <Route path="/" element={<LandinPage />} />
-            <Route
-              path="/login"
-              element={
-                <Login
-                  setIsAuthenticated={handleSetIsAuthenticated}
-                  setUserRole={handleSetUserRole}
+        <Routes>
+          {!isAuthenticated && (
+            <>
+              <Route path="/" element={<LandinPage />} />
+              <Route
+                path="/login"
+                element={
+                  <Login
+                    setIsAuthenticated={handleSetIsAuthenticated}
+                    setUserRole={handleSetUserRole}
+                  />
+                }
+              />
+              <Route path="/register" element={<Register />} />
+              <Route
+                path="/verify-email"
+                element={
+                  <VerifyEmail
+                    setIsAuthenticated={setIsAuthenticated}
+                    setUserRole={setUserRole}
+                  />
+                }
+              />
+            </>
+          )}
+
+          {isAuthenticated && (
+            <>
+              <Route path="*" element={<NotFound />} />
+              <Route
+                path="/"
+                element={
+                  userRole === "candidate" ? (
+                    <Navigate to="/candidate" />
+                  ) : userRole === "company" ? (
+                    <Navigate to="/company" />
+                  ) : userRole === "admin" ? (
+                    <Navigate to="/admin" />
+                  ) : (
+                    <Navigate to="/login" />
+                  )
+                }
+              />
+
+              <Route
+                element={
+                  <PrivateRoute isAuthenticated={isAuthenticated}>
+                    <RoleRoute userRole={userRole} role="candidate">
+                      <Layout
+                        userRole={userRole}
+                        showSidebar={showSidebar}
+                        setShowSidebar={handleSetShowSidebar}
+                        setIsAuthenticated={handleSetIsAuthenticated}
+                        setUserRole={handleSetUserRole}
+                      />
+                    </RoleRoute>
+                  </PrivateRoute>
+                }
+              >
+                <Route path="/candidate" element={<CandidateDashboard />} />
+                <Route
+                  path="/candidate/profile"
+                  element={<CandidateProfile />}
                 />
-              }
-            />
-            <Route path="/register" element={<Register />} />
-            <Route path="/verify-email" element={<VerifyEmail />} />
-          </>
-        )}
+                <Route path="/candidate/jobs" element={<JobListings />} />
+                <Route path="/candidate/jobs/:id" element={<JobListings />} />
+                <Route
+                  path="/candidate/resume_analyzer"
+                  element={<ResumeAnalyzer />}
+                />
+                <Route
+                  path="/candidate/application/:id"
+                  element={<ApplicationDetails />}
+                />
+                <Route
+                  path="/candidate/history"
+                  element={<HistoryApplication />}
+                />
+              </Route>
 
-        {/* Authenticated Routes */}
-        {isAuthenticated && (
-          <>
-            <Route
-              path="/"
-              element={
-                userRole === "candidate" ? (
-                  <Navigate to="/candidate" />
-                ) : userRole === "company" ? (
-                  <Navigate to="/company" />
-                ) : userRole === "admin" ? (
-                  <Navigate to="/admin" />
-                ) : (
-                  <Navigate to="/login" />
-                )
-              }
-            />
+              {/* Recruiter Routes */}
+              <Route
+                element={
+                  <PrivateRoute isAuthenticated={isAuthenticated}>
+                    <RoleRoute userRole={userRole} role="company">
+                      <Layout
+                        userRole={userRole}
+                        showSidebar={showSidebar}
+                        setShowSidebar={handleSetShowSidebar}
+                        setIsAuthenticated={handleSetIsAuthenticated}
+                        setUserRole={handleSetUserRole}
+                      />
+                    </RoleRoute>
+                  </PrivateRoute>
+                }
+              >
+                <Route path="/company" element={<CompanyDashboard />} />
+                <Route path="/company/jobs/:id?" element={<JobListings />} />
+                <Route path="/pricing" element={<Pricing />} />
+                <Route path="/billing/success" element={<BillingSuccess />} />
+                <Route path="/billing/cancel" element={<BillingCancel />} />
+                <Route
+                  path="/company/post_job/:jobId?"
+                  element={<JobPostingForm />}
+                />
+                <Route path="/company/profile" element={<CompanyProfile />} />
+                <Route
+                  path="/company/hiring-pipeline"
+                  element={<HiringPipeline />}
+                />
+              </Route>
 
-            {/* Candidate Routes */}
-            <Route
-              path="/candidate"
-              element={
-                <PrivateRoute isAuthenticated={isAuthenticated}>
-                  <RoleRoute userRole={userRole} role="candidate">
-                    <Layout
-                      userRole={userRole}
-                      showSidebar={showSidebar}
-                      setShowSidebar={handleSetShowSidebar}
+              {/* Admin */}
+              <Route element={<AdminProtected userRole={userRole} />}>
+                <Route
+                  path="/admin"
+                  element={
+                    <AdminPanel
+                      setUserRole={setUserRole}
                       setIsAuthenticated={handleSetIsAuthenticated}
-                      setUserRole={handleSetUserRole}
-                    >
-                      <CandidateDashboard />
-                    </Layout>
-                  </RoleRoute>
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/candidate/profile"
-              element={
-                <PrivateRoute isAuthenticated={isAuthenticated}>
-                  <RoleRoute userRole={userRole} role="candidate">
-                    <Layout
-                      userRole={userRole}
-                      showSidebar={showSidebar}
-                      setShowSidebar={handleSetShowSidebar}
-                      setIsAuthenticated={handleSetIsAuthenticated}
-                      setUserRole={handleSetUserRole}
-                    >
-                      <CandidateProfile />
-                    </Layout>
-                  </RoleRoute>
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/candidate/jobs"
-              element={
-                <PrivateRoute isAuthenticated={isAuthenticated}>
-                  <RoleRoute userRole={userRole} role="candidate">
-                    <Layout
-                      userRole={userRole}
-                      showSidebar={showSidebar}
-                      setShowSidebar={handleSetShowSidebar}
-                      setIsAuthenticated={handleSetIsAuthenticated}
-                      setUserRole={handleSetUserRole}
-                    >
-                      <JobListings />
-                    </Layout>
-                  </RoleRoute>
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/candidate/jobs/:id"
-              element={
-                <PrivateRoute isAuthenticated={isAuthenticated}>
-                  <RoleRoute userRole={userRole} role="candidate">
-                    <Layout
-                      userRole={userRole}
-                      showSidebar={showSidebar}
-                      setShowSidebar={handleSetShowSidebar}
-                      setIsAuthenticated={handleSetIsAuthenticated}
-                      setUserRole={handleSetUserRole}
-                    >
-                      <JobListings />
-                    </Layout>
-                  </RoleRoute>
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/candidate/resume_analyzer"
-              element={
-                <PrivateRoute isAuthenticated={isAuthenticated}>
-                  <RoleRoute userRole={userRole} role="candidate">
-                    <Layout
-                      userRole={userRole}
-                      showSidebar={showSidebar}
-                      setShowSidebar={handleSetShowSidebar}
-                      setIsAuthenticated={handleSetIsAuthenticated}
-                      setUserRole={handleSetUserRole}
-                    >
-                      <ResumeAnalyzer />
-                    </Layout>
-                  </RoleRoute>
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/candidate/application/:id"
-              element={
-                <PrivateRoute isAuthenticated={isAuthenticated}>
-                  <RoleRoute userRole={userRole} role="candidate">
-                    <Layout
-                      userRole={userRole}
-                      showSidebar={showSidebar}
-                      setShowSidebar={handleSetShowSidebar}
-                      setIsAuthenticated={handleSetIsAuthenticated}
-                      setUserRole={handleSetUserRole}
-                    >
-                      <ApplicationDetails />
-                    </Layout>
-                  </RoleRoute>
-                </PrivateRoute>
-              }
-            />
-
-            {/* Company Routes */}
-            <Route
-              path="/company"
-              element={
-                <PrivateRoute isAuthenticated={isAuthenticated}>
-                  <RoleRoute userRole={userRole} role="company">
-                    <Layout
-                      userRole={userRole}
-                      showSidebar={showSidebar}
-                      setShowSidebar={handleSetShowSidebar}
-                      setIsAuthenticated={handleSetIsAuthenticated}
-                      setUserRole={handleSetUserRole}
-                    >
-                      <CompanyDashboard />
-                    </Layout>
-                  </RoleRoute>
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/company/jobs"
-              element={
-                <PrivateRoute isAuthenticated={isAuthenticated}>
-                  <RoleRoute userRole={userRole} role="company">
-                    <Layout
-                      userRole={userRole}
-                      showSidebar={showSidebar}
-                      setShowSidebar={handleSetShowSidebar}
-                      setIsAuthenticated={handleSetIsAuthenticated}
-                      setUserRole={handleSetUserRole}
-                    >
-                      <JobListings />
-                    </Layout>
-                  </RoleRoute>
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/pricing"
-              element={
-                <PrivateRoute isAuthenticated={isAuthenticated}>
-                  <RoleRoute userRole={userRole} role="company">
-                    <Layout
-                      userRole={userRole}
-                      showSidebar={showSidebar}
-                      setShowSidebar={handleSetShowSidebar}
-                      setIsAuthenticated={handleSetIsAuthenticated}
-                      setUserRole={handleSetUserRole}
-                    >
-                      <Pricing />
-                    </Layout>
-                  </RoleRoute>
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/company/jobs/:id"
-              element={
-                <PrivateRoute isAuthenticated={isAuthenticated}>
-                  <RoleRoute userRole={userRole} role="company">
-                    <Layout
-                      userRole={userRole}
-                      showSidebar={showSidebar}
-                      setShowSidebar={handleSetShowSidebar}
-                      setIsAuthenticated={handleSetIsAuthenticated}
-                      setUserRole={handleSetUserRole}
-                    >
-                      <JobListings />
-                    </Layout>
-                  </RoleRoute>
-                </PrivateRoute>
-              }
-            />
-
-            <Route path="/billing/success" element={<BillingSuccess />} />
-            <Route path="/billing/cancel" element={<BillingCancel />} />
-
-            <Route
-              path="/company/post_job"
-              element={
-                <PrivateRoute isAuthenticated={isAuthenticated}>
-                  <RoleRoute userRole={userRole} role="company">
-                    <Layout
-                      userRole={userRole}
-                      showSidebar={showSidebar}
-                      setShowSidebar={handleSetShowSidebar}
-                      setIsAuthenticated={handleSetIsAuthenticated}
-                      setUserRole={handleSetUserRole}
-                    >
-                      <JobPostingForm />
-                    </Layout>
-                  </RoleRoute>
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/company/profile"
-              element={
-                <PrivateRoute isAuthenticated={isAuthenticated}>
-                  <RoleRoute userRole={userRole} role="company">
-                    <Layout
-                      userRole={userRole}
-                      showSidebar={showSidebar}
-                      setShowSidebar={handleSetShowSidebar}
-                      setIsAuthenticated={handleSetIsAuthenticated}
-                      setUserRole={handleSetUserRole}
-                    >
-                      <CompanyProfile />
-                    </Layout>
-                  </RoleRoute>
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/company/hiring-pipeline"
-              element={
-                <PrivateRoute isAuthenticated={isAuthenticated}>
-                  <RoleRoute userRole={userRole} role="company">
-                    <Layout
-                      userRole={userRole}
-                      showSidebar={showSidebar}
-                      setShowSidebar={handleSetShowSidebar}
-                      setIsAuthenticated={handleSetIsAuthenticated}
-                      setUserRole={handleSetUserRole}
-                    >
-                      <HiringPipeline />
-                    </Layout>
-                  </RoleRoute>
-                </PrivateRoute>
-              }
-            />
-
-            {/* Admin */}
-            <Route element={<AdminProtected userRole={userRole} />}>
-              <Route path="/admin" element={<AdminPanel />} />
-            </Route>
-
-            <Route path="*" element={<NotFound />} />
-          </>
-        )}
-      </Routes>
+                    />
+                  }
+                />
+                <Route path="/admin/:id" element={<UserDetailPage />} />
+              </Route>
+            </>
+          )}
+        </Routes>
+      </Suspense>
     </div>
   );
 }

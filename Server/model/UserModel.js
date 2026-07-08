@@ -5,7 +5,7 @@ const userSchema = new mongoose.Schema(
     firstName: {
       type: String,
       required: true,
-      trim: true,
+      trim: true, //removed whiteSpace
     },
 
     lastName: {
@@ -15,7 +15,7 @@ const userSchema = new mongoose.Schema(
     },
 
     email: {
-      type: String,
+      type: String, 
       required: true,
       unique: true,
       lowercase: true,
@@ -24,7 +24,7 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: true,
-      minlength: 6,
+      minlength: 8,
     },
 
     accountType: {
@@ -35,12 +35,6 @@ const userSchema = new mongoose.Schema(
 
     profile_image: { type: String },
 
-    // Candidate-specific
-    skills: [String],
-    resume: String,
-    experience: Number,
-
-    // Employer-specific
     company: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Company",
@@ -49,7 +43,6 @@ const userSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Candidate",
     },
-    refreshToken: { type: String },
 
     status: {
       type: String,
@@ -68,4 +61,5 @@ const userSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-export const User = mongoose.model("User", userSchema);
+const User = mongoose.model("User", userSchema);
+export default User;

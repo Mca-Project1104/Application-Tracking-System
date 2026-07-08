@@ -1,13 +1,7 @@
-import Candidate from "../../model/Candidate.js";
-import { User } from "../../model/UserModel.js";
+import Candidate from "../../model/CandidateModel.js";
+import User  from "../../model/UserModel.js";
 import { upload_image } from "../../services/multerServices.js";
 
-// Get ranked candidates
-export const getRankedCandidates = async (req, res) => {
-  const candidates = await Candidate.find().sort({ score: -1 });
-
-  res.json(candidates);
-};
 
 export const downloadResume = async (req, res) => {
   try {
@@ -25,44 +19,41 @@ export const downloadResume = async (req, res) => {
   }
 };
 
-// controllers/candidateController.js
 export const updateCandidate = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status } = req.body;
+    const { personal } = req.body;
     const file = req.file;
 
-    console.log("FILE:", file);
-
     if (!id) {
-      return res.status(400).json({ message: " Detail missing " });
+      return res.status(400).json({ message: "Detail missing" });
     }
 
-    const candidate = await Candidate.findById(id);
-    if (!candidate) {
-      return res.status(404).json({ message: "Candidate not found" });
-    }
-
-    if (status) {
-      candidate.status = status;
-    }
-
+    let updateData = {};
     if (file) {
       const url = await upload_image(file);
-      candidate.profile_image = url;
-
-    } else if (req.body.profile_image === "") {
-      candidate.profile_image = undefined;
+      updateData.profile_image = url;
     }
 
-    const updatedCandidate = await candidate.save();
+    if (personal) {
+      updateData.personal = personal;
+    }
+
+    const updatedCandidate = await Candidate.findByIdAndUpdate(
+      id,
+      { $set: updateData },
+      { new: true },
+    ).select("-resumeText");
+
+    if (!updatedCandidate) {
+      return res.status(404).json({ message: "Candidate not found" });
+    }
 
     res.status(200).json({
       message: "Candidate updated successfully",
       candidate: updatedCandidate,
     });
   } catch (error) {
-    console.error("Update error:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
@@ -74,10 +65,11 @@ export const getCandidate = async (req, res) => {
       path: "user_id",
       select: "firstName lastName",
     });
+
     if (!candidate) {
       return res.status(404).json({ message: "Candidate not found" });
     }
-    res.status(200).json({ data: candidate });
+    res.status(200).json({ message: "Candidate found", data: candidate });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

@@ -1,19 +1,18 @@
 from fastapi import APIRouter, status
-from dotenv import load_dotenv # type: ignore
-from groq import Groq # type: ignore
+from dotenv import load_dotenv
+from groq import Groq 
 import os
 import json
 from fastapi.security import OAuth2PasswordBearer
-from pydantic import BaseModel  # Add this import
+from pydantic import BaseModel  
 
 load_dotenv()
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-groq_client = Groq(api_key=GROQ_API_KEY)  # Create Groq client
+groq_client = Groq(api_key=GROQ_API_KEY)
 ats_router = APIRouter()
 
-# Load Groq API key
-if not GROQ_API_KEY:  # present or not
+if not GROQ_API_KEY:
     raise ValueError("GROQ_API_KEY is missing!")
 
 class ATSRequest(BaseModel):
@@ -21,7 +20,7 @@ class ATSRequest(BaseModel):
     JD: str
 
 @ats_router.post("/ats/score")
-def model_response(request: ATSRequest) -> dict:  # Change parameter to model, return type to dict
+def model_response(request: ATSRequest) -> dict:
     try:
         combined_text = f"""
         JOB DESCRIPTION:
@@ -29,7 +28,7 @@ def model_response(request: ATSRequest) -> dict:  # Change parameter to model, r
 
         RESUME:
         {request.resume}
-        """ # Extract text from request
+        """ 
         response = groq_client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[
@@ -40,7 +39,7 @@ def model_response(request: ATSRequest) -> dict:  # Change parameter to model, r
 
                     Your task is to compare a JOB DESCRIPTION and a RESUME.
 
-                    ⚠️ STRICT RULES:
+                     STRICT RULES:
                     - Return ONLY a valid JSON object
                     - Do NOT include markdown (no ``` or ```json)
                     - Do NOT include any explanation or extra text
@@ -82,12 +81,8 @@ def model_response(request: ATSRequest) -> dict:  # Change parameter to model, r
             temperature=0.2
         )
         reply = response.choices[0].message.content
-
-        json_reply = json.loads(reply)  # convert into json
-        print(json_reply)
-        
-        return json_reply  # Return the JSON directly; FastAPI will set 200 OK
+        json_reply = json.loads(reply)  
+        return json_reply 
     
     except Exception as e:
-        # Return error as dict; FastAPI will set 500
         return {"error": "server error", "details": str(e)}

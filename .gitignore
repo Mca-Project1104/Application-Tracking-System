@@ -17,8 +17,9 @@ dist-ssr
 env
 Schema_Design.txt
 *.pem
-
+requirements.txt
 uploads
+HUL_Company.jpg
 
 PROJECT_ARCHITECTURE.md
 

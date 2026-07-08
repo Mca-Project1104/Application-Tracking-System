@@ -8,7 +8,7 @@ const ResumeAnalyzer = () => {
   const [resumeUploaded, setResumeUploaded] = useState(false);
   const [jobDescription, setJobDescription] = useState("");
   const [matchScore, setMatchScore] = useState(0);
-  const [atsDetail, setAtsDetail] = useState(null); // { score, matched, total }
+  const [atsDetail, setAtsDetail] = useState(null);
   const [analysisComplete, setAnalysisComplete] = useState(false);
   const [file, setFile] = useState(null);
   const [resumeText, setResumeText] = useState("");
@@ -70,14 +70,13 @@ const ResumeAnalyzer = () => {
       formData.append("jobDescription", jobDescription);
       const token = localStorage.getItem("token");
 
-      const res = await api.post("/api/resume/analyze", formData, {
+      const res = await api.post("/api/v1/resume/analyze", formData, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
       const candidate = res.data.data.candidate;
-
       const atsScoreRaw = res.data.data.atsScore;
       const numericScore =
         typeof atsScoreRaw === "object" && atsScoreRaw !== null
@@ -124,18 +123,15 @@ const ResumeAnalyzer = () => {
         ? "text-yellow-600 dark:text-yellow-400"
         : "text-red-600 dark:text-red-400";
 
-  // ── render ────────────────────────────────────────────────────────────────
-
   return (
-    <div className="space-y-6 p-4 dark:bg-gray-900 min-h-screen transition-colors duration-200">
-      <div className="bg-white dark:bg-gray-800 shadow mt-3 rounded-lg hover:shadow-lg transition-all duration-200">
+    <div className="space-y-4 p-4 dark:bg-gray-900 min-h-screen transition-colors duration-200">
+      <div className=" hidden md:block bg-white dark:bg-gray-800 shadow  rounded-lg hover:shadow-lg transition-all duration-200">
         <Header
-          title={"Resume Analyzer"}
+          title={"Upload Resume"}
           description={"Upload your resume and get instant feedback"}
         />
       </div>
 
-      {/* Error banner */}
       {error && (
         <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-400 dark:border-red-600 p-4 rounded">
           <div className="flex items-start gap-3">
@@ -156,7 +152,6 @@ const ResumeAnalyzer = () => {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Upload card */}
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 hover:shadow-lg transition-all duration-200">
           <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
             Upload Resume
@@ -248,13 +243,9 @@ const ResumeAnalyzer = () => {
           )}
         </div>
 
-        {/* Job description card */}
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 hover:shadow-lg transition-all duration-200">
           <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
             Job Description{" "}
-            <span className="text-sm font-normal text-gray-400">
-              (Optional)
-            </span>
           </h2>
           <textarea
             id="job-description"
@@ -301,22 +292,19 @@ const ResumeAnalyzer = () => {
         </div>
       </div>
 
-      {/* ── Results ── */}
-      {analysisComplete && analysisData && (
+      {analysisComplete && analysisData ? (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left: extracted info */}
           <div className="lg:col-span-2 space-y-6">
             <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 hover:shadow-lg transition-all duration-200">
               <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-6">
                 Extracted Information
               </h2>
 
-              {/* Contact */}
               <section className="mb-6">
                 <h3 className="text-base font-semibold text-gray-800 dark:text-white mb-3 pb-1 border-b border-gray-100 dark:border-gray-700">
                   Contact Information
                 </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="capitalize grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {[
                     {
                       label: "Name",
@@ -356,12 +344,12 @@ const ResumeAnalyzer = () => {
                           href={`https://${value}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="mt-1 text-sm text-blue-600 dark:text-blue-400 hover:underline break-all"
+                          className="capitalize mt-1 text-sm text-blue-600 dark:text-blue-400 hover:underline break-all"
                         >
                           {value}
                         </a>
                       ) : (
-                        <p className="mt-1 text-sm text-gray-900 dark:text-gray-300">
+                        <p className="mt-1 capitalize text-sm text-gray-900 dark:text-gray-300">
                           {value || "Not found"}
                         </p>
                       )}
@@ -370,7 +358,6 @@ const ResumeAnalyzer = () => {
                 </div>
               </section>
 
-              {/* Skills */}
               <section className="mb-6">
                 <h3 className="text-base font-semibold text-gray-800 dark:text-white mb-3 pb-1 border-b border-gray-100 dark:border-gray-700">
                   Skills
@@ -382,7 +369,6 @@ const ResumeAnalyzer = () => {
                 ) : (
                   <div className="flex flex-wrap gap-2">
                     {skills.map((skill, i) => {
-                      // handle both plain string and { name, level } object
                       const name =
                         typeof skill === "object" ? skill.name : skill;
                       const level =
@@ -401,7 +387,6 @@ const ResumeAnalyzer = () => {
                 )}
               </section>
 
-              {/* Experience — FIX: was analysisData.candidate?.experience */}
               <section className="mb-6">
                 <h3 className="text-base font-semibold text-gray-800 dark:text-white mb-3 pb-1 border-b border-gray-100 dark:border-gray-700">
                   Experience
@@ -440,7 +425,6 @@ const ResumeAnalyzer = () => {
                 )}
               </section>
 
-              {/* Education */}
               <section className="mb-6">
                 <h3 className="text-base font-semibold text-gray-800 dark:text-white mb-3 pb-1 border-b border-gray-100 dark:border-gray-700">
                   Education
@@ -475,7 +459,6 @@ const ResumeAnalyzer = () => {
                           )}
                         </div>
                       ) : (
-                        // plain string fallback
                         <div
                           key={i}
                           className="border-l-4 border-purple-500 dark:border-purple-400 pl-4 py-1"
@@ -490,7 +473,6 @@ const ResumeAnalyzer = () => {
                 )}
               </section>
 
-              {/* Resume text preview */}
               {resumeText && (
                 <section>
                   <h3 className="text-base font-semibold text-gray-800 dark:text-white mb-3 pb-1 border-b border-gray-100 dark:border-gray-700">
@@ -506,9 +488,7 @@ const ResumeAnalyzer = () => {
             </div>
           </div>
 
-          {/* Right: score + feedback + keywords */}
           <div className="space-y-6">
-            {/* Match score */}
             <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 hover:shadow-lg transition-all duration-200">
               <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
                 Match Score
@@ -562,7 +542,6 @@ const ResumeAnalyzer = () => {
                     {atsDetail.matched} of {atsDetail.total} keywords matched
                   </p>
                 )}
-                {/* Score legend */}
                 <div className="mt-3 text-xs text-gray-500 dark:text-gray-400 space-y-1 self-start w-full">
                   <div className="flex items-center gap-2">
                     <span className="w-3 h-3 rounded-full bg-green-500 inline-block" />{" "}
@@ -580,7 +559,6 @@ const ResumeAnalyzer = () => {
               </div>
             </div>
 
-            {/* Resume Feedback */}
             <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 hover:shadow-lg transition-all duration-200">
               <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
                 Resume Feedback
@@ -634,7 +612,6 @@ const ResumeAnalyzer = () => {
               )}
             </div>
 
-            {/* Keywords */}
             <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 hover:shadow-lg transition-all duration-200">
               <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
                 Keywords Found
@@ -678,6 +655,8 @@ const ResumeAnalyzer = () => {
             </div>
           </div>
         </div>
+      ) : (
+        <div className="bg-gray-50 dark:bg-gray-800/20 min-h-screen border border-gray-100/5 rounded"></div>
       )}
     </div>
   );
