@@ -3,7 +3,6 @@ import User from "../../model/UserModel.js";
 import Application from "../../model/ApplicationModel.js";
 import { Company } from "../../model/CompanyModel.js";
 import Candidate from "../../model/CandidateModel.js";
-import { recruiterFlow } from "../../../Frontend/src/assets/dummydata.js";
 
 export const getUsers = async (_, res) => {
   try {
