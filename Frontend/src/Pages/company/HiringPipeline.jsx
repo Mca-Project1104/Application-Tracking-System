@@ -234,7 +234,7 @@ const HiringPipeline = () => {
                   />
                 ),
                 value: stats.interviewsToday || 0,
-                label: "Interviews Today",
+                label: "Interviews ",
                 bg: "bg-purple-50 dark:bg-purple-900/20",
                 iconColor: "text-purple-600 dark:text-purple-400",
               },
@@ -422,9 +422,10 @@ const HiringPipeline = () => {
         <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 scroll-smooth snap-x snap-mandatory scrollbar-thin">
           {columns.map((column) => {
             const config = getStatusConfig(column.id);
-            const columnCandidates = filteredCandidates.filter(
-              (candidate) => candidate.status === column.id,
-            );
+            const columnCandidates = filteredCandidates
+              .filter((candidate) => candidate.status === column.id)
+              .sort((a, b) => (b.score || 0) - (a.score || 0))
+              .slice(0, 10);
             const isDragOver = dragOverColumn === column.id;
 
             return (

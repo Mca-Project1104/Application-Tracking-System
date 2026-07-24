@@ -138,6 +138,8 @@ const AdminPanel = ({ setUserRole, setIsAuthenticated }) => {
       toast.error("Failed to update status");
     }
   };
+
+  console.log(company);
   useEffect(() => {
     if (company.length > 0) {
       const normalizedCompanies = company.map((comp) => {

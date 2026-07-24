@@ -11,9 +11,10 @@ import HIREFLOWLOGO from "../assets/HIRE_FLOW.png";
 import api from "../api/axios";
 import { AppWindow } from "lucide-react";
 
-export const AppContext = createContext();
+export const AppContext = createContext(); // create context
 
 export const AppProvider = ({ children }) => {
+  // used context all children, can access this variable globally
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
   const adminToken = localStorage.getItem("admin_token");

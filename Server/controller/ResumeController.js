@@ -151,7 +151,7 @@ const extractText = async (file) => {
   if (!file) throw new Error("No file uploaded");
 
   const filePath = file.path;
-  const ext = file.originalname.split(".").pop().toLowerCase();
+  const ext = file.originalname.split(".").pop().toLowerCase(); //convert resume text in lowerCase
   let raw = "";
 
   if (ext === "pdf") {
@@ -163,7 +163,7 @@ const extractText = async (file) => {
     const result = await mammoth.extractRawText({ path: filePath });
     raw = result.value;
   } else {
-    throw new Error("Unsupported file format; only PDF and DOCX supported");
+    throw new Error("Unsupported file format; only PDF and DOCX supported"); //validation
   }
 
   return cleanResumeText(raw);

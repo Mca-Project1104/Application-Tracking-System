@@ -14,6 +14,6 @@ userRouter.post("/register", registration);
 userRouter.post("/verify-email", verifyEmail);
 userRouter.post("/resend", resendOTP);
 userRouter.post("/login", login);
-userRouter.post("/forgetpass", authMiddleware, forgotPassword);
+userRouter.post("/forgetpass", forgotPassword);
 
 export default userRouter;

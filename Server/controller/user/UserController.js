@@ -176,10 +176,11 @@ export const login = async (req, res) => {
 
 export const forgotPassword = async (req, res) => {
   try {
-    const { password, newpassword } = req.body;
-    const id = req.user.id;
+    const { password, newpassword, email } = req.body;
+    // const id = req.user.id;
+    console.log(req.body);
 
-    const user = await User.findById(id);
+    const user = await User.findOne({ email: email });
 
     if (!user) {
       return res.status(404).json({ message: "Not found user" });

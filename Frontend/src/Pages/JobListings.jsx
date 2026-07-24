@@ -350,14 +350,13 @@ const JobListings = () => {
       {!loading && (
         <div className="py-2 p-2">
           <div className="hidden md:block">
-              {userRole !== "company" && (
-            <Header
-              title={"Job Listings"}
-              description={`Find your next opportunity from ${jobs.length} available positions`}
-            />
-          )}
+            {userRole !== "company" && (
+              <Header
+                title={"Job Listings"}
+                description={`Find your next opportunity from ${jobs.length} available positions`}
+              />
+            )}
           </div>
-        
 
           {userRole === "candidate" && appliedJobs.size > 0 && (
             <div className="mb-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3 flex items-center">

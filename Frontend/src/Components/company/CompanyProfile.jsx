@@ -163,7 +163,7 @@ const CompanyProfile = () => {
 
       <div
         className="bg-white rounded min-h-screen lg:h-[167.5] h-[195] // Fixed syntax for arbitrary values
-          dark:bg-gray-800 p-4 shadow-md lg:p-6"
+          dark:bg-gray-900 p-4 shadow-md lg:p-6"
       >
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-800 dark:text-white">

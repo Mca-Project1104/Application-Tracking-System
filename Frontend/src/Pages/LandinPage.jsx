@@ -120,7 +120,7 @@ function LandingPage() {
           <div className="hidden md:flex items-center space-x-8">
             <a
               href="#how-it-works"
-              className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+              className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400   transition-colors"
               data-aos="fade-down"
               data-aos-duration="800"
               data-aos-delay="100"

@@ -32,9 +32,9 @@ const CompanyDashboard = () => {
     100,
   );
 
-  useEffect(()=>{
+  useEffect(() => {
     fetchCompanyDashbord();
-  }, [])
+  }, []);
 
   if (loading) {
     return <Loading detail={"Loading data..."} />;
@@ -212,6 +212,7 @@ const CompanyDashboard = () => {
                 {recentapplications?.length > 0 ? (
                   recentapplications?.map((app) => (
                     <div
+                      onClick={() => navigate("/company/hiring-pipeline")}
                       key={app.id}
                       className={`flex items-center justify-between p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-black/10 transition-colors duration-200 cursor-pointer`}
                     >

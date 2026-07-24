@@ -13,7 +13,7 @@ const Footer = () => {
                   onClick={
                     () => window.scrollTo({ top: 0, behavior: "smooth" }) //custom scrolling
                   }
-                  className="w-8 h-8 bg-linear-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center"
+                  className="w-8 h-8 rounded-lg flex items-center justify-center"
                 >
                   <img
                     src={hireflow}

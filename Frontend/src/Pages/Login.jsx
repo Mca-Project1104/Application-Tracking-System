@@ -11,6 +11,7 @@ import { IoMdCloseCircle } from "react-icons/io";
 import { ImSpinner2 } from "react-icons/im";
 import { FcGoogle } from "react-icons/fc";
 import { FaLinkedin } from "react-icons/fa";
+import toast from "react-hot-toast";
 
 const Login = ({ setIsAuthenticated, setUserRole }) => {
   const [formData, setFormData] = useState({
@@ -32,15 +33,15 @@ const Login = ({ setIsAuthenticated, setUserRole }) => {
 
   const handleForgot = async () => {
     try {
-      const response = await api.post(
-        "/api/v1/users/forgetpass",
-        { password, newpassword },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      );
+      if (!password | !newpassword | !email) {
+        toast.error("all fields are required");
+      }
+
+      const response = await api.post("/api/v1/users/forgetpass", {
+        password,
+        newpassword,
+        email,
+      });
 
       if (response.status === 200) {
         setIsActive("login");
@@ -365,7 +366,9 @@ const Login = ({ setIsAuthenticated, setUserRole }) => {
                   }
                   className="font-medium text-indigo-600 hover:text-indigo-500"
                 >
-                  Forgot your password?
+                  {isActive === "forgot_password"
+                    ? "back to login"
+                    : "Forgot your password?"}
                 </Link>
               </div>
             </div>
