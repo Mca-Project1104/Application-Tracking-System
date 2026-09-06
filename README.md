@@ -1,4 +1,4 @@
-# 🚀 AI-Powered Application Tracking System (ATS)
+# 🚀Application Tracking System (ATS)
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![React](https://img.shields.io/badge/Frontend-React%20%2B%20Vite-61DAFB?logo=react)
