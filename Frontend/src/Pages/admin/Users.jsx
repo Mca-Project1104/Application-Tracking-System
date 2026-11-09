@@ -25,19 +25,19 @@ const Users = ({
     if (searchtext.length > 0) {
       const lowerSearch = searchtext.toLowerCase().trim();
 
-      candidates = candidates.filter((candidate) =>
-        (candidate?.firstName.trim() + " " + candidate?.lastName.trim())
-          .toLowerCase()
-          .includes(lowerSearch),
-      );
+      candidates = candidates.filter((candidate) => {
+        const fullName = `${candidate?.firstName || ""} ${candidate?.lastName || ""}`.trim();
+        return fullName.toLowerCase().includes(lowerSearch);
+      });
 
-      recruiters = recruiters.filter(
-        (recruiter) =>
-          (recruiter?.firstName.trim() + " " + recruiter?.lastName.trim())
-            .toLowerCase()
-            .includes(lowerSearch) ||
-          recruiter?.company?.name.trim().toLowerCase().includes(lowerSearch),
-      );
+      recruiters = recruiters.filter((recruiter) => {
+        const fullName = `${recruiter?.firstName || ""} ${recruiter?.lastName || ""}`.trim();
+        const compName = recruiter?.company?.name || "";
+        return (
+          fullName.toLowerCase().includes(lowerSearch) ||
+          compName.toLowerCase().includes(lowerSearch)
+        );
+      });
     }
     setUser(candidates);
     setCompany(recruiters);

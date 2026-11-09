@@ -6,6 +6,7 @@ import {
   adminLinks,
 } from "../assets/dummydata.js";
 import { useAppContext } from "../context/AppProvider.jsx";
+import ThemeToggle from "./common/ThemeToggle.jsx";
 
 const Sidebar = ({ userRole, showSidebar, setShowSidebar }) => {
   const location = useLocation();
@@ -34,29 +35,35 @@ const Sidebar = ({ userRole, showSidebar, setShowSidebar }) => {
 
       <aside
         className={`fixed left-0 top-16 z-40 h-[calc(100vh-4rem)] w-72 sm:w-64
-          bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700
+          bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-r border-slate-200/80 dark:border-slate-800
           transform transition-transform duration-300 ease-in-out
-          overflow-y-auto overscroll-contain
+          flex flex-col justify-between
           ${showSidebar ? "translate-x-0" : "-translate-x-full"}
           md:translate-x-0`}
       >
-        <ul className="space-y-1 p-3">
-          {links.map((link) => (
-            <li key={link.name}>
-              <button
-                onClick={() => handleLinks(link.path)}
-                className={`flex items-center px-4 py-3 w-full rounded-lg transition-colors text-sm ${
-                  location.pathname === link.path
-                    ? "bg-blue-50 dark:bg-white/10 text-blue-600 dark:text-blue-400 font-medium border-l-4 border-blue-500"
-                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10"
-                }`}
-              >
-                {link.icon && <link.icon className="mr-3 text-lg shrink-0" />}
-                <span className="truncate">{link.name}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
+        <div className="overflow-y-auto overscroll-contain flex-1 p-3">
+          <ul className="space-y-1">
+            {links.map((link) => (
+              <li key={link.name}>
+                <button
+                  onClick={() => handleLinks(link.path)}
+                  className={`flex items-center px-3.5 py-2.5 w-full rounded-xl transition-all duration-150 text-sm font-medium ${
+                    location.pathname === link.path
+                      ? "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 font-semibold shadow-2xs"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-slate-800/60"
+                  }`}
+                >
+                  {link.icon && <link.icon className="mr-3 text-lg shrink-0" />}
+                  <span className="truncate">{link.name}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="p-3 border-t border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+          <ThemeToggle variant="sidebar" />
+        </div>
       </aside>
     </>
   );

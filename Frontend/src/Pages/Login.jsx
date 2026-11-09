@@ -33,8 +33,9 @@ const Login = ({ setIsAuthenticated, setUserRole }) => {
 
   const handleForgot = async () => {
     try {
-      if (!password | !newpassword | !email) {
-        toast.error("all fields are required");
+      if (!password || !newpassword || !email) {
+        toast.error("All fields are required");
+        return;
       }
 
       const response = await api.post("/api/v1/users/forgetpass", {

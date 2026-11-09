@@ -7,6 +7,8 @@ import { useLocation } from "react-router-dom";
 import { MdDelete } from "react-icons/md";
 import { toast } from "react-hot-toast";
 import { getStatusColors, jobTypeColors } from "../assets/dummydata.js";
+import { JobCardSkeleton } from "../Components/common/SkeletonLoaders.jsx";
+import StatusPill from "../Components/common/StatusPill.jsx";
 
 const JobListings = () => {
   const {
@@ -95,9 +97,11 @@ const JobListings = () => {
         toast.success("Apply Successfully .");
       }
     } catch (error) {
-      if (error.response.data.message) {
-        toast.error(error.response.data.message);
-      }
+      const errorMsg =
+        error.response?.data?.message ||
+        error.response?.data?.msg ||
+        "Failed to apply for job";
+      toast.error(errorMsg);
     } finally {
       setApplyingJobId(null);
     }
@@ -942,7 +946,13 @@ const JobListings = () => {
           )}
         </div>
       )}
-      {loading && <Loading detail={"loading.."} />}
+      {loading && (
+        <div className="py-6 px-4 max-w-7xl mx-auto space-y-4">
+          <JobCardSkeleton />
+          <JobCardSkeleton />
+          <JobCardSkeleton />
+        </div>
+      )}
     </div>
   );
 };

@@ -1,25 +1,39 @@
 import React, { useState, useEffect, useRef } from "react";
 import api from "../../api/axios.jsx";
 import { useAppContext } from "../../context/AppProvider.jsx";
+import { toast } from "react-hot-toast";
+import SlideOverDrawer from "../../Components/common/SlideOverDrawer.jsx";
+import RadialAtsScore from "../../Components/common/RadialAtsScore.jsx";
+import { Video, ExternalLink, Copy } from "lucide-react";
+import {
+  MicrosoftLogo,
+  MicrosoftTeamsLogo,
+  ZoomLogo,
+  GoogleMeetLogo,
+  PlatformBadge,
+} from "../../Components/common/MeetingPlatformIcons.jsx";
 
 const CandidateProfileModal = ({
   candidate,
   isOpen,
   onClose,
   onStatusChange,
+  initialTab = "overview",
 }) => {
   const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(false);
   const [downloadingResume, setDownloadingResume] = useState(false);
   const [updateapplication, setUpdateApplication] = useState({});
 
-  const { token, refetchDashboard: fetchCompanyDashbord } = useAppContext();
+  const { user, token, refetchDashboard: fetchCompanyDashbord } = useAppContext();
 
   const [scheduleForm, setScheduleForm] = useState({
     date: "",
     time: "",
     type: "technical",
     interviewer: "",
+    interviewerEmail: "",
+    platform: "teams",
     notes: "",
     location: "",
   });
@@ -63,13 +77,18 @@ const CandidateProfileModal = ({
 
   useEffect(() => {
     if (isOpen && candidate) {
-      setActiveTab("overview");
-      setShowScheduleForm(false);
+      setActiveTab(initialTab || "overview");
+      setShowScheduleForm(initialTab === "interviews");
       setScheduleForm({
         date: "",
         time: "",
         type: "technical",
-        interviewer: "",
+        interviewer:
+          user?.name ||
+          [user?.firstName, user?.lastName].filter(Boolean).join(" ") ||
+          "",
+        interviewerEmail: user?.email || "",
+        platform: "teams",
         notes: "",
         location: "",
       });
@@ -77,7 +96,7 @@ const CandidateProfileModal = ({
       setInterviews([]);
       fetchInterviews();
     }
-  }, [isOpen, candidate]);
+  }, [isOpen, candidate, initialTab]);
 
   const fetchInterviews = async () => {
     try {
@@ -128,24 +147,51 @@ const CandidateProfileModal = ({
     e.preventDefault();
     setLoading(true);
     try {
+      const loc = scheduleForm.location || "";
+      const isTeams =
+        loc.includes("teams.microsoft.com") ||
+        loc.includes("teams.live.com") ||
+        scheduleForm.platform === "teams";
+      const finalPlatform = isTeams
+        ? "teams"
+        : loc.includes("meet.google.com") || scheduleForm.platform === "meet"
+        ? "meet"
+        : loc.includes("zoom.us") || scheduleForm.platform === "zoom"
+        ? "zoom"
+        : scheduleForm.platform || "custom";
+
+      const enrichedScheduleForm = {
+        ...scheduleForm,
+        platform: finalPlatform,
+        interviewerEmail: scheduleForm.interviewerEmail || user?.email || "",
+      };
+
       const response = await api.patch(
         `/api/v1/applications/${candidate.id}/status`,
         {
-          newStatus: candidate?.originalStatus || "",
-          scheduleForm,
-          details: scheduleForm,
+          newStatus: "interview",
+          scheduleForm: enrichedScheduleForm,
+          details: [enrichedScheduleForm],
         },
         { headers: { Authorization: `Bearer ${token}` } },
       );
 
-      setInterviews([response.data.data.scheduleForm, ...interviews]);
+      if (onStatusChange) {
+        onStatusChange(candidate.id, "interview");
+      }
       fetchCompanyDashbord();
+      fetchInterviews();
       setShowScheduleForm(false);
       setScheduleForm({
         date: "",
         time: "",
         type: "technical",
-        interviewer: "",
+        interviewer:
+          user?.name ||
+          [user?.firstName, user?.lastName].filter(Boolean).join(" ") ||
+          "",
+        interviewerEmail: user?.email || "",
+        platform: "teams",
         notes: "",
         location: "",
       });
@@ -217,196 +263,59 @@ const CandidateProfileModal = ({
   if (!isOpen || !candidate) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden">
-      <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
-        onClick={onClose}
-      ></div>
+    <SlideOverDrawer
+      isOpen={isOpen && !!candidate}
+      onClose={onClose}
+      title={candidate.name}
+      subtitle={`${candidate.position || "Applicant"} • Status: ${candidate.originalStatus}`}
+      maxWidth="max-w-4xl"
+      headerActions={
+        <div className="flex items-center gap-2">
+          <RadialAtsScore score={candidate.score || 0} size={36} strokeWidth={3.5} />
+          <button
+            onClick={handleDownloadResume}
+            disabled={downloadingResume || !candidate.resumeUrl}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 transition shadow-2xs"
+            title="Download Candidate Resume"
+          >
+            {downloadingResume ? (
+              <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+            ) : (
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            )}
+            Resume
+          </button>
+        </div>
+      }
+    >
+      {/* Sticky Tab Navigation */}
+      <div className="sticky top-0 z-10 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 px-4 sm:px-6">
+        <div className="flex gap-1 overflow-x-auto">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`inline-flex items-center gap-1.5 px-3.5 py-3 text-xs sm:text-sm font-medium border-b-2 transition-all whitespace-nowrap ${
+                activeTab === tab.id
+                  ? "border-indigo-600 dark:border-indigo-400 text-indigo-600 dark:text-indigo-400 font-semibold"
+                  : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:border-slate-300 dark:hover:border-slate-700"
+              }`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={tab.icon} />
+              </svg>
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
-      <div className="absolute   inset-0 flex items-start justify-center overflow-y-auto py-4 sm:py-8 px-2 sm:px-4">
-        <div className="absolute w-full max-w-4xl bg-white dark:bg-gray-800 rounded-2xl shadow-2xl transition-all duration-300 my-auto">
-          <div className="sticky top-0 z-10 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 rounded-t-2xl">
-            <div className=" flex items-start justify-between p-4 sm:p-6">
-              <div className="flex items-center gap-3 sm:gap-4">
-                <div className="relative">
-                  {candidate.profile_image ? (
-                    <img
-                      src={candidate.profile_image}
-                      alt={candidate.name}
-                      className="h-14 w-14 sm:h-16 sm:w-16 rounded-xl object-cover ring-2 ring-gray-200 dark:ring-gray-700"
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src =
-                          "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' className='h-14 w-14 sm:h-16 sm:w-16 rounded-xl bg-gray-200 dark:bg-gray-700' fill='currentColor' viewBox='0 0 24 24'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
-                      }}
-                    />
-                  ) : (
-                    <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-xl bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                      <svg
-                        className="w-8 h-8 text-gray-400"
-                        fill="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                      </svg>
-                    </div>
-                  )}
-                  <div
-                    className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-gray-800 ${
-                      candidate.originalStatus === "hired"
-                        ? "bg-green-500"
-                        : candidate.originalStatus === "rejected"
-                          ? "bg-red-500"
-                          : candidate.originalStatus === "offer"
-                            ? "bg-amber-500"
-                            : "bg-blue-500"
-                    }`}
-                  ></div>
-                </div>
-                <div>
-                  <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
-                    {candidate.name}
-                  </h2>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {candidate.position}
-                  </p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium capitalize ${
-                        candidate.originalStatus === "hired"
-                          ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
-                          : candidate.originalStatus === "rejected"
-                            ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400"
-                            : candidate.originalStatus === "offer"
-                              ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"
-                              : "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
-                      }`}
-                    >
-                      {candidate.originalStatus}
-                    </span>
-                    {candidate.location && candidate.location !== "-" && (
-                      <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                        <svg
-                          className="w-3 h-3"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                          />
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                          />
-                        </svg>
-                        {candidate.location}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleDownloadResume}
-                  disabled={downloadingResume || !candidate.resumeUrl}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                >
-                  {downloadingResume ? (
-                    <svg
-                      className="w-4 h-4 animate-spin"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                      ></path>
-                    </svg>
-                  ) : (
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                      />
-                    </svg>
-                  )}
-                  <span className="hidden sm:inline">Resume</span>
-                </button>
-                <button
-                  onClick={onClose}
-                  className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                >
-                  <svg
-                    className="w-5 h-5 text-gray-500 dark:text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            <div className="px-4 sm:px-6 flex gap-1 overflow-x-auto pb-0">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`inline-flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-medium border-b-2 transition-all whitespace-nowrap ${
-                    activeTab === tab.id
-                      ? "border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400"
-                      : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600"
-                  }`}
-                >
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d={tab.icon}
-                    />
-                  </svg>
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="relative   p-4 sm:p-6">
+      <div className="p-4 sm:p-6 space-y-6">
             {activeTab === "overview" && (
               <div className="space-y-6 ">
                 <div>
@@ -783,6 +692,101 @@ const CandidateProfileModal = ({
                       New Interview
                     </h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="sm:col-span-2">
+                        <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+                          Select Interview Platform
+                        </label>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setScheduleForm({
+                                ...scheduleForm,
+                                platform: "teams",
+                              })
+                            }
+                            className={`flex items-center gap-2 p-2 rounded-lg border text-xs font-semibold transition ${
+                              (scheduleForm.platform || "teams") === "teams"
+                                ? "border-[#5B5FC7] bg-[#5B5FC7]/10 text-[#464EB8] dark:text-[#7B83EB] shadow-xs ring-1 ring-[#5B5FC7]"
+                                : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                            }`}
+                          >
+                            <MicrosoftTeamsLogo className="w-4 h-4 shrink-0" />
+                            <span>MS Teams</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setScheduleForm({
+                                ...scheduleForm,
+                                platform: "zoom",
+                              })
+                            }
+                            className={`flex items-center gap-2 p-2 rounded-lg border text-xs font-semibold transition ${
+                              scheduleForm.platform === "zoom"
+                                ? "border-[#2D8CFF] bg-[#2D8CFF]/10 text-[#0B5CFF] dark:text-[#2D8CFF] shadow-xs ring-1 ring-[#2D8CFF]"
+                                : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                            }`}
+                          >
+                            <ZoomLogo className="w-4 h-4 shrink-0" />
+                            <span>Zoom</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setScheduleForm({
+                                ...scheduleForm,
+                                platform: "meet",
+                              })
+                            }
+                            className={`flex items-center gap-2 p-2 rounded-lg border text-xs font-semibold transition ${
+                              scheduleForm.platform === "meet"
+                                ? "border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 shadow-xs ring-1 ring-emerald-500"
+                                : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                            }`}
+                          >
+                            <GoogleMeetLogo className="w-4 h-4 shrink-0" />
+                            <span>Google Meet</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setScheduleForm({
+                                ...scheduleForm,
+                                platform: "custom",
+                              })
+                            }
+                            className={`flex items-center gap-2 p-2 rounded-lg border text-xs font-semibold transition ${
+                              scheduleForm.platform === "custom"
+                                ? "border-gray-500 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white shadow-xs ring-1 ring-gray-400"
+                                : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                            }`}
+                          >
+                            <MicrosoftLogo className="w-3.5 h-3.5 shrink-0" />
+                            <span>Custom Link</span>
+                          </button>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                          Type
+                        </label>
+                        <select
+                          value={scheduleForm.type}
+                          onChange={(e) =>
+                            setScheduleForm({
+                              ...scheduleForm,
+                              type: e.target.value,
+                            })
+                          }
+                          className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                          <option value="technical">Technical</option>
+                          <option value="hr">HR Round</option>
+                          <option value="managerial">Managerial</option>
+                          <option value="final">Final Round</option>
+                        </select>
+                      </div>
                       <div>
                         <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
                           Date
@@ -819,27 +823,7 @@ const CandidateProfileModal = ({
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                          Type
-                        </label>
-                        <select
-                          value={scheduleForm.type}
-                          onChange={(e) =>
-                            setScheduleForm({
-                              ...scheduleForm,
-                              type: e.target.value,
-                            })
-                          }
-                          className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        >
-                          <option value="technical">Technical</option>
-                          <option value="hr">HR Round</option>
-                          <option value="managerial">Managerial</option>
-                          <option value="final">Final Round</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                          Interviewer
+                          Interviewer Name
                         </label>
                         <input
                           type="text"
@@ -855,13 +839,91 @@ const CandidateProfileModal = ({
                           className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
                       </div>
-                      <div className="sm:col-span-2">
+                      <div>
                         <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                          Location / Link
+                          HR / Interviewer Email <span className="text-gray-400">(Gets meeting link)</span>
                         </label>
                         <input
+                          type="email"
+                          placeholder="recruiter@company.com"
+                          value={scheduleForm.interviewerEmail || ""}
+                          onChange={(e) =>
+                            setScheduleForm({
+                              ...scheduleForm,
+                              interviewerEmail: e.target.value,
+                            })
+                          }
+                          className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300">
+                            {scheduleForm.platform === "teams" ? (
+                              <>
+                                <MicrosoftTeamsLogo className="w-4 h-4 shrink-0" />
+                                <span>Microsoft Teams Meeting Link</span>
+                              </>
+                            ) : scheduleForm.platform === "zoom" ? (
+                              <>
+                                <ZoomLogo className="w-4 h-4 shrink-0" />
+                                <span>Zoom Meeting Link</span>
+                              </>
+                            ) : scheduleForm.platform === "meet" ? (
+                              <>
+                                <GoogleMeetLogo className="w-4 h-4 shrink-0" />
+                                <span>Google Meet Link</span>
+                              </>
+                            ) : (
+                              <>
+                                <MicrosoftLogo className="w-3.5 h-3.5 shrink-0" />
+                                <span>Meeting Link or Location</span>
+                              </>
+                            )}
+                          </label>
+                          {scheduleForm.platform === "teams" && (
+                            <button
+                              type="button"
+                              onClick={() => window.open("https://teams.microsoft.com", "_blank")}
+                              className="text-[11px] text-[#5B5FC7] hover:underline flex items-center gap-1 font-medium"
+                            >
+                              <MicrosoftTeamsLogo className="w-3.5 h-3.5 shrink-0" />
+                              Open MS Teams to create meeting ↗
+                            </button>
+                          )}
+                          {scheduleForm.platform === "zoom" && (
+                            <button
+                              type="button"
+                              onClick={() => window.open("https://zoom.us/start/videomeeting", "_blank")}
+                              className="text-[11px] text-blue-600 hover:underline flex items-center gap-1 font-medium"
+                            >
+                              <ZoomLogo className="w-3.5 h-3.5 shrink-0" />
+                              Open Zoom to create meeting ↗
+                            </button>
+                          )}
+                          {scheduleForm.platform === "meet" && (
+                            <button
+                              type="button"
+                              onClick={() => window.open("https://meet.google.com/new", "_blank")}
+                              className="text-[11px] text-emerald-600 hover:underline flex items-center gap-1 font-medium"
+                            >
+                              <GoogleMeetLogo className="w-3.5 h-3.5 shrink-0" />
+                              Open Google Meet ↗
+                            </button>
+                          )}
+                        </div>
+                        <input
                           type="text"
-                          placeholder="Meeting link or room number"
+                          required
+                          placeholder={
+                            scheduleForm.platform === "teams"
+                              ? "https://teams.microsoft.com/l/meetup-join/..."
+                              : scheduleForm.platform === "meet"
+                              ? "https://meet.google.com/xyz-abc-def"
+                              : scheduleForm.platform === "zoom"
+                              ? "https://zoom.us/j/..."
+                              : "Meeting link or room address"
+                          }
                           value={scheduleForm.location}
                           onChange={(e) =>
                             setScheduleForm({
@@ -931,84 +993,171 @@ const CandidateProfileModal = ({
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {interviews[0]._id == candidate.id &&
-                      interviews[0].scheduleForm &&
-                      interviews.map((interview) => (
-                        <div
-                          key={interview._id}
-                          className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl p-4"
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center shrink-0">
-                                <svg
-                                  className="w-5 h-5 text-purple-600 dark:text-purple-400"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth="2"
-                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                                  />
-                                </svg>
-                              </div>
-                              <div>
-                                <div className="flex items-center gap-2">
-                                  <p className="text-sm font-medium text-gray-900 dark:text-white capitalize">
-                                    {interview?.scheduleForm?.type} Round
-                                  </p>
-                                  <span
-                                    className={`px-2 py-0.5 rounded-full text-xs font-medium ${getInterviewTypeColor(interview.type)}`}
-                                  >
-                                    {interview?.scheduleForm?.status}
-                                  </span>
+                    {interviews
+                      .filter((i) => (i?.scheduleForm && i?.scheduleForm?.date) || i?.date)
+                      .map((interview, idx) => {
+                        const sForm = interview?.scheduleForm || interview;
+                        return (
+                          <div
+                            key={interview._id || idx}
+                            className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl p-4"
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-xs flex items-center justify-center shrink-0">
+                                  {(() => {
+                                    const isTeams =
+                                      sForm.platform === "teams" ||
+                                      sForm.location?.includes("teams.microsoft.com") ||
+                                      sForm.location?.includes("teams.live.com");
+                                    const isZoom =
+                                      sForm.platform === "zoom" ||
+                                      sForm.location?.includes("zoom.");
+                                    const isMeet =
+                                      sForm.platform === "meet" ||
+                                      sForm.location?.includes("meet.google.");
+                                    if (isTeams)
+                                      return <MicrosoftTeamsLogo className="w-6 h-6" />;
+                                    if (isZoom)
+                                      return <ZoomLogo className="w-6 h-6" />;
+                                    if (isMeet)
+                                      return <GoogleMeetLogo className="w-6 h-6" />;
+                                    return <MicrosoftLogo className="w-5 h-5" />;
+                                  })()}
                                 </div>
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                  {new Date(
-                                    interview?.scheduleForm?.date,
-                                  ).toLocaleDateString("en-US", {
-                                    weekday: "short",
-                                    month: "short",
-                                    day: "numeric",
-                                  })}{" "}
-                                  at {interview?.scheduleForm?.time}
-                                </p>
-                                {interview.interviewer && (
-                                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                    with {interview?.scheduleForm?.interviewer}
-                                  </p>
-                                )}
-                                {interview?.scheduleForm?.location && (
-                                  <p className="text-xs text-blue-600 dark:text-blue-400 mt-0.5 flex items-center gap-1">
-                                    <svg
-                                      className="w-3 h-3"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
+                                <div>
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <p className="text-sm font-semibold text-gray-900 dark:text-white capitalize">
+                                      {sForm?.type || "Technical"} Round
+                                    </p>
+                                    <span
+                                      className={`px-2 py-0.5 rounded-full text-xs font-medium ${getInterviewTypeColor(sForm?.type)}`}
                                     >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth="2"
-                                        d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-                                      />
-                                    </svg>
-                                    {interview?.scheduleForm?.location}
+                                      {sForm?.status || "Scheduled"}
+                                    </span>
+                                    <PlatformBadge
+                                      platform={
+                                        sForm?.platform ||
+                                        (sForm?.location?.includes("teams.")
+                                          ? "teams"
+                                          : sForm?.location?.includes("zoom.")
+                                          ? "zoom"
+                                          : sForm?.location?.includes("meet.")
+                                          ? "meet"
+                                          : "custom")
+                                      }
+                                    />
+                                  </div>
+                                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                    {sForm?.date
+                                      ? new Date(sForm.date).toLocaleDateString("en-US", {
+                                          weekday: "short",
+                                          month: "short",
+                                          day: "numeric",
+                                        })
+                                      : "Upcoming"}{" "}
+                                    at {sForm?.time || "TBD"}
                                   </p>
-                                )}
+                                  {sForm?.interviewer && (
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                      with {sForm.interviewer}
+                                    </p>
+                                  )}
+                                  {sForm?.location && (() => {
+                                    const isUrl =
+                                      sForm.location.startsWith("http://") ||
+                                      sForm.location.startsWith("https://");
+                                    const isTeams =
+                                      sForm.platform === "teams" ||
+                                      sForm.location?.includes("teams.microsoft.com") ||
+                                      sForm.location?.includes("teams.live.com");
+                                    const isMeet =
+                                      sForm.platform === "meet" ||
+                                      sForm.location?.includes("meet.google.");
+                                    const isZoom =
+                                      sForm.platform === "zoom" ||
+                                      sForm.location?.includes("zoom.");
+
+                                    const meetingHref = isUrl
+                                      ? sForm.location
+                                      : `https://${sForm.location}`;
+
+                                    return (
+                                      <div className="flex items-center gap-2 mt-2 flex-wrap">
+                                        {isTeams ? (
+                                          <a
+                                            href={meetingHref}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#5B5FC7] hover:bg-[#464EB8] text-white transition shadow-sm"
+                                          >
+                                            <MicrosoftTeamsLogo className="w-4 h-4 shrink-0" />
+                                            <span>Join Microsoft Teams</span>
+                                          </a>
+                                        ) : isZoom ? (
+                                          <a
+                                            href={meetingHref}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#2D8CFF] hover:bg-[#1A7BE6] text-white transition shadow-sm"
+                                          >
+                                            <ZoomLogo className="w-4 h-4 shrink-0" />
+                                            <span>Join Zoom Meeting</span>
+                                          </a>
+                                        ) : isMeet ? (
+                                          <a
+                                            href={meetingHref}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition shadow-sm"
+                                          >
+                                            <GoogleMeetLogo className="w-4 h-4 shrink-0" />
+                                            <span>Join Google Meet</span>
+                                          </a>
+                                        ) : isUrl ? (
+                                          <a
+                                            href={meetingHref}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition shadow-sm"
+                                          >
+                                            <Video className="w-4 h-4 shrink-0" />
+                                            <span>Join Meeting</span>
+                                          </a>
+                                        ) : (
+                                          <span className="text-xs text-gray-600 dark:text-gray-300 font-medium">
+                                            📍 {sForm.location}
+                                          </span>
+                                        )}
+
+                                        {isUrl && (
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              navigator.clipboard.writeText(sForm.location);
+                                              toast.success("Meeting link copied!");
+                                            }}
+                                            className="text-[11px] font-medium px-2 py-1 rounded bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 transition inline-flex items-center gap-1"
+                                            title="Copy meeting link"
+                                          >
+                                            <Copy className="w-3 h-3" />
+                                            Copy Link
+                                          </button>
+                                        )}
+                                      </div>
+                                    );
+                                  })()}
+                                </div>
                               </div>
                             </div>
+                            {sForm?.notes && (
+                              <p className="mt-2 text-xs text-gray-500 dark:text-gray-400 pl-13 border-t border-gray-200 dark:border-gray-700 pt-2">
+                                {sForm.notes}
+                              </p>
+                            )}
                           </div>
-                          {interview?.scheduleForm?.notes && (
-                            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400 pl-13 border-t border-gray-200 dark:border-gray-700 pt-2">
-                              {interview?.scheduleForm?.notes}
-                            </p>
-                          )}
-                        </div>
-                      ))}
+                        );
+                      })}
                   </div>
                 )}
               </div>
@@ -1127,10 +1276,8 @@ const CandidateProfileModal = ({
                 </div>
               </div>
             )}
-          </div>
-        </div>
       </div>
-    </div>
+    </SlideOverDrawer>
   );
 };
 

@@ -1,7 +1,6 @@
-import { FaUser } from "react-icons/fa";
+import { FaUser, FaHome, FaVideo } from "react-icons/fa";
 import { FaRegMessage } from "react-icons/fa6";
 import { MdOutlineDocumentScanner } from "react-icons/md";
-import { FaHome } from "react-icons/fa";
 import { FaUsersViewfinder } from "react-icons/fa6";
 import { LiaClipboardListSolid } from "react-icons/lia";
 import { MdPostAdd } from "react-icons/md";
@@ -241,6 +240,11 @@ export const companyLinks = [
     name: "Hiring Pipeline",
     path: "/company/hiring-pipeline",
     icon: FaUsersViewfinder,
+  },
+  {
+    name: "Interviews",
+    path: "/company/interviews",
+    icon: FaVideo,
   },
 ];
 

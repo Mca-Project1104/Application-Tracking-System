@@ -150,11 +150,20 @@ export const deleteJob = async (req, res) => {
       return res.status(404).json({ message: "Job not found" });
     }
 
+    const callerCompany = (req.user?.company?._id || req.user?.company)?.toString?.();
+    const isJobOwner = callerCompany && job.company && job.company.toString() === callerCompany;
+    const isAdmin = req.user?.accountType === "admin";
+
+    if (!isJobOwner && !isAdmin) {
+      return res.status(403).json({ message: "Unauthorized: You do not own this job posting" });
+    }
+
     await Job.findByIdAndDelete(req.params.id);
 
-    await Company.findByIdAndUpdate(job.company, {
-      $inc: { "limits.activeJobs": -1 },
-    });
+    await Company.updateOne(
+      { _id: job.company, "limits.activeJobs": { $gt: 0 } },
+      { $inc: { "limits.activeJobs": -1 } },
+    );
 
     await ApplicationModel.deleteMany({ jobId: req.params.id });
 
@@ -167,11 +176,25 @@ export const deleteJob = async (req, res) => {
 
 export const updateJob = async (req, res) => {
   try {
-    const { updatedData } = req.body;
+    const job = await Job.findById(req.params.jobId);
+
+    if (!job) {
+      return res.status(404).json({ message: "Job not found" });
+    }
+
+    const callerCompany = (req.user?.company?._id || req.user?.company)?.toString?.();
+    const isJobOwner = callerCompany && job.company && job.company.toString() === callerCompany;
+    const isAdmin = req.user?.accountType === "admin";
+
+    if (!isJobOwner && !isAdmin) {
+      return res.status(403).json({ message: "Unauthorized: You do not own this job posting" });
+    }
+
+    const updatePayload = req.body.updatedData || req.body;
     const data = await Job.findByIdAndUpdate(
       req.params.jobId,
       {
-        $set: updatedData,
+        $set: updatePayload,
       },
       { new: true },
     );

@@ -3,15 +3,26 @@ import Job from "../model/JobModel.js";
 import { Company } from "../model/CompanyModel.js";
 import Candidate from "../model/CandidateModel.js";
 import axios from "axios";
+import fs from "fs";
 import { application } from "express";
-import { InterviewEmail, hiredEmail } from "../utils/sendEmail.js";
+import {
+  InterviewEmail,
+  InterviewEmailToRecruiter,
+  sendDualInterviewEmail,
+  hiredEmail,
+} from "../utils/sendEmail.js";
 
 export const applyJob = async (req, res) => {
   try {
     const { jobId, candidateId } = req.body;
     const job = await Job.findById(jobId);
 
-    if (!job) return res.status(404).json({ msg: "Job not found" });
+    if (!job) return res.status(404).json({ msg: "Job not found", message: "Job not found" });
+
+    const existingApplication = await Application.findOne({ jobId, candidateId });
+    if (existingApplication) {
+      return res.status(400).json({ msg: "You have already applied for this job", message: "You have already applied for this job" });
+    }
 
     const U_candidate = await Candidate.findById(candidateId).select("-_id");
 
@@ -29,7 +40,7 @@ export const applyJob = async (req, res) => {
       JD: job?.requirements || job?.responsibilities,
     };
 
-    const response = await axios.post(process.env.PYTHON_SERVER, payload);
+    const response = await axios.post(process.env.PYTHON_SERVER, payload); // call to the Python server for resume analysis
 
     const score = response?.data;
     const application = new Application({
@@ -56,9 +67,14 @@ export const applyJob = async (req, res) => {
 
 export const getapplications = async (req, res) => {
   try {
-    const { candidateId } = req.body;
+    const targetCandidateId = req.body.candidateId || req.user?.candidate;
+
+    if (!targetCandidateId) {
+      return res.status(400).json({ message: "Candidate ID required" });
+    }
+
     const application = await Application.find({
-      candidateId: candidateId,
+      candidateId: targetCandidateId,
     })
       .populate({
         path: "jobId",
@@ -74,7 +90,7 @@ export const getapplications = async (req, res) => {
       .select("-candidateSnapshot -resumeText");
 
     if (application.length === 0) {
-      return res.status(303).json({ message: "application not found" });
+      return res.status(200).json({ message: "No applications found", data: [] });
     }
 
     res
@@ -87,34 +103,45 @@ export const getapplications = async (req, res) => {
 
 export const getCompanyDashboard = async (req, res) => {
   try {
-    const company = await Company.findOne({ _id: req.user.company });
-    if (!company) {
+    const companyId = req.user.company;
+    if (!companyId) {
       return res.status(404).json({ message: "Company not found" });
     }
 
-    const jobs = await Job.find({ company: company._id }).sort("-createdAt");
+    const [company, jobs] = await Promise.all([
+      Company.findById(companyId).lean(),
+      Job.find({ company: companyId })
+        .select("title department location status openingJob createdAt")
+        .sort("-createdAt")
+        .lean(),
+    ]);
+
+    if (!company) {
+      return res.status(404).json({ message: "Company not found" });
+    }
 
     const jobIds = jobs.map((job) => job._id);
 
     const applications = await Application.find({
       jobId: { $in: jobIds },
-    }).populate({
-      path: "candidateId",
-      select: "user_id profile_image skills location",
-      populate: {
-        path: "user_id",
-        model: "User",
-        select: "firstName lastName email profile_image",
-      },
-    });
+    })
+      .select("-resumeText -candidateSnapshot")
+      .populate({
+        path: "candidateId",
+        select: "user_id profile_image skills location phone",
+        populate: {
+          path: "user_id",
+          model: "User",
+          select: "firstName lastName email profile_image",
+        },
+      })
+      .lean();
 
     const stats = {
       totalApplicants: applications.length,
       activeJobs: jobs.filter((j) => j.status === "Open").length,
-      shortlisted: applications.filter((a) => a.status === "shortlisted")
-        .length,
-      interviewsToday: applications.filter((a) => a.status === "interview")
-        .length,
+      shortlisted: applications.filter((a) => a.status === "shortlisted").length,
+      interviewsToday: applications.filter((a) => a.status === "interview").length,
     };
 
     const pipeline = [
@@ -130,25 +157,35 @@ export const getCompanyDashboard = async (req, res) => {
       count: applications.filter((a) => a.status === stage).length,
     }));
 
-    const recentApplications = applications
-      .sort((a, b) => b.createdAt - a.createdAt)
-      .slice(0, 6)
+    const jobTitleMap = new Map(jobs.map((j) => [String(j._id), j.title]));
+    const applicantCountMap = new Map();
+    for (const app of applications) {
+      const jId = String(app.jobId);
+      applicantCountMap.set(jId, (applicantCountMap.get(jId) || 0) + 1);
+    }
+
+    const recentApplications = [...applications]
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
       .map((app) => ({
         id: app._id,
+        _id: app._id,
         jobId: app.jobId,
         candidate: app.candidateId,
+        candidateId: app.candidateId,
         resumeUrl: app.resumeUrl,
         score: app.score,
         resume_Analyse: app.resume_Analyse,
-        position: jobs.find((j) => j._id.equals(app.jobId))?.title,
+        position: jobTitleMap.get(String(app.jobId)) || "Job Position",
         status: app.status,
+        scheduleForm: app.scheduleForm,
+        details: app.details,
       }));
 
     const jobPostings = jobs.map((job) => ({
       id: job._id,
       position: job.title,
       department: job.department,
-      applicants: applications.filter((a) => a.jobId.equals(job._id)).length,
+      applicants: applicantCountMap.get(String(job._id)) || 0,
       status: job.status,
       opening: job.openingJob,
       posted: job.createdAt,
@@ -162,7 +199,7 @@ export const getCompanyDashboard = async (req, res) => {
       company: company,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Error in getCompanyDashboard:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -177,17 +214,36 @@ export const updateApplication = async (req, res) => {
       return res.status(422).json({ message: "id and details not found " });
     }
 
-    const response = await Application.findByIdAndUpdate(
+    const updateFields = {
+      status: newStatus,
+    };
+    if (details !== undefined) updateFields.details = details;
+    if (scheduleForm !== undefined) {
+      const loc = scheduleForm.location || "";
+      const isTeams =
+        loc.includes("teams.microsoft.com") ||
+        loc.includes("teams.live.com") ||
+        scheduleForm.platform === "teams";
+      const detectedPlatform = isTeams
+        ? "teams"
+        : loc.includes("meet.google.com") || scheduleForm.platform === "meet"
+        ? "meet"
+        : loc.includes("zoom.us") || scheduleForm.platform === "zoom"
+        ? "zoom"
+        : scheduleForm.platform || "custom";
+
+      updateFields.scheduleForm = {
+        ...scheduleForm,
+        platform: detectedPlatform,
+        interviewerEmail: scheduleForm.interviewerEmail || email,
+      };
+    }
+
+    const response = await Application.findOneAndUpdate(
       { _id: id, status: { $ne: "hired" } },
+      { $set: updateFields },
       {
-        $set: {
-          status: newStatus,
-          details: details,
-          scheduleForm,
-        },
-      },
-      {
-        new: true,
+        returnDocument: "after",
         runValidators: true,
       },
     )
@@ -204,49 +260,110 @@ export const updateApplication = async (req, res) => {
       })
       .select("-resumeText");
 
-    const candidateEmail = response.candidateId.email;
+    if (!response) {
+      return res.status(404).json({
+        success: false,
+        message: "Application not found or already finalized as hired.",
+      });
+    }
+
+    const candidateEmail =
+      response.candidateId?.email || response.candidateId?.user_id?.email;
 
     if (!candidateEmail) {
       return res.status(404).json({ message: " Candidate Email not found" });
     }
 
     if (newStatus === "interview" && response.status === "interview") {
-      if (response.scheduleForm == null) {
+      const interviewInfo =
+        response.scheduleForm ||
+        (Array.isArray(response.details) ? response.details[0] : response.details);
+
+      if (!interviewInfo) {
         return res
           .status(400)
-          .json({ message: "Details not fount please set interview detail ." });
+          .json({ message: "Details not found. Please set interview detail." });
       }
 
-      const data = {
-        username: response?.candidateId?.user_id?.firstName,
+      const candidateName =
+        [
+          response?.candidateId?.user_id?.firstName,
+          response?.candidateId?.user_id?.lastName,
+        ]
+          .filter(Boolean)
+          .join(" ") || "Candidate";
+
+      const jobPosition = response?.jobId?.title || "Job Position";
+      const companyName = response?.jobId?.companyName || "HireFlow";
+      const meetingLoc = interviewInfo?.location || "Online";
+      const platform =
+        interviewInfo?.platform ||
+        (meetingLoc.includes("teams.microsoft.com") ||
+        meetingLoc.includes("teams.live.com")
+          ? "teams"
+          : meetingLoc.includes("meet.google.com")
+          ? "meet"
+          : meetingLoc.includes("zoom.us")
+          ? "zoom"
+          : "custom");
+
+      const recruiterEmail =
+        interviewInfo?.interviewerEmail || email || req.user?.email;
+      const interviewerName = interviewInfo?.interviewer || "Hiring Team";
+
+      const candidateData = {
+        username: candidateName,
+        userName: candidateName,
+        jobPosition: jobPosition,
+        companyName: companyName,
         status: response?.status,
-        resumeScore: response.score,
-        skills: response?.resume_Analyse?.matched_skills,
-        feedback: response?.details[0].notes,
-        interviewDate: response?.details[0]?.date,
-        interviewTime: response.details[0].time,
-        interviewLocation: response.details[0].location,
+        resumeScore: response.score || 0,
+        skills: response?.resume_Analyse?.matched_skills || [],
+        feedback: interviewInfo?.notes || "Interview scheduled",
+        interviewDate: interviewInfo?.date || new Date().toLocaleDateString(),
+        interviewTime: interviewInfo?.time || "10:00 AM",
+        interviewLocation: meetingLoc,
+        roundType: interviewInfo?.type || "technical",
+        interviewer: interviewerName,
+        platform: platform,
+        recruiterEmail: recruiterEmail,
       };
 
-      await InterviewEmail({
-        email: response.candidateId.user_id?.email,
-        data: data,
+      const recruiterData = {
+        candidateName: candidateName,
+        candidateEmail: candidateEmail,
+        jobPosition: jobPosition,
+        companyName: companyName,
+        status: response?.status,
+        resumeScore: response.score || 0,
+        skills: response?.resume_Analyse?.matched_skills || [],
+        feedback: interviewInfo?.notes || "Interview scheduled",
+        interviewDate: interviewInfo?.date || new Date().toLocaleDateString(),
+        interviewTime: interviewInfo?.time || "10:00 AM",
+        interviewLocation: meetingLoc,
+        roundType: interviewInfo?.type || "technical",
+        interviewer: interviewerName,
+        platform: platform,
+      };
+
+      await sendDualInterviewEmail({
+        candidateEmail: candidateEmail,
+        recruiterEmail: recruiterEmail,
+        candidateData: candidateData,
+        recruiterData: recruiterData,
       });
     }
 
     if (newStatus === "hired" && response.status === "hired") {
-      if (!response.details) {
-        return res.status(400).json({
-          message: "Hiring details not found.",
-        });
-      }
+      const hireInfo =
+        (Array.isArray(response.details) ? response.details[0] : response.details) || {};
 
       const data = {
         username: response?.candidateId?.user_id?.firstName,
-        companyName: response?.jobId?.companyName,
+        companyName: response?.jobId?.companyName || "Company",
         jobPosition: response?.jobId?.title || "N/A",
-        joiningDate: response?.details?.date,
-        jobLocation: response?.jobId?.location,
+        joiningDate: hireInfo?.date || new Date().toLocaleDateString(),
+        jobLocation: response?.jobId?.location || "Remote",
       };
 
       await hiredEmail({
@@ -271,5 +388,101 @@ export const allInterviews = async (req, res) => {
     res.status(200).json(data);
   } catch (error) {
     return res.status(500).json({ message: "server error" });
+  }
+};
+
+export const getCompanyInterviews = async (req, res) => {
+  try {
+    const company = await Company.findOne({ _id: req.user.company });
+    if (!company) {
+      return res.status(404).json({ message: "Company not found" });
+    }
+
+    const jobs = await Job.find({ company: company._id }).select(
+      "title department location companyName",
+    );
+    const jobIds = jobs.map((j) => j._id);
+
+    const applications = await Application.find({
+      jobId: { $in: jobIds },
+      $or: [
+        { status: "interview" },
+        { "scheduleForm.date": { $exists: true, $ne: "" } },
+      ],
+    })
+      .populate({
+        path: "jobId",
+        select: "title department location companyName",
+      })
+      .populate({
+        path: "candidateId",
+        select: "user_id profile_image skills location phone",
+        populate: {
+          path: "user_id",
+          model: "User",
+          select: "firstName lastName email profile_image",
+        },
+      })
+      .sort({ updatedAt: -1 });
+
+    const todayStr = new Date().toISOString().split("T")[0];
+    const stats = {
+      total: applications.length,
+      teams: applications.filter(
+        (a) =>
+          a.scheduleForm?.platform === "teams" ||
+          /teams\.microsoft\.com|teams\.live\.com/i.test(a.scheduleForm?.location || "")
+      ).length,
+      zoom: applications.filter(
+        (a) =>
+          a.scheduleForm?.platform === "zoom" ||
+          /zoom\.us/i.test(a.scheduleForm?.location || "")
+      ).length,
+      meet: applications.filter(
+        (a) =>
+          a.scheduleForm?.platform === "meet" ||
+          /meet\.google\.com/i.test(a.scheduleForm?.location || "")
+      ).length,
+      today: applications.filter((a) => a.scheduleForm?.date === todayStr).length,
+    };
+
+    res.status(200).json({
+      success: true,
+      interviews: applications,
+      stats,
+    });
+  } catch (error) {
+    console.error("Error fetching company interviews:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const downloadApplicationResume = async (req, res) => {
+  try {
+    const app = await Application.findById(req.params.id);
+    if (!app || !app.resumeUrl) {
+      return res.status(404).json({ error: "Resume not found" });
+    }
+
+    const directPath = app.resumeUrl;
+    if (fs.existsSync(directPath)) {
+      return res.download(directPath);
+    }
+
+    const parts = directPath.split("/");
+    const fileName = parts.pop();
+    const dir = parts.join("/");
+    const spacedPath = `${dir}/ ${fileName}`;
+    if (fs.existsSync(spacedPath)) {
+      return res.download(spacedPath);
+    }
+    const trimmedPath = `${dir}/${fileName.trim()}`;
+    if (fs.existsSync(trimmedPath)) {
+      return res.download(trimmedPath);
+    }
+
+    return res.status(404).json({ error: "Resume file does not exist on server" });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
   }
 };

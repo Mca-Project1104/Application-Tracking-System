@@ -13,6 +13,7 @@ const candidateRouter = Router();
 // routes/candidateRoutes.js
 candidateRouter.put(
   "/update/:id",
+  authMiddleware,
   upload.single("profile_image"),
   updateCandidate,
 );

@@ -1,4 +1,5 @@
 import Router from "express";
+import authMiddleware from "../../middleware/auth.js";
 import {
   getUsers,
   getAllCompanies,
@@ -11,6 +12,15 @@ import {
 } from "../../controller/admin/adminController.js";
 
 const adminRouter = Router();
+
+const requireAdmin = (req, res, next) => {
+  if (req.user?.accountType !== "admin") {
+    return res.status(403).json({ message: "Admin access required" });
+  }
+  next();
+};
+
+adminRouter.use(authMiddleware, requireAdmin);
 
 adminRouter.get("/users", getUsers);
 adminRouter.post("/user/detail", getUsreDetail);

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import api from "../../api/axios";
 import { useAppContext } from "../../context/AppProvider";
 import Header from "../../Components/Header";
+import RadialAtsScore from "../../Components/common/RadialAtsScore.jsx";
 
 const ResumeAnalyzer = () => {
   const [isDragging, setIsDragging] = useState(false);
@@ -494,43 +495,8 @@ const ResumeAnalyzer = () => {
                 Match Score
               </h2>
               <div className="flex flex-col items-center">
-                <div className="relative w-32 h-32">
-                  <svg
-                    viewBox="0 0 128 128"
-                    className="w-full h-full -rotate-90"
-                  >
-                    <circle
-                      className="text-gray-200 dark:text-gray-700"
-                      strokeWidth="10"
-                      stroke="currentColor"
-                      fill="transparent"
-                      r="56"
-                      cx="64"
-                      cy="64"
-                    />
-                    <circle
-                      className={
-                        matchScore >= 80
-                          ? "text-green-500"
-                          : matchScore >= 60
-                            ? "text-yellow-500"
-                            : "text-red-500"
-                      }
-                      strokeWidth="10"
-                      strokeDasharray={`${(matchScore / 100) * 351.86} 351.86`}
-                      strokeLinecap="round"
-                      stroke="currentColor"
-                      fill="transparent"
-                      r="56"
-                      cx="64"
-                      cy="64"
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className={`text-3xl font-bold ${scoreColor}`}>
-                      {matchScore}%
-                    </span>
-                  </div>
+                <div className="my-2">
+                  <RadialAtsScore score={matchScore} size={128} strokeWidth={9} showLabel={true} />
                 </div>
                 <p className="mt-4 text-sm text-gray-600 dark:text-gray-400 text-center">
                   {jobDescription

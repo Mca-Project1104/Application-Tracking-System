@@ -141,11 +141,12 @@ export const login = async (req, res) => {
       if (!candidateExists) {
         const candidate = new Candidate({
           user_id: user._id,
+          email: user.email,
         });
 
         await candidate.save();
         await User.findByIdAndUpdate(user._id, {
-          $set: { candidate: exists._id },
+          $set: { candidate: candidate._id },
         });
       }
     }

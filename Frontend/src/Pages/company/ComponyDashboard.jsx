@@ -20,24 +20,31 @@ const CompanyDashboard = () => {
     jobpostings,
     setJobPostings,
     loading,
+    isDashboardRefreshing,
     subscription,
     refetchDashboard: fetchCompanyDashbord,
     setSubscription,
   } = useAppContext();
 
-  const arrstate = Object.entries(stats);
+  const arrstate = Object.entries(stats || {});
 
-  const usagePercentage = Math.min(
-    (subscription.limits.activeJobs / subscription.limits.maxJobs) * 100,
-    100,
-  );
+  const hasData =
+    Boolean(stats && Object.keys(stats).length > 0) ||
+    Boolean(recentapplications && recentapplications.length > 0) ||
+    Boolean(jobpostings && jobpostings.length > 0);
+
+  const activeJobs = subscription?.limits?.activeJobs || 0;
+  const maxJobs = subscription?.limits?.maxJobs || 3;
+  const usagePercentage =
+    maxJobs > 0 ? Math.min((activeJobs / maxJobs) * 100, 100) : 0;
 
   useEffect(() => {
-    fetchCompanyDashbord();
+    // Stale-While-Revalidate: If data already exists in context, refresh in background without blanking screen
+    fetchCompanyDashbord(hasData);
   }, []);
 
-  if (loading) {
-    return <Loading detail={"Loading data..."} />;
+  if (loading && !hasData) {
+    return <Loading detail={"Loading company dashboard..."} />;
   }
 
   return (
@@ -93,8 +100,13 @@ const CompanyDashboard = () => {
           <div className="lg:col-span-2 bg-white dark:bg-gray-800 shadow-sm rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
             <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
               <div>
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center">
                   Subscription & Usage
+                  {isDashboardRefreshing && (
+                    <span className="ml-2 inline-flex items-center text-xs font-normal text-blue-500 animate-pulse">
+                      ● Syncing...
+                    </span>
+                  )}
                 </h3>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   Manage your plan and view job posting limits
@@ -103,10 +115,10 @@ const CompanyDashboard = () => {
 
               <span
                 className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase border ${getPlanStyles(
-                  subscription.plan,
+                  subscription?.plan || "FREE",
                 )}`}
               >
-                {subscription.plan}
+                {subscription?.plan || "FREE"}
               </span>
             </div>
 
@@ -119,15 +131,15 @@ const CompanyDashboard = () => {
                     </span>
                     <span
                       className={`text-sm font-semibold ${
-                        subscription.status === "ACTIVE"
+                        subscription?.status === "ACTIVE"
                           ? "text-green-600 dark:text-green-400"
                           : "text-red-600 dark:text-red-400"
                       }`}
                     >
-                      ● {subscription.status}
+                      ● {subscription?.status || "ACTIVE"}
                     </span>
                   </div>
-                  {subscription.endDate && (
+                  {subscription?.endDate && (
                     <div className="flex items-center space-x-2">
                       <span className="text-sm text-gray-500 dark:text-gray-400">
                         Renews:
@@ -146,8 +158,8 @@ const CompanyDashboard = () => {
                       Active Job Postings
                     </span>
                     <span className="text-sm text-gray-500 dark:text-gray-400">
-                      {subscription.limits.activeJobs} /{" "}
-                      {subscription.limits.maxJobs} Used
+                      {subscription?.limits?.activeJobs ?? 0} /{" "}
+                      {subscription?.limits?.maxJobs ?? 3} Used
                     </span>
                   </div>
                   <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2.5 overflow-hidden">
@@ -210,7 +222,7 @@ const CompanyDashboard = () => {
             <div className="p-2">
               <div className="space-y-4">
                 {recentapplications?.length > 0 ? (
-                  recentapplications?.map((app) => (
+                  recentapplications?.slice(0, 6).map((app) => (
                     <div
                       onClick={() => navigate("/company/hiring-pipeline")}
                       key={app.id}

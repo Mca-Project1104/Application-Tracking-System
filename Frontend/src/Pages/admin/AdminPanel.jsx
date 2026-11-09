@@ -21,6 +21,7 @@ import { toast } from "react-hot-toast";
 import Loading from "../../Components/Loading/Loading";
 import { useAppContext } from "../../context/AppProvider";
 import UserDetailPage from "./UserDetailPage";
+import ThemeToggle from "../../Components/common/ThemeToggle";
 
 const AdminPanel = ({ setUserRole, setIsAuthenticated }) => {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -625,7 +626,8 @@ const AdminPanel = ({ setUserRole, setIsAuthenticated }) => {
                 </h1>
               </div>
 
-              <div className="flex items-center space-x-2 sm:space-x-4 ">
+              <div className="flex items-center space-x-2 sm:space-x-3">
+                <ThemeToggle variant="header" />
                 <div className="h-9 w-9 rounded-full hover:scale-108 duration-400 flex items-center justify-center text-white font-medium">
                   <img
                     src={HIREFLOWLOGO}

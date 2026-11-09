@@ -51,19 +51,19 @@ const HistoryApplication = () => {
                 </div>
 
                 <div className="mt-4 flex flex-wrap gap-2">
-                  {item?.jobId?.skillsRequired.map((skill, index) => (
+                  {(item?.jobId?.skillsRequired || item?.jobId?.skills || []).map((skill, index) => (
                     <span
                       key={index}
                       className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200"
                     >
-                      {skill}
+                      {typeof skill === "string" ? skill : skill.name || skill}
                     </span>
                   ))}
                 </div>
 
                 <div className="flex justify-between items-center text-sm text-gray-500 dark:text-gray-400 mb-4 sm:mb-0">
                   {["createdAt", "updatedAt"].map((date) => (
-                    <div className="flex">
+                    <div key={date} className="flex">
                       <svg
                         className="shrink-0 mr-1.5 h-4 w-4 text-gray-400 dark:text-gray-500"
                         fill="none"

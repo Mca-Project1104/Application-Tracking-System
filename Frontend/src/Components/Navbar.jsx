@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAppContext } from "../context/AppProvider";
+import ThemeToggle from "./common/ThemeToggle";
 
 const Navbar = ({
   userRole,
@@ -24,14 +25,14 @@ const Navbar = ({
   };
 
   return (
-    <nav className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700 h-16 fixed top-0 left-0 right-0 z-50 flex items-center px-3 sm:px-4">
+    <nav className="bg-white/85 dark:bg-slate-900/85 backdrop-blur-md shadow-2xs border-b border-slate-200/80 dark:border-slate-800 h-16 fixed top-0 left-0 right-0 z-50 flex items-center px-4 sm:px-6 transition-all duration-200">
       <div className="flex items-center justify-between w-full">
         <div className="flex items-center gap-2">
           {userRole !== "admin" && (
             <button
               type="button"
               onClick={() => setShowSidebar(!showSidebar)}
-              className="p-2 rounded-md block md:hidden text-gray-600 dark:text-gray-300 dark:hover:bg-gray-800 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+              className="p-2 rounded-lg block md:hidden text-slate-600 dark:text-slate-300 dark:hover:bg-slate-800 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               aria-label="Toggle sidebar"
             >
               <svg
@@ -51,13 +52,15 @@ const Navbar = ({
           )}
           <Link
             to={`/${userRole}`}
-            className="text-lg sm:text-xl font-bold text-blue-600 dark:text-blue-400 whitespace-nowrap"
+            className="text-lg sm:text-xl font-bold tracking-tight text-indigo-600 dark:text-indigo-400 whitespace-nowrap"
           >
             Hire Flow
           </Link>
         </div>
 
-        <div className="hidden md:flex items-center space-x-4">
+        <div className="hidden md:flex items-center space-x-3">
+          <ThemeToggle variant="header" />
+
           <div className="flex items-center">
             <div
               onClick={() => navigate(`/${userRole}/profile`)}
@@ -96,26 +99,29 @@ const Navbar = ({
           </button>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setShowMobileMenu(!showMobileMenu)}
-          className="md:hidden p-2 rounded-md text-gray-600 dark:text-gray-300 dark:hover:bg-gray-800 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-          aria-label="Open menu"
-        >
-          <svg
-            className="w-6 h-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+        <div className="flex md:hidden items-center gap-1.5">
+          <ThemeToggle variant="header" />
+          <button
+            type="button"
+            onClick={() => setShowMobileMenu(!showMobileMenu)}
+            className="p-2 rounded-md text-gray-600 dark:text-gray-300 dark:hover:bg-gray-800 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+            aria-label="Open menu"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-            />
-          </svg>
-        </button>
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+              />
+            </svg>
+          </button>
+        </div>
       </div>
 
       {showMobileMenu && (
@@ -131,7 +137,7 @@ const Navbar = ({
                 navigate(`/${userRole}/profile`);
                 setShowMobileMenu(false);
               }}
-              className="flex items-center cursor-pointer mb-4"
+              className="flex items-center cursor-pointer mb-3"
             >
               <div className="w-9 h-9 rounded-full bg-blue-500 flex items-center justify-center text-white shrink-0">
                 {user?.name?.charAt(0).toUpperCase()}
@@ -144,7 +150,9 @@ const Navbar = ({
               </div>
             </div>
 
-            <hr className="border-gray-200 dark:border-gray-700 mb-3" />
+            <div className="py-2 border-t border-b border-gray-200 dark:border-gray-700 mb-3">
+              <ThemeToggle variant="menu" />
+            </div>
 
             <button
               onClick={Logout}

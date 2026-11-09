@@ -18,7 +18,13 @@ const VerifyEmail = ({ setIsAuthenticated, setUserRole }) => {
   const location = useLocation();
   const inputRefs = useRef([]);
 
-  const { email, user, accessToken } = location.state;
+  const { email, user, accessToken } = location.state || {};
+
+  useEffect(() => {
+    if (!email) {
+      navigate("/register");
+    }
+  }, [email, navigate]);
 
   useEffect(() => {
     if (resendTimer > 0) {
@@ -113,7 +119,7 @@ const VerifyEmail = ({ setIsAuthenticated, setUserRole }) => {
   const handleResend = async () => {
     try {
       setLoading(true);
-      await api.post("/api/v1/user/resend", { email });
+      await api.post("/api/v1/users/resend", { email });
       setResendTimer(60);
       setCanResend(false);
       setError("");
@@ -202,10 +208,9 @@ const VerifyEmail = ({ setIsAuthenticated, setUserRole }) => {
                   onKeyDown={(e) => handleKeyDown(index, e)}
                   onPaste={index === 0 ? handlePaste : undefined}
                   className={`w-12 h-14 text-center text-xl font-semibold border-2 rounded-lg transition-all duration-200
-                    ${
-                      digit
-                        ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400"
-                        : "border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    ${digit
+                      ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400"
+                      : "border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                     }
                     ${error ? "border-red-500 animate-pulse" : ""}
                     focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
@@ -235,10 +240,9 @@ const VerifyEmail = ({ setIsAuthenticated, setUserRole }) => {
               type="submit"
               disabled={loading || otp.join("").length !== 6}
               className={`w-full py-3 px-4 rounded-lg font-medium transition-all duration-200 transform
-                ${
-                  loading || otp.join("").length !== 6
-                    ? "bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed"
-                    : "bg-linear-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]"
+                ${loading || otp.join("").length !== 6
+                  ? "bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed"
+                  : "bg-linear-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]"
                 }`}
             >
               {loading ? (
@@ -279,10 +283,9 @@ const VerifyEmail = ({ setIsAuthenticated, setUserRole }) => {
               onClick={handleResend}
               disabled={!canResend || loading}
               className={`mt-2 text-sm font-medium transition-colors duration-200
-                ${
-                  canResend && !loading
-                    ? "text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 cursor-pointer"
-                    : "text-gray-400 dark:text-gray-600 cursor-not-allowed"
+                ${canResend && !loading
+                  ? "text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 cursor-pointer"
+                  : "text-gray-400 dark:text-gray-600 cursor-not-allowed"
                 }`}
             >
               {canResend ? (

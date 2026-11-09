@@ -41,6 +41,8 @@ export const AppProvider = ({ children }) => {
   const [pipelinestages, setPipelineStages] = useState([]);
   const [jobpostings, setJobPostings] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [isDashboardRefreshing, setIsDashboardRefreshing] = useState(false);
+  const dashboardLoadedRef = useRef(false);
 
   const [subscription, setSubscription] = useState({
     plan: "FREE",
@@ -203,8 +205,14 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  const fetchCompanyDashbord = useCallback(async () => {
-    setLoading(true);
+  const fetchCompanyDashbord = useCallback(async (forceBackground = false) => {
+    const hasData = dashboardLoadedRef.current;
+    if (!hasData && !forceBackground) {
+      setLoading(true);
+    } else {
+      setIsDashboardRefreshing(true);
+    }
+
     const token = localStorage.getItem("token");
     try {
       const response = await api.get("/api/v1/applications", {
@@ -213,24 +221,28 @@ export const AppProvider = ({ children }) => {
         },
       });
 
-      setStats(response?.data?.stats);
-      setRecentApplications(response?.data?.recentApplications);
-      setPipelineStages(response?.data?.pipeline);
-      setJobPostings(response?.data?.jobs);
+      if (response?.data) {
+        setStats(response.data.stats || {});
+        setRecentApplications(response.data.recentApplications || []);
+        setPipelineStages(response.data.pipeline || []);
+        setJobPostings(response.data.jobs || []);
 
-      if (response?.data?.company) {
-        setSubscription(response.data.company.subscription);
-        setSubscription((prev) => ({
-          ...prev,
-          limits: response.data.company.limits,
-        }));
-      } else if (response?.data?.subscription) {
-        setSubscription(response.data.subscription);
+        if (response.data.company) {
+          setSubscription(response.data.company.subscription);
+          setSubscription((prev) => ({
+            ...prev,
+            limits: response.data.company.limits,
+          }));
+        } else if (response.data.subscription) {
+          setSubscription(response.data.subscription);
+        }
+        dashboardLoadedRef.current = true;
       }
-
-      setLoading(false);
     } catch (error) {
+      console.error("Error fetching company dashboard:", error);
+    } finally {
       setLoading(false);
+      setIsDashboardRefreshing(false);
     }
   }, []);
 
@@ -253,6 +265,7 @@ export const AppProvider = ({ children }) => {
     profileLoading,
     appsLoading,
     isInitialLoading,
+    isDashboardRefreshing,
 
     refetchJobs: fetchJobs,
     refetchCandidate: fetchCandidateData,

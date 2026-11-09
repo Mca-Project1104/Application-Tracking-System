@@ -24,14 +24,45 @@ const CandidateProfile = () => {
   useEffect(() => {
     fetchCandidateData();
   }, []);
-  const [personalbio, setPersonalBio] = useState(candidate?.personal);
+  const [personalbio, setPersonalBio] = useState(candidate?.personal || "");
+  const [editForm, setEditForm] = useState({
+    personal: "",
+    phone: "",
+    location: "",
+    linkedin: "",
+    github: "",
+    website: "",
+  });
+  const [newSkillInput, setNewSkillInput] = useState("");
+
+  useEffect(() => {
+    fetchCandidateData();
+  }, []);
+
+  useEffect(() => {
+    if (candidate) {
+      setPersonalBio(candidate.personal || "");
+      setEditForm({
+        personal: candidate.personal || "",
+        phone: candidate.phone || "",
+        location: candidate.location || "",
+        linkedin: candidate.linkedin || "",
+        github: candidate.github || "",
+        website: candidate.website || "",
+      });
+    }
+  }, [candidate]);
 
   const handleDownload = () => {
-    if (!candidate.resumeUrl) {
+    if (!candidate?.resumeUrl && !candidate?.resumeFile) {
       return toast.error("Please Upload your resume");
     }
+    const backendUrl =
+      api.defaults.baseURL ||
+      import.meta.env.VITE_BACKEND_URL ||
+      "http://localhost:8000";
     window.open(
-      `${import.meta.env.VITE_BACKEND_URL}/${candidate.resumeUrl}`,
+      `${backendUrl}/api/v1/candidates/resume/${candidate._id}`,
       "_blank",
     );
   };
@@ -63,7 +94,12 @@ const CandidateProfile = () => {
     if (file) {
       formData.append("profile_image", file);
     }
-    formData.append("personal", personalbio);
+    formData.append("personal", editForm.personal);
+    formData.append("phone", editForm.phone);
+    formData.append("location", editForm.location);
+    formData.append("linkedin", editForm.linkedin);
+    formData.append("github", editForm.github);
+    formData.append("website", editForm.website);
 
     try {
       setIsUploading(true);
@@ -83,13 +119,52 @@ const CandidateProfile = () => {
       );
 
       setCandidate(response.data.candidate);
+      toast.success("Profile updated successfully!");
       closeImageModal();
       fetchCandidateData();
     } catch (error) {
-      console.error("Error saving image:", error);
-      alert("Save failed. Please try again.");
+      console.error("Error saving profile:", error);
+      toast.error("Save failed. Please try again.");
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  const handleAddSkill = async () => {
+    if (!newSkillInput.trim()) return;
+    const currentSkills = candidate?.skills || [];
+    if (currentSkills.includes(newSkillInput.trim())) {
+      toast.error("Skill already added");
+      return;
+    }
+    const updatedSkills = [...currentSkills, newSkillInput.trim()];
+    try {
+      const response = await api.put(
+        `/api/v1/candidates/update/${candidate._id}`,
+        { skills: updatedSkills },
+      );
+      setCandidate(response.data.candidate);
+      setNewSkillInput("");
+      toast.success("Skill added!");
+      fetchCandidateData();
+    } catch (error) {
+      toast.error("Failed to add skill");
+    }
+  };
+
+  const handleRemoveSkill = async (skillToRemove) => {
+    const currentSkills = candidate?.skills || [];
+    const updatedSkills = currentSkills.filter((s) => s !== skillToRemove);
+    try {
+      const response = await api.put(
+        `/api/v1/candidates/update/${candidate._id}`,
+        { skills: updatedSkills },
+      );
+      setCandidate(response.data.candidate);
+      toast.success("Skill removed");
+      fetchCandidateData();
+    } catch (error) {
+      toast.error("Failed to remove skill");
     }
   };
 
@@ -317,16 +392,69 @@ const CandidateProfile = () => {
                 className="hidden"
               />
               <div>
-                <div className="flxe space-x-4">
-                  <textarea
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Bio / Summary</label>
+                <textarea
+                  placeholder="Enter a brief professional bio..."
+                  rows={2}
+                  value={editForm.personal}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, personal: e.target.value }))}
+                  className="border border-slate-300 dark:border-slate-600 rounded-lg w-full p-2 text-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Phone Number</label>
+                  <input
                     type="text"
-                    placeholder="Enter Bio"
-                    rows={3}
-                    value={personalbio}
-                    onChange={(e) => setPersonalBio(e.target.value)}
-                    className="border rounded w-full font-light p-1 text-sm lg:text-md"
-                    required
-                  ></textarea>
+                    placeholder="+91 9876543210"
+                    value={editForm.phone}
+                    onChange={(e) => setEditForm((prev) => ({ ...prev, phone: e.target.value }))}
+                    className="border border-slate-300 dark:border-slate-600 rounded-lg w-full p-2 text-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Location</label>
+                  <input
+                    type="text"
+                    placeholder="San Francisco, CA"
+                    value={editForm.location}
+                    onChange={(e) => setEditForm((prev) => ({ ...prev, location: e.target.value }))}
+                    className="border border-slate-300 dark:border-slate-600 rounded-lg w-full p-2 text-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">LinkedIn</label>
+                  <input
+                    type="text"
+                    placeholder="linkedin.com/in/username"
+                    value={editForm.linkedin}
+                    onChange={(e) => setEditForm((prev) => ({ ...prev, linkedin: e.target.value }))}
+                    className="border border-slate-300 dark:border-slate-600 rounded-lg w-full p-2 text-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">GitHub</label>
+                  <input
+                    type="text"
+                    placeholder="github.com/username"
+                    value={editForm.github}
+                    onChange={(e) => setEditForm((prev) => ({ ...prev, github: e.target.value }))}
+                    className="border border-slate-300 dark:border-slate-600 rounded-lg w-full p-2 text-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Portfolio</label>
+                  <input
+                    type="text"
+                    placeholder="myportfolio.dev"
+                    value={editForm.website}
+                    onChange={(e) => setEditForm((prev) => ({ ...prev, website: e.target.value }))}
+                    className="border border-slate-300 dark:border-slate-600 rounded-lg w-full p-2 text-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                  />
                 </div>
               </div>
 
@@ -470,28 +598,74 @@ const CandidateProfile = () => {
 
           {activeTab === "skills" && (
             <div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                Technical Skills
-              </h3>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                    Technical Skills
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                    Manage the technical capabilities shown on your candidate profile.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <input
+                    type="text"
+                    value={newSkillInput}
+                    onChange={(e) => setNewSkillInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleAddSkill();
+                      }
+                    }}
+                    placeholder="Add a new skill (e.g. React)..."
+                    className="px-3 py-1.5 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddSkill}
+                    className="px-3.5 py-1.5 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors whitespace-nowrap active:scale-95"
+                  >
+                    Add
+                  </button>
+                </div>
+              </div>
+
               {skills.length === 0 ? (
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  No skills listed.
+                  No skills listed. Add some skills above!
                 </p>
               ) : (
-                <div className="grid grid-cols-4 md:grid-cols-4 gap-4">
+                <div className="flex flex-wrap gap-2.5">
                   {skills.map((skill, index) => {
                     const skillName =
                       typeof skill === "object" ? skill.name : skill;
-                    const skillLevel =
-                      typeof skill === "object" ? skill.level : "Advanced";
                     return (
                       <div
                         key={index}
-                        className="flex items-center p-3 border border-gray-200 dark:border-gray-600 rounded-lg"
+                        className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-100 dark:bg-slate-700/80 border border-slate-200 dark:border-slate-600 rounded-xl text-sm font-medium text-slate-800 dark:text-slate-200"
                       >
-                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                          {skillName}
-                        </span>
+                        <span>{skillName}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveSkill(skillName)}
+                          className="text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors p-0.5 rounded-full"
+                          title="Remove skill"
+                        >
+                          <svg
+                            className="w-3.5 h-3.5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M6 18L18 6M6 6l12 12"
+                            />
+                          </svg>
+                        </button>
                       </div>
                     );
                   })}

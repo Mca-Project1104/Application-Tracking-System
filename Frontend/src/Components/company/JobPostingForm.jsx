@@ -269,7 +269,7 @@ const JobPostingForm = () => {
         title: formData.title,
         description: formData.description,
         location: formData.location,
-        companyName: formData.company,
+        companyName: formData.companyName || formData.company || companydata?.company?.name || "",
         employmentType: formData.type,
         experienceLevel: formData.experience,
         workMode: formData.remoteOption,

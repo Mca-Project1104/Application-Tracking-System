@@ -19,6 +19,6 @@ jobRouter.get("/company", authMiddleware, getJobs);
 jobRouter.get("/candidate", userAuth, getAllJobs);
 jobRouter.delete("/delete/:id", companyAuthMiddleware, deleteJob);
 jobRouter.get("/:jobId", getJob);
-jobRouter.patch("/update/:jobId", updateJob);
+jobRouter.patch("/update/:jobId", companyAuthMiddleware, updateJob);
 
 export default jobRouter;

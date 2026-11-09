@@ -13,13 +13,25 @@ import {
   Code,
   FileText,
   Loader2,
+  Video,
+  Copy,
 } from "lucide-react";
+import { toast } from "react-hot-toast";
+import {
+  MicrosoftLogo,
+  MicrosoftTeamsLogo,
+  ZoomLogo,
+  GoogleMeetLogo,
+  PlatformBadge,
+} from "../../Components/common/MeetingPlatformIcons.jsx";
 import { FaGithub } from "react-icons/fa";
 import { FaLinkedin } from "react-icons/fa";
 import { useParams } from "react-router-dom";
 import { useAppContext } from "../../context/AppProvider";
 import Loading from "../../Components/Loading/Loading";
 import { getStatusBadge } from "../../assets/dummydata.js";
+import StatusPill from "../../Components/common/StatusPill.jsx";
+import RadialAtsScore from "../../Components/common/RadialAtsScore.jsx";
 
 const ApplicationDetails = () => {
   const { id } = useParams();
@@ -49,6 +61,8 @@ const ApplicationDetails = () => {
     jobId,
     scheduleForm,
   } = applicationData;
+
+  const cand = candidate || candidateId || {};
 
   const getJobTitle = () => {
     if (typeof jobId === "object" && jobId !== null) return jobId.title;
@@ -85,11 +99,7 @@ const ApplicationDetails = () => {
             </div>
           </div>
           <div className="flex items-center space-x-3">
-            <span
-              className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusBadge(status)} capitalize`}
-            >
-              {status}
-            </span>
+            <StatusPill status={status} size="md" />
           </div>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -98,20 +108,20 @@ const ApplicationDetails = () => {
               <div className="h-32 bg-linear-to-r from-blue-500 to-indigo-600 relative">
                 <div className="absolute -bottom-10 left-6">
                   <img
-                    src={candidate.profile_image}
+                    src={cand.profile_image}
                     alt="Profile"
                     className="w-24 h-24 rounded-xl border-4 border-white dark:border-gray-800 object-cover shadow-md bg-white"
                     onError={(e) => {
                       e.target.onerror = null;
-                      e.target.src = `https://ui-avatars.com/api/?name=${candidate.email || "User"}&background=random`;
+                      e.target.src = `https://ui-avatars.com/api/?name=${cand.email || "User"}&background=random`;
                     }}
                   />
                 </div>
               </div>
               <div className="pt-12 pb-6 px-6">
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {candidate.email?.split("@")[0].charAt(0).toUpperCase() +
-                    candidate.email?.split("@")[0].slice(1) || "Candidate Name"}
+                  {cand.email?.split("@")[0]?.charAt(0)?.toUpperCase() +
+                    cand.email?.split("@")[0]?.slice(1) || "Candidate Name"}
                 </h2>
                 <p className="text-sm text-gray-900 dark:text-white mt-1">
                   Applied for: {getJobTitle()}
@@ -119,27 +129,27 @@ const ApplicationDetails = () => {
 
                 <div className="mt-4 flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
                   <MapPin className="w-4 h-4" />
-                  <span className="truncate">{candidate.location}</span>
+                  <span className="truncate">{cand.location || "Location not provided"}</span>
                 </div>
 
                 <div className="mt-6 flex flex-col space-y-3">
                   <a
-                    href={`mailto:${candidate.email}`}
+                    href={`mailto:${cand.email}`}
                     className="flex items-center text-sm text-gray-600 dark:text-gray-300 hover:text-blue-600 transition"
                   >
                     <Mail className="w-4 h-4 mr-3 text-gray-400" />
-                    {candidate.email}
+                    {cand.email || "Not Provided"}
                   </a>
                   <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
                     <Phone className="w-4 h-4 mr-3 text-gray-400" />
-                    {candidate.phone || "Not Provided"}
+                    {cand.phone || "Not Provided"}
                   </div>
                 </div>
 
                 <div className="mt-6 flex space-x-3">
-                  {candidate && (
+                  {cand.linkedin && (
                     <a
-                      href={candidate?.linkedin}
+                      href={cand.linkedin}
                       target="_blank"
                       rel="noreferrer"
                       className="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 hover:text-blue-600 transition"
@@ -147,9 +157,9 @@ const ApplicationDetails = () => {
                       <FaLinkedin className="w-5 h-5" />
                     </a>
                   )}
-                  {candidate && (
+                  {cand.github && (
                     <a
-                      href={candidate?.github}
+                      href={cand.github}
                       target="_blank"
                       rel="noreferrer"
                       className="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition"
@@ -168,11 +178,11 @@ const ApplicationDetails = () => {
                   Skills
                 </h3>
                 <span className="text-xs bg-gray-100  dark:bg-gray-700 px-2 py-1 rounded text-gray-500 dark:text-gray-400">
-                  {candidate.skills?.length || 0} Total
+                  {cand.skills?.length || 0} Total
                 </span>
               </div>
               <div className="flex flex-wrap gap-2">
-                {candidate.skills?.map((skill, index) => (
+                {cand.skills?.map((skill, index) => (
                   <span
                     key={index}
                     className="capitalize px-3 py-1 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full border border-gray-200 dark:border-gray-600"
@@ -184,7 +194,7 @@ const ApplicationDetails = () => {
             </div>
 
             <a
-              href={`http://localhost:8000/${resumeUrl}`}
+              href={`${import.meta.env.VITE_BACKEND_URL || "http://localhost:8000"}/${resumeUrl}`}
               target="_blank"
               rel="noreferrer"
               className="block w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-500 transition-all group cursor-pointer"
@@ -219,15 +229,13 @@ const ApplicationDetails = () => {
                     Based on job requirements analysis
                   </p>
                 </div>
-                <div className="text-right">
-                  <div
-                    className={`text-5xl font-bold ${getScoreColor(resume_Analyse.match_score || 0)}`}
-                  >
-                    {resume_Analyse.match_score || 0}%
-                  </div>
-                  <div className="flex items-center justify-end mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    <Calendar className="w-3 h-3 mr-1" />
-                    Analyzed on {new Date(createdAt).toLocaleDateString()}
+                <div className="flex items-center gap-4">
+                  <RadialAtsScore score={resume_Analyse.match_score || 0} size={68} strokeWidth={5.5} />
+                  <div className="text-right hidden sm:block">
+                    <div className="flex items-center justify-end text-xs text-slate-500 dark:text-slate-400">
+                      <Calendar className="w-3 h-3 mr-1" />
+                      Analyzed on {new Date(createdAt).toLocaleDateString()}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -294,9 +302,23 @@ const ApplicationDetails = () => {
 
                   <div className="space-y-3 pb-2">
                     <div>
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 capitalize mb-1.5">
-                        {scheduleForm.type} Round
-                      </span>
+                      <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 capitalize">
+                          {scheduleForm.type} Round
+                        </span>
+                        <PlatformBadge
+                          platform={
+                            scheduleForm.platform ||
+                            (scheduleForm.location?.includes("teams.")
+                              ? "teams"
+                              : scheduleForm.location?.includes("zoom.")
+                              ? "zoom"
+                              : scheduleForm.location?.includes("meet.")
+                              ? "meet"
+                              : "custom")
+                          }
+                        />
+                      </div>
                       <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
                         with {scheduleForm.interviewer || "TBD"}
                       </h4>
@@ -365,32 +387,190 @@ const ApplicationDetails = () => {
                         </p>
                       </div>
                     )}
-                    {scheduleForm.location && (
-                      <div className="flex items-start gap-1.5 text-sm">
-                        <svg
-                          className="w-4 h-4 text-gray-400 mt-0.5 shrink-0"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                          />
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                          />
-                        </svg>
-                        <p className="text-blue-600 dark:text-blue-400 hover:underline cursor-pointer">
-                          {scheduleForm.location}
-                        </p>
-                      </div>
-                    )}
+                    {scheduleForm.location && (() => {
+                      const isUrl =
+                        scheduleForm.location.startsWith("http://") ||
+                        scheduleForm.location.startsWith("https://");
+                      const isTeams =
+                        scheduleForm.platform === "teams" ||
+                        scheduleForm.location?.includes("teams.microsoft.com") ||
+                        scheduleForm.location?.includes("teams.live.com");
+                      const isMeet =
+                        scheduleForm.platform === "meet" ||
+                        scheduleForm.location?.includes("meet.google.");
+                      const isZoom =
+                        scheduleForm.platform === "zoom" ||
+                        scheduleForm.location?.includes("zoom.");
+                      const meetingHref = isUrl
+                        ? scheduleForm.location
+                        : `https://${scheduleForm.location}`;
+
+                      if (isTeams) {
+                        return (
+                          <div className="mt-4 p-4 rounded-xl border border-[#5B5FC7]/30 bg-gradient-to-r from-[#5B5FC7]/10 via-[#5B5FC7]/5 to-transparent">
+                            <div className="flex items-center gap-2.5 mb-2">
+                              <div className="p-1.5 rounded-lg bg-[#5B5FC7]/15 border border-[#5B5FC7]/30 shadow-xs">
+                                <MicrosoftTeamsLogo className="w-5 h-5 shrink-0" />
+                              </div>
+                              <div>
+                                <span className="text-xs font-bold uppercase tracking-wider text-[#464EB8] dark:text-[#7B83EB] flex items-center gap-1.5">
+                                  <span>Microsoft Teams Online Interview</span>
+                                </span>
+                                <div className="flex items-center gap-1.5 text-[11px] text-gray-500 dark:text-gray-400">
+                                  <MicrosoftLogo className="w-3 h-3 shrink-0" />
+                                  <span>Microsoft 365 Meeting Room</span>
+                                </div>
+                              </div>
+                            </div>
+                            <p className="text-xs text-gray-600 dark:text-gray-300 mb-3">
+                              Your interview is hosted on Microsoft Teams. You can join directly from your web browser or Microsoft Teams application.
+                            </p>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <a
+                                href={meetingHref}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold text-white bg-[#5B5FC7] hover:bg-[#464EB8] shadow-md shadow-[#5B5FC7]/20 transition-all transform hover:-translate-y-0.5"
+                              >
+                                <MicrosoftTeamsLogo className="w-4 h-4 shrink-0" />
+                                Join Microsoft Teams Meeting
+                              </a>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(scheduleForm.location);
+                                  toast.success("Microsoft Teams link copied!");
+                                }}
+                                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition"
+                              >
+                                <Copy className="w-3.5 h-3.5 text-gray-500" />
+                                Copy Link
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      if (isMeet) {
+                        return (
+                          <div className="mt-4 p-4 rounded-xl border border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 via-emerald-500/5 to-transparent">
+                            <div className="flex items-center gap-2.5 mb-2">
+                              <div className="p-1.5 rounded-lg bg-emerald-500/15 border border-emerald-500/30 shadow-xs">
+                                <GoogleMeetLogo className="w-5 h-5 shrink-0" />
+                              </div>
+                              <div>
+                                <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+                                  Google Meet Video Interview
+                                </span>
+                                <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                                  Google Workspace Secure Video Call
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <a
+                                href={meetingHref}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-md shadow-emerald-600/20 transition-all"
+                              >
+                                <GoogleMeetLogo className="w-4 h-4 shrink-0" />
+                                Join Google Meet
+                              </a>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(scheduleForm.location);
+                                  toast.success("Google Meet link copied!");
+                                }}
+                                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition"
+                              >
+                                <Copy className="w-3.5 h-3.5 text-gray-500" />
+                                Copy Link
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      if (isZoom) {
+                        return (
+                          <div className="mt-4 p-4 rounded-xl border border-blue-500/30 bg-gradient-to-r from-blue-500/10 via-blue-500/5 to-transparent">
+                            <div className="flex items-center gap-2.5 mb-2">
+                              <div className="p-1.5 rounded-lg bg-blue-500/15 border border-blue-500/30 shadow-xs">
+                                <ZoomLogo className="w-5 h-5 shrink-0" />
+                              </div>
+                              <div>
+                                <span className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
+                                  Zoom Video Interview
+                                </span>
+                                <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                                  Official Zoom Video Communications Call
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <a
+                                href={meetingHref}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold text-white bg-[#2D8CFF] hover:bg-[#1A7BE6] shadow-md shadow-blue-600/20 transition-all"
+                              >
+                                <ZoomLogo className="w-4 h-4 shrink-0" />
+                                Join Zoom Meeting
+                              </a>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(scheduleForm.location);
+                                  toast.success("Zoom link copied!");
+                                }}
+                                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition"
+                              >
+                                <Copy className="w-3.5 h-3.5 text-gray-500" />
+                                Copy Link
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      if (isUrl) {
+                        return (
+                          <div className="mt-4 p-4 rounded-xl border border-indigo-500/30 bg-indigo-50/50 dark:bg-indigo-900/10">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <a
+                                href={meetingHref}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition"
+                              >
+                                <Video className="w-4 h-4" />
+                                Join Online Meeting
+                              </a>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(scheduleForm.location);
+                                  toast.success("Meeting link copied!");
+                                }}
+                                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition"
+                              >
+                                <Copy className="w-3.5 h-3.5 text-gray-500" />
+                                Copy Link
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div className="flex items-start gap-1.5 text-sm mt-3 text-gray-600 dark:text-gray-400">
+                          <MapPin className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
+                          <span>{scheduleForm.location}</span>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>

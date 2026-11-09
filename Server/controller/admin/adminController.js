@@ -101,8 +101,8 @@ export const getAllCompanies = async (req, res) => {
       },
     ]);
 
-    const companies = result[0].data;
-    const total = result[0].metadata[0]?.total || 0;
+    const companies = result[0]?.data || [];
+    const total = result[0]?.metadata?.[0]?.total || 0;
     const totalJobs = await JobModel.countDocuments({ status: "Open" });
 
     res.status(200).json({
