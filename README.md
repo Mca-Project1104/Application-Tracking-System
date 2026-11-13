@@ -3,7 +3,6 @@
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![React](https://img.shields.io/badge/Frontend-React%20%2B%20Vite-61DAFB?logo=react)
 ![Node](https://img.shields.io/badge/Backend-Node.js-339933?logo=node.js)
-![Python](https://img.shields.io/badge/AI_Service-Python-3776AB?logo=python)
 
 A comprehensive, full-stack Application Tracking System designed to streamline the hiring process for companies, candidates, and administrators. This platform features an AI-driven resume analyzer, dynamic hiring pipelines, a centralized job board, and secure Stripe billing integration.
 
@@ -43,12 +42,9 @@ A comprehensive, full-stack Application Tracking System designed to streamline t
 *   [MongoDB](https://www.mongodb.com/) with Mongoose ORM
 *   JWT Authentication & bcrypt for security
 *   Multer for resume/PDF uploads
+*   Groq SDK for AI-powered resume scoring
 *   Stripe API for payment processing
 *   Nodemailer for email verification/notifications
-
-**AI Microservice (Python)**
-*   Python 3.x
-*   Grok Model API Integration for Resume Parsing & ATS Scoring
 
 ---
 
@@ -70,7 +66,7 @@ Application-Tracking-System/
 │   ├── model/          # Mongoose database schemas
 │   ├── routes/         # Express API routes
 │   └── services/       # Stripe, Email, Multer, and ATS Scorer logic
-└── Python/             # AI Resume Analysis Microservice
+└── Python/             # Legacy AI service files; not required to run the app
     ├── main.py
     ├── grock_model_api.py
     └── requirements.txt
@@ -79,8 +75,6 @@ Prerequisites
 Ensure you have the following installed on your local machine:
 
 Node.js (v18 or higher)
-
-Python (v3.8 or higher)
 
 MongoDB (Local instance or MongoDB Atlas URI)
 
@@ -103,7 +97,7 @@ JWT_SECRET=your_jwt_secret
 STRIPE_SECRET_KEY=your_stripe_secret_key
 EMAIL_USER=your_email@example.com
 EMAIL_PASS=your_email_password
-PYTHON_API_URL=http://localhost:8000 # URL where python service runs
+GROQ_API_KEY=your_groq_api_key
 Start the server:
 
 Bash
@@ -121,18 +115,6 @@ Start the frontend development server:
 
 Bash
 npm run dev
-4. Setup the Python AI Microservice
-Bash
-cd ../Python
-pip install -r requirements.txt
-Create a .env file in the Python directory (if required by your Grok API integration):
-
-Code snippet
-GROK_API_KEY=your_api_key_here
-Start the Python server:
-
-Bash
-python main.py
 🤝 Contributing
 Contributions are what make the open-source community such an amazing place to learn, inspire, and create. Any contributions you make are greatly appreciated.
 
